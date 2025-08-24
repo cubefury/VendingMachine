@@ -1,4 +1,4 @@
-package com.myname.mymodid;
+package com.cubefury.vendingmachine;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -6,17 +6,26 @@ import org.apache.logging.log4j.Logger;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLMissingMappingsEvent;
+import cpw.mods.fml.common.event.FMLMissingMappingsEvent.MissingMapping;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
+import cpw.mods.fml.common.registry.GameRegistry.Type;
 
-@Mod(modid = MyMod.MODID, version = Tags.VERSION, name = "MyMod", acceptedMinecraftVersions = "[1.7.10]")
-public class MyMod {
+@Mod(
+    modid = VendingMachine.MODID,
+    version = Tags.VERSION,
+    name = "VendingMachine",
+    acceptedMinecraftVersions = "[1.7.10]")
+public class VendingMachine {
 
-    public static final String MODID = "mymodid";
+    public static final String MODID = "vending-machine";
     public static final Logger LOG = LogManager.getLogger(MODID);
 
-    @SidedProxy(clientSide = "com.myname.mymodid.ClientProxy", serverSide = "com.myname.mymodid.CommonProxy")
+    @SidedProxy(
+        clientSide = "com.cubefury.vendingmachine.ClientProxy",
+        serverSide = "com.cubefury.vendingmachine.CommonProxy")
     public static CommonProxy proxy;
 
     @Mod.EventHandler
@@ -42,5 +51,14 @@ public class MyMod {
     // register server commands in this event handler (Remove if not needed)
     public void serverStarting(FMLServerStartingEvent event) {
         proxy.serverStarting(event);
+    }
+
+    @Mod.EventHandler
+    public void missingMapping(FMLMissingMappingsEvent event) {
+        for (MissingMapping mapping : event.getAll()) {
+            if (mapping.type != Type.BLOCK) {
+                continue;
+            }
+        }
     }
 }

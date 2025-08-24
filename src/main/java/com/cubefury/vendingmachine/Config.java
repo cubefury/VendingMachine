@@ -1,4 +1,4 @@
-package com.myname.mymodid;
+package com.cubefury.vendingmachine;
 
 import java.io.File;
 
@@ -6,7 +6,7 @@ import net.minecraftforge.common.config.Configuration;
 
 public class Config {
 
-    public static String greeting = "Hello World";
+    public static String greeting = "poggers";
 
     public static void synchronizeConfiguration(File configFile) {
         Configuration configuration = new Configuration(configFile);

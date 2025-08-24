@@ -1,4 +1,6 @@
-package com.myname.mymodid;
+package com.cubefury.vendingmachine;
+
+import net.minecraft.entity.player.EntityPlayer;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
@@ -12,8 +14,8 @@ public class CommonProxy {
     public void preInit(FMLPreInitializationEvent event) {
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
 
-        MyMod.LOG.info(Config.greeting);
-        MyMod.LOG.info("I am MyMod at version " + Tags.VERSION);
+        VendingMachine.LOG.info(Config.greeting);
+        VendingMachine.LOG.info("Loading Vending Machine " + Tags.VERSION);
     }
 
     // load "Do your mod setup. Build whatever data structures you care about. Register recipes." (Remove if not needed)
@@ -24,4 +26,8 @@ public class CommonProxy {
 
     // register server commands in this event handler (Remove if not needed)
     public void serverStarting(FMLServerStartingEvent event) {}
+
+    public EntityPlayer getThePlayer() {
+        return null;
+    }
 }
