@@ -44,9 +44,9 @@ dependencies {
 project.getConfigurations()
     .all(c -> {
         final DependencySubstitutions ds = c.getResolutionStrategy()
-            .getDependencySubstitution();
+            .getDependencySubstitution()
         ds.substitute(ds.module("com.github.GTNewHorizons:Baubles"))
             .using(ds.module("com.github.GTNewHorizons:Baubles-Expanded:2.1.9-GTNH"))
             .withClassifier("dev")
-            .because("Baubles-Expanded replaces Baubles");
-    });
+            .because("Baubles-Expanded replaces Baubles")
+    })

@@ -1,7 +1,12 @@
 package com.cubefury.vendingmachine;
 
+import net.minecraft.block.Block;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.cubefury.vendingmachine.blocks.BlockVendingMachine;
+import com.cubefury.vendingmachine.blocks.TileVendingMachine;
 
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.SidedProxy;
@@ -11,6 +16,7 @@ import cpw.mods.fml.common.event.FMLMissingMappingsEvent.MissingMapping;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
+import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.GameRegistry.Type;
 
 @Mod(
@@ -23,14 +29,17 @@ public class VendingMachine {
     public static final String MODID = "vending-machine";
     public static final Logger LOG = LogManager.getLogger(MODID);
 
+    @Mod.Instance(MODID)
+    public static VendingMachine instance;
+
+    public static Block vendingMachine = new BlockVendingMachine();
+
     @SidedProxy(
         clientSide = "com.cubefury.vendingmachine.ClientProxy",
         serverSide = "com.cubefury.vendingmachine.CommonProxy")
     public static CommonProxy proxy;
 
     @Mod.EventHandler
-    // preInit "Run before anything else. Read your config, create blocks, items, etc, and register them with the
-    // GameRegistry." (Remove if not needed)
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);
     }
@@ -39,6 +48,9 @@ public class VendingMachine {
     // load "Do your mod setup. Build whatever data structures you care about. Register recipes." (Remove if not needed)
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
+
+        GameRegistry.registerBlock(vendingMachine, "vending_machine");
+        GameRegistry.registerTileEntity(TileVendingMachine.class, "vending_machine");
     }
 
     @Mod.EventHandler
