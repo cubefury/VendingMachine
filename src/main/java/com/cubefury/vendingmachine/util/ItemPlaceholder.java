@@ -12,11 +12,6 @@ import net.minecraft.world.World;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
-/**
- * This code is extracted directly from BetterQuesting, for consistency with the questbook implementation.
- * We do not reference the class directly, so BetterQuesting may remain as an optional dependency.
- * BetterQuesting's license may be found in the root directory of this project.
- */
 public class ItemPlaceholder extends Item {
 
     public static Item placeholder = new ItemPlaceholder();

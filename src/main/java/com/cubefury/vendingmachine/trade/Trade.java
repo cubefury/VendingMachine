@@ -6,10 +6,13 @@ import java.util.List;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.Constants;
 
+import com.cubefury.vendingmachine.events.MarkDirtyTradeEvent;
 import com.cubefury.vendingmachine.integration.betterquesting.gui.PanelQBTrade;
 import com.cubefury.vendingmachine.util.BigItemStack;
+import com.cubefury.vendingmachine.util.ItemPlaceholder;
 import com.cubefury.vendingmachine.util.JsonHelper;
 
 import betterquesting.api2.client.gui.misc.IGuiRect;
@@ -22,11 +25,10 @@ public class Trade {
 
     public final List<BigItemStack> fromItems = new ArrayList<>();
     public final List<BigItemStack> toItems = new ArrayList<>();
-    public boolean ignoreInputsNbt = true;
+    public BigItemStack displayItem = new BigItemStack(ItemPlaceholder.placeholder);
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
-        nbt.setBoolean("ignoreInputsNBT", ignoreInputsNbt);
-
+        nbt.setTag("displayItem", displayItem.writeToNBT(new NBTTagCompound()));
         NBTTagList fromItemsArray = new NBTTagList();
         for (BigItemStack stack : this.fromItems) {
             fromItemsArray.appendTag(JsonHelper.ItemStackToJson(stack, new NBTTagCompound()));
@@ -43,8 +45,6 @@ public class Trade {
     }
 
     public void readFromNBT(NBTTagCompound nbt) {
-        ignoreInputsNbt = nbt.getBoolean("ignoreInputsNBT");
-
         fromItems.clear();
         toItems.clear();
         NBTTagList fromList = nbt.getTagList("fromItems", Constants.NBT.TAG_COMPOUND);
@@ -58,7 +58,9 @@ public class Trade {
         }
     }
 
-    public void executeTrade(EntityPlayer player) {}
+    public void executeTrade(EntityPlayer player) {
+        MinecraftForge.EVENT_BUS.post(new MarkDirtyTradeEvent(player.getUniqueID()));
+    }
 
     @Optional.Method(modid = "NotEnoughItems")
     @SideOnly(Side.CLIENT)

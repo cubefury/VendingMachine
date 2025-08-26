@@ -18,6 +18,8 @@ public class TradeManager {
 
     private TradeManager() {}
 
+    public void init() {}
+
     public void addTradeGroup(UUID player, TradeGroup tg) {
         synchronized (availableTrades) {
             if (!availableTrades.containsKey(player) || availableTrades.get(player) == null) {

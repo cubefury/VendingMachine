@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.annotation.Nullable;
+
 import com.cubefury.vendingmachine.trade.TradeGroup;
 
 public class BqAdapter {
@@ -15,6 +17,14 @@ public class BqAdapter {
     private final Map<UUID, Set<TradeGroup>> questUpdateTriggers = new HashMap<>();
 
     private BqAdapter() {}
+
+    public void resetQuestTriggers(@Nullable UUID quest) {
+        if (quest == null) {
+            questUpdateTriggers.clear();
+        } else {
+            questUpdateTriggers.remove(quest);
+        }
+    }
 
     public void addQuestTrigger(UUID quest, TradeGroup tg) {
         if (!questUpdateTriggers.containsKey(quest) || questUpdateTriggers.get(quest) == null) {

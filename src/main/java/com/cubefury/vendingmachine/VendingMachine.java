@@ -58,6 +58,7 @@ public class VendingMachine {
         GameRegistry.registerTileEntity(TileVendingMachine.class, "vending_machine");
 
         GameRegistry.registerItem(ItemPlaceholder.placeholder, "placeholder");
+
     }
 
     @Mod.EventHandler

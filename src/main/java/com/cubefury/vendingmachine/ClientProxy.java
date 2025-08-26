@@ -14,6 +14,10 @@ public class ClientProxy extends CommonProxy {
         super.init(event);
     }
 
+    public boolean isClient() {
+        return true;
+    }
+
     @Override
     public EntityPlayer getThePlayer() {
         return FMLClientHandler.instance()

@@ -17,9 +17,6 @@ import net.minecraftforge.oredict.OreDictionary;
 import cpw.mods.fml.common.Optional;
 
 /**
- * This code is extracted directly from BetterQuesting, for consistency with the questbook implementation.
- * We do not reference the class directly, so BetterQuesting may remain as an optional dependency.
- * BetterQuesting's license may be found in the root directory of this project.
  * Purpose built container class for holding ItemStacks larger than 127. <br>
  * <b>For storage purposes only!
  */

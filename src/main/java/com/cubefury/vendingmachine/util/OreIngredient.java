@@ -10,11 +10,6 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;
 
-/**
- * This code is extracted directly from BetterQuesting, for consistency with the questbook implementation.
- * We do not reference the class directly, so BetterQuesting may remain as an optional dependency.
- * BetterQuesting's license may be found in the root directory of this project.
- */
 // Cut down version from 1.12
 public class OreIngredient {
 

@@ -1,17 +1,17 @@
 package com.cubefury.vendingmachine.util;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.function.Function;
+
 import javax.annotation.Nonnull;
 
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.util.Constants;
 
-/**
- * The BigItemStack serialization and deserialization code was taken from BetterQuesting's implementation of
- * utils.JsonHelper.
- * We do not reference the class directly, so BetterQuesting may remain as an optional dependency.
- * BetterQuesting's license may be found in the root directory of this project.
- */
+import com.cubefury.vendingmachine.trade.TradeDatabase;
+
 public class JsonHelper {
 
     public static BigItemStack JsonToItemStack(@Nonnull NBTTagCompound nbt) {
@@ -42,5 +42,25 @@ public class JsonHelper {
             return stack.writeToNBT(nbt);
         }
         return nbt;
+    }
+
+    public static void populateTradeDatabaseFromFile(File file) {
+        TradeDatabase db = TradeDatabase.INSTANCE;
+        db.clear();
+
+        Function<File, NBTTagCompound> readNbt = f -> NBTConverter
+            .JSONtoNBT_Object(FileIO.ReadFromFile(f), new NBTTagCompound(), true);
+
+        db.readFromNBT(readNbt.apply(file));
+    }
+
+    public static void populateTradeStateFromFile(File file) {
+
+    }
+
+    @FunctionalInterface
+    public interface IOConsumer<T> {
+
+        void accept(T arg) throws IOException;
     }
 }
