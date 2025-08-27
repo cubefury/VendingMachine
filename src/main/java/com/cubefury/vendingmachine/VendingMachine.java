@@ -7,7 +7,9 @@ import org.apache.logging.log4j.Logger;
 
 import com.cubefury.vendingmachine.blocks.BlockVendingMachine;
 import com.cubefury.vendingmachine.blocks.TileVendingMachine;
+import com.cubefury.vendingmachine.util.ItemPlaceholder;
 
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -16,6 +18,7 @@ import cpw.mods.fml.common.event.FMLMissingMappingsEvent.MissingMapping;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
+import cpw.mods.fml.common.event.FMLServerStoppedEvent;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.GameRegistry.Type;
 
@@ -26,13 +29,16 @@ import cpw.mods.fml.common.registry.GameRegistry.Type;
     acceptedMinecraftVersions = "[1.7.10]")
 public class VendingMachine {
 
-    public static final String MODID = "vending-machine";
+    public static final String MODID = "vendingmachine";
     public static final Logger LOG = LogManager.getLogger(MODID);
 
     @Mod.Instance(MODID)
     public static VendingMachine instance;
 
     public static Block vendingMachine = new BlockVendingMachine();
+
+    public static boolean isNeiLoaded = false;
+    public static boolean isBqLoaded = false;
 
     @SidedProxy(
         clientSide = "com.cubefury.vendingmachine.ClientProxy",
@@ -42,6 +48,7 @@ public class VendingMachine {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);
+        proxy.registerHandlers();
     }
 
     @Mod.EventHandler
@@ -51,11 +58,19 @@ public class VendingMachine {
 
         GameRegistry.registerBlock(vendingMachine, "vending_machine");
         GameRegistry.registerTileEntity(TileVendingMachine.class, "vending_machine");
+
+        GameRegistry.registerItem(ItemPlaceholder.placeholder, "placeholder");
+
     }
 
     @Mod.EventHandler
     // postInit "Handle interaction with other mods, complete your setup based on this." (Remove if not needed)
     public void postInit(FMLPostInitializationEvent event) {
+        isNeiLoaded = Loader.isModLoaded("NotEnoughItems");
+        isBqLoaded = Loader.isModLoaded("betterquesting");
+
+        LOG.info("NEI Integration enabled: {}", isNeiLoaded);
+        LOG.info("Better Questing Integration enabled: {}", isBqLoaded);
         proxy.postInit(event);
     }
 
@@ -64,6 +79,9 @@ public class VendingMachine {
     public void serverStarting(FMLServerStartingEvent event) {
         proxy.serverStarting(event);
     }
+
+    @Mod.EventHandler
+    public void serverStop(FMLServerStoppedEvent event) {}
 
     @Mod.EventHandler
     public void missingMapping(FMLMissingMappingsEvent event) {

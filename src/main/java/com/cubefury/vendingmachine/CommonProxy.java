@@ -1,7 +1,15 @@
 package com.cubefury.vendingmachine;
 
+import net.minecraft.command.ICommandManager;
+import net.minecraft.command.ServerCommandManager;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.common.MinecraftForge;
 
+import com.cubefury.vendingmachine.handlers.EventHandler;
+import com.cubefury.vendingmachine.handlers.SaveLoadHandler;
+
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
@@ -12,10 +20,8 @@ public class CommonProxy {
     // preInit "Run before anything else. Read your config, create blocks, items, etc, and register them with the
     // GameRegistry." (Remove if not needed)
     public void preInit(FMLPreInitializationEvent event) {
-        Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
-
-        VendingMachine.LOG.info(Config.greeting);
         VendingMachine.LOG.info("Loading Vending Machine " + Tags.VERSION);
+        Config.init(event.getSuggestedConfigurationFile());
     }
 
     // load "Do your mod setup. Build whatever data structures you care about. Register recipes." (Remove if not needed)
@@ -25,7 +31,24 @@ public class CommonProxy {
     public void postInit(FMLPostInitializationEvent event) {}
 
     // register server commands in this event handler (Remove if not needed)
-    public void serverStarting(FMLServerStartingEvent event) {}
+    public void serverStarting(FMLServerStartingEvent event) {
+        MinecraftServer server = event.getServer();
+        ICommandManager command = server.getCommandManager();
+        ServerCommandManager manager = (ServerCommandManager) command;
+
+        SaveLoadHandler.INSTANCE.init(server);
+    }
+
+    public boolean isClient() {
+        return false;
+    }
+
+    public void registerHandlers() {
+        MinecraftForge.EVENT_BUS.register(EventHandler.INSTANCE);
+        FMLCommonHandler.instance()
+            .bus()
+            .register(EventHandler.INSTANCE);
+    }
 
     public EntityPlayer getThePlayer() {
         return null;

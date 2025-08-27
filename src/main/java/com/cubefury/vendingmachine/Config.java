@@ -6,12 +6,25 @@ import net.minecraftforge.common.config.Configuration;
 
 public class Config {
 
-    public static String greeting = "poggers";
+    private static final String CONFIG_CATEGORY_GUI = "GUI";
 
-    public static void synchronizeConfiguration(File configFile) {
+    public static String data_dir = "vendingmachine";
+    public static String config_dir = "config/vendingmachine";
+    public static int gui_refresh_interval = 1;
+
+    public static File worldDir = null;
+
+    public static void init(File configFile) {
         Configuration configuration = new Configuration(configFile);
 
-        greeting = configuration.getString("greeting", Configuration.CATEGORY_GENERAL, greeting, "How shall I greet?");
+        data_dir = configuration
+            .getString("data_dir", Configuration.CATEGORY_GENERAL, data_dir, "World vendingmachine data directory");
+        config_dir = configuration
+            .getString("config_dir", Configuration.CATEGORY_GENERAL, config_dir, "Configuration directory");
+
+        configuration.addCustomCategoryComment(CONFIG_CATEGORY_GUI, "GUI Settings");
+        gui_refresh_interval = configuration
+            .getInt("gui_refresh_interval", CONFIG_CATEGORY_GUI, gui_refresh_interval, 1, 3600, "");
 
         if (configuration.hasChanged()) {
             configuration.save();
