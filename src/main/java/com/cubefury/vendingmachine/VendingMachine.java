@@ -51,7 +51,6 @@ public class VendingMachine {
         proxy.registerHandlers();
 
         // Register network handlers
-
     }
 
     @Mod.EventHandler
