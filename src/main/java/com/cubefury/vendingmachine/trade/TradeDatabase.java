@@ -34,16 +34,22 @@ public class TradeDatabase {
     }
 
     public void readFromNBT(NBTTagCompound nbt) {
+        int newIdCount = 0;
         this.version = nbt.getInteger("version");
         NBTTagList trades = nbt.getTagList("tradeGroups", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < trades.tagCount(); i++) {
             TradeGroup tg = new TradeGroup();
-            tg.readFromNBT(trades.getCompoundTagAt(i));
+            newIdCount += tg.readFromNBT(trades.getCompoundTagAt(i)) ? 1 : 0;
             if (tradeGroups.contains(tg)) {
                 VendingMachine.LOG.warn("Multiple trade groups with id {} exist in the file!", tg);
             }
             tradeGroups.add(tg);
         }
+        if (newIdCount > 0) {
+            VendingMachine.LOG.info("Updated {} new trades with UUIDs", newIdCount);
+            DirtyDbMarker.markDirty();
+        }
+
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {

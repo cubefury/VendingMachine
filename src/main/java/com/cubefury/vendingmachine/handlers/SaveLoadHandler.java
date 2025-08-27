@@ -16,7 +16,6 @@ public class SaveLoadHandler {
 
     public static SaveLoadHandler INSTANCE = new SaveLoadHandler();
 
-    private File defaultFileDatabase = null;
     private File fileDatabase = null;
     private File dirTradeState = null;
 
@@ -29,7 +28,7 @@ public class SaveLoadHandler {
             Config.worldDir = server.getFile(server.getFolderName() + "/" + Config.data_dir);
         }
 
-        defaultFileDatabase = new File(Config.config_dir, "tradeDatabase.json");
+        fileDatabase = new File(Config.config_dir, "tradeDatabase.json");
         dirTradeState = new File(Config.worldDir, "tradeState");
 
         loadDatabase();
@@ -40,9 +39,14 @@ public class SaveLoadHandler {
         JsonHelper.populateTradeDatabaseFromFile(fileDatabase);
     }
 
+    public void writeDatabase() {
+        CopyPaste(fileDatabase, new File(Config.config_dir + "/backup", "tradeDatabase.json"))
+        FileIO.WriteToFile(fileDatabase,
+            out -> NBTConverter.NBTtoJSON_Compound(TradeDatabase.INSTANCE.writeToNBT(new NBTTagCompound()), out, true));
+    }
     public void loadTradeState() {
         if (dirTradeState.exists()) {
-            CopyPaste(dirTradeState, new File(Config.worldDir + "/backup", "dirTradeState"));
+            CopyPaste(dirTradeState, new File(Config.worldDir + "/backup", "tradeState"));
             // JsonHelper.populateTradeStateFromFile();
         }
     }

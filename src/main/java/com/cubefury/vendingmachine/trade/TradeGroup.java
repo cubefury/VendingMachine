@@ -16,10 +16,11 @@ import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.api.TradeManager;
 import com.cubefury.vendingmachine.integration.betterquesting.BqAdapter;
 import com.cubefury.vendingmachine.integration.betterquesting.BqCondition;
+import com.cubefury.vendingmachine.util.NBTConverter;
 
 public class TradeGroup {
 
-    private String id = "";
+    private UUID id = new UUID(0, 0); // placeholder UUID
     private final List<Trade> trades = new ArrayList<>();
     private int cooldown = -1;
     private int maxTrades = -1;
@@ -29,7 +30,7 @@ public class TradeGroup {
     public TradeGroup() {}
 
     public String toString() {
-        return this.id;
+        return this.id.toString();
     }
 
     public boolean isAvailableUponSatisfied(UUID player, ICondition c) {
@@ -88,11 +89,17 @@ public class TradeGroup {
         return false;
     }
 
-    public void readFromNBT(NBTTagCompound nbt) {
+    public boolean readFromNBT(NBTTagCompound nbt) {
         this.trades.clear();
         this.requirementSet.clear();
 
-        this.id = nbt.getString("id");
+        boolean generatedRandomUUID = false;
+        if (nbt.hasKey("id")) {
+            this.id = NBTConverter.UuidValueType.TRADEGROUP.readFromNBT(nbt.getNBTTagCompound("id"));
+        } else {
+            this.id = UUID.randomUUID();
+            generatedRandomUUID = true;
+        }
         this.cooldown = nbt.getInteger("cooldown");
         this.maxTrades = nbt.getInteger("maxTrades");
         NBTTagList tradeList = nbt.getTagList("trades", Constants.NBT.TAG_COMPOUND);
@@ -113,10 +120,11 @@ public class TradeGroup {
                 BqAdapter.INSTANCE.addQuestTrigger(bqc.getQuestId(), this);
             }
         }
+        return generatedRandomUUID;
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
-        nbt.setString("id", this.id);
+        nbt.setTag("id", NBTConverter.UuidValueType.TRADEGROUP.writeId(this.id));
         nbt.setInteger("cooldown", this.cooldown);
         nbt.setInteger("maxTrades", this.maxTrades);
         NBTTagList tList = new NBTTagList();

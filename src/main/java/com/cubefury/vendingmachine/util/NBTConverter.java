@@ -49,6 +49,7 @@ public class NBTConverter {
     public enum UuidValueType {
 
         QUEST("questID");
+        TRADEGROUP("tradeGroupID");
 
         private final String idFieldName;
         private final String highIdFieldName;

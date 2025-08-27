@@ -13,4 +13,9 @@ public class EventHandler {
         SaveLoadHandler.INSTANCE.writeTradeState(event.getDirtyPlayerIDs());
     }
 
+    @SubscribeEvent
+    public void onMarkDirtyDb(MarkDirtyDbEvent event) {
+        SaveLoadHandler.INSTANCE.writeDatabase();
+    }
+
 }
