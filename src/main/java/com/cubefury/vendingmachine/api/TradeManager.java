@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import com.cubefury.vendingmachine.api.TradeWrapper;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
 import com.cubefury.vendingmachine.trade.TradeGroup;
 
@@ -39,4 +40,20 @@ public class TradeManager {
         }
     }
 
+    public List<TradeWrapper> getTrades(UUID player) {
+        synchronized (availableTrades) {
+            if (!availableTrades.containsKey(player) || availableTrades.get(player) == null) {
+                return new ArrayList<>();
+            }
+            ArrayList<TradeWrapper> tradeList = new ArrayList<>();
+            for (TradeGroup tg : availableTrades.get(player)) {
+                TradeHistory = tg.getTradeState(player);
+                tg.
+                tradeList.addAll(tg.getTrades().stream()
+                    .map(trade -> new TradeWrapper(trade, c))
+                    .collect(Collectors.toList()));
+            }
+            return tradeList;
+        }
+    }
 }

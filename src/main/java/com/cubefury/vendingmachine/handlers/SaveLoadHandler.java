@@ -5,6 +5,7 @@ import static com.cubefury.vendingmachine.util.FileIO.CopyPaste;
 import java.io.File;
 import java.util.Collection;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import net.minecraft.server.MinecraftServer;
 
@@ -36,18 +37,23 @@ public class SaveLoadHandler {
     }
 
     public void loadDatabase() {
+        CopyPaste(fileDatabase, new File(Config.config_dir + "/backup", "tradeDatabase.json"));
         JsonHelper.populateTradeDatabaseFromFile(fileDatabase);
     }
 
     public void writeDatabase() {
-        CopyPaste(fileDatabase, new File(Config.config_dir + "/backup", "tradeDatabase.json"))
+        CopyPaste(fileDatabase, new File(Config.config_dir + "/backup", "tradeDatabase.json"));
         FileIO.WriteToFile(fileDatabase,
             out -> NBTConverter.NBTtoJSON_Compound(TradeDatabase.INSTANCE.writeToNBT(new NBTTagCompound()), out, true));
     }
     public void loadTradeState() {
         if (dirTradeState.exists()) {
             CopyPaste(dirTradeState, new File(Config.worldDir + "/backup", "tradeState"));
-            // JsonHelper.populateTradeStateFromFile();
+            JsonHelper.populateTradeStateFromFiles(dirTradeState
+                .listFiles()
+                .stream()
+                .filter(f -> f.getName().endswith(".json"))
+                .collect(Collectors::toList));
         }
     }
 

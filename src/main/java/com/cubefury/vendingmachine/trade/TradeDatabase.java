@@ -21,6 +21,10 @@ public class TradeDatabase {
         tradeGroups.clear();
     }
 
+    public void clearTradeState() {
+        tradeGroups.forEach(TradeGroup::clearTradeState);
+    }
+
     public int getTradeGroupCount() {
         return tradeGroups.size();
     }

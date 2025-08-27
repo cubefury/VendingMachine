@@ -54,6 +54,12 @@ public class JsonHelper {
         db.readFromNBT(readNbt.apply(file));
     }
 
+    public static void populateTradeStateFromFiles(List<File> files) {
+        TradeDatabase db = TradeDatabase.INSTANCE;
+        db.clearTradeState();
+        files.forEach(JsonHelper::populateTradeStateFromFile);
+    }
+
     public static void populateTradeStateFromFile(File file) {
 
     }

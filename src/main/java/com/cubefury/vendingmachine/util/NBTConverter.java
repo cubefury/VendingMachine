@@ -50,6 +50,7 @@ public class NBTConverter {
 
         QUEST("questID");
         TRADEGROUP("tradeGroupID");
+        PLAYER("playerID");
 
         private final String idFieldName;
         private final String highIdFieldName;

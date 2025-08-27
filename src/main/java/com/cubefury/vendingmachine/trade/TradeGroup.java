@@ -25,7 +25,12 @@ public class TradeGroup {
     private int cooldown = -1;
     private int maxTrades = -1;
     private final Set<ICondition> requirementSet = new HashSet<>();
+
+    // List of completed conditions for each player
     private final Map<UUID, Set<ICondition>> playerDone = new HashMap<>();
+
+    // List of players with trade history
+    private final Map<UUID, TradeHistory> tradeState = new HashMap<>();
 
     public TradeGroup() {}
 
@@ -81,6 +86,25 @@ public class TradeGroup {
         return trades;
     }
 
+    public void clearTradeState() {
+        tradeState.clear();
+    }
+
+    public void resetTradeState(UUID player) {
+        if (player != null) {
+            tradeState.remove(player);
+        } else {
+            clearTradeState();
+        }
+    }
+
+    public TradeHistory getTradeState(UUID player) {
+        if (!tradeState.containsKey(player) || tradeState.get(player) == null) {
+            return new TradeHistory();
+        }
+        return tradeState.get(player);
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof TradeGroup) {
@@ -95,7 +119,7 @@ public class TradeGroup {
 
         boolean generatedRandomUUID = false;
         if (nbt.hasKey("id")) {
-            this.id = NBTConverter.UuidValueType.TRADEGROUP.readFromNBT(nbt.getNBTTagCompound("id"));
+            this.id = NBTConverter.UuidValueType.TRADEGROUP.readId(nbt.getNBTTagCompound("id"));
         } else {
             this.id = UUID.randomUUID();
             generatedRandomUUID = true;
@@ -137,6 +161,25 @@ public class TradeGroup {
             cList.appendTag(ic.writeToNBT(new NBTTagCompound()));
         }
         nbt.setTag("requirements", cList);
+        return nbt;
+    }
+
+    public void readTradeStateFromNBT(NBTTagList nbt) {
+        for (int i = 0; i < nbt.tagCount(); i++) {
+            NBTTagCompound ts = nbt.getCompoundTagAt(i);
+            UUID player = NBTConverter.UuidValueType.PLAYER.readId(ts);
+            tradeState.put(player, new TradeHistory(ts.getLong("lastTrade"), ts.getInteger("tradeCount")));
+        }
+    }
+
+    public NBTTagList writeTradeStateToNBT(NBTTagList nbt) {
+        for (Map.Entry<UUID, TradeHistory> entry : tradeState.entrySet()) {
+            NBTTagCompound ts = new NBTTagCompound();
+            NBTConverter.UuidValuetype.PLAYER.writeId(entry.getKey(), ts);
+            ts.setLong(entry.getValue().lastTrade);
+            ts.setInteger(entry.getvalue().tradeCount);
+            nbt.appendTag(ts);
+        }
         return nbt;
     }
 }
