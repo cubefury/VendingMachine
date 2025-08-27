@@ -1,7 +1,5 @@
 package com.cubefury.vendingmachine;
 
-import com.cubefury.vendingmachine.handlers.SaveLoadHandler;
-import cpw.mods.fml.common.event.FMLServerStoppedEvent;
 import net.minecraft.block.Block;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,6 +18,7 @@ import cpw.mods.fml.common.event.FMLMissingMappingsEvent.MissingMapping;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
+import cpw.mods.fml.common.event.FMLServerStoppedEvent;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.GameRegistry.Type;
 
@@ -49,6 +48,7 @@ public class VendingMachine {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);
+        proxy.registerHandlers();
     }
 
     @Mod.EventHandler
@@ -67,7 +67,10 @@ public class VendingMachine {
     // postInit "Handle interaction with other mods, complete your setup based on this." (Remove if not needed)
     public void postInit(FMLPostInitializationEvent event) {
         isNeiLoaded = Loader.isModLoaded("NotEnoughItems");
-        isBqLoaded = Loader.isModLoaded("BetterQuesting");
+        isBqLoaded = Loader.isModLoaded("betterquesting");
+
+        LOG.info("NEI Integration enabled: {}", isNeiLoaded);
+        LOG.info("Better Questing Integration enabled: {}", isBqLoaded);
         proxy.postInit(event);
     }
 
@@ -78,8 +81,7 @@ public class VendingMachine {
     }
 
     @Mod.EventHandler
-    public void serverStop(FMLServerStoppedEvent event) {
-    }
+    public void serverStop(FMLServerStoppedEvent event) {}
 
     @Mod.EventHandler
     public void missingMapping(FMLMissingMappingsEvent event) {

@@ -70,6 +70,7 @@ public class TradeDatabase {
         for (TradeGroup tg : tradeGroups.values()) {
             tgList.appendTag(tg.writeToNBT(new NBTTagCompound()));
         }
+        nbt.setTag("tradeGroups", tgList);
         return nbt;
     }
 

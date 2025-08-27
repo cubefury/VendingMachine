@@ -20,6 +20,10 @@ public class ThreadedIO {
 
     ExecutorService exService;
 
+    public ThreadedIO() {
+        this.init();
+    }
+
     public void init() {
         if (exService == null || exService.isShutdown()) {
             exService = Executors.newSingleThreadExecutor();

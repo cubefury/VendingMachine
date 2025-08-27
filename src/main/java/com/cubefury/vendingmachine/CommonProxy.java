@@ -4,9 +4,12 @@ import net.minecraft.command.ICommandManager;
 import net.minecraft.command.ServerCommandManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.common.MinecraftForge;
 
+import com.cubefury.vendingmachine.handlers.EventHandler;
 import com.cubefury.vendingmachine.handlers.SaveLoadHandler;
 
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
@@ -25,9 +28,7 @@ public class CommonProxy {
     public void init(FMLInitializationEvent event) {}
 
     // postInit "Handle interaction with other mods, complete your setup based on this." (Remove if not needed)
-    public void postInit(FMLPostInitializationEvent event) {
-
-    }
+    public void postInit(FMLPostInitializationEvent event) {}
 
     // register server commands in this event handler (Remove if not needed)
     public void serverStarting(FMLServerStartingEvent event) {
@@ -40,6 +41,13 @@ public class CommonProxy {
 
     public boolean isClient() {
         return false;
+    }
+
+    public void registerHandlers() {
+        MinecraftForge.EVENT_BUS.register(EventHandler.INSTANCE);
+        FMLCommonHandler.instance()
+            .bus()
+            .register(EventHandler.INSTANCE);
     }
 
     public EntityPlayer getThePlayer() {

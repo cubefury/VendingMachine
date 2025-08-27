@@ -24,4 +24,9 @@ public class ClientProxy extends CommonProxy {
             .getClientPlayerEntity();
     }
 
+    @Override
+    public void registerHandlers() {
+        super.registerHandlers();
+    }
+
 }
