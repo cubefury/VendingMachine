@@ -1,8 +1,11 @@
 package com.cubefury.vendingmachine.trade;
 
-class TradeHistory {
+public class TradeHistory {
+
     public long lastTrade = -1;
     public int tradeCount = 0;
+
+    public static TradeHistory DEFAULT = new TradeHistory();
 
     public TradeHistory() {}
 
@@ -18,11 +21,16 @@ class TradeHistory {
 
     public void resetData() {
         lastTrade = -1;
-        tradecount = 0;
+        tradeCount = 0;
     }
 
     public void resetTradeAvailability() {
         lastTrade = -1;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof TradeHistory that)) return false;
+        return lastTrade == that.lastTrade && tradeCount == that.tradeCount;
+    }
 }

@@ -1,19 +1,21 @@
 package com.cubefury.vendingmachine.trade;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
 
 import com.cubefury.vendingmachine.VendingMachine;
+import com.cubefury.vendingmachine.util.NBTConverter;
 
 public class TradeDatabase {
 
     public static final TradeDatabase INSTANCE = new TradeDatabase();
     public int version = -1;
-    private final Set<TradeGroup> tradeGroups = new HashSet<>();
+    private final Map<UUID, TradeGroup> tradeGroups = new HashMap<>();
 
     private TradeDatabase() {}
 
@@ -22,7 +24,11 @@ public class TradeDatabase {
     }
 
     public void clearTradeState() {
-        tradeGroups.forEach(TradeGroup::clearTradeState);
+        tradeGroups.forEach((k, v) -> v.clearTradeState());
+    }
+
+    public TradeGroup getTradeGroupFromId(UUID tgId) {
+        return tradeGroups.get(tgId);
     }
 
     public int getTradeGroupCount() {
@@ -30,7 +36,8 @@ public class TradeDatabase {
     }
 
     public int getTradeCount() {
-        return tradeGroups.stream()
+        return tradeGroups.values()
+            .stream()
             .mapToInt(
                 tg -> tg.getTrades()
                     .size())
@@ -44,13 +51,14 @@ public class TradeDatabase {
         for (int i = 0; i < trades.tagCount(); i++) {
             TradeGroup tg = new TradeGroup();
             newIdCount += tg.readFromNBT(trades.getCompoundTagAt(i)) ? 1 : 0;
-            if (tradeGroups.contains(tg)) {
+            if (tradeGroups.containsKey(tg.getId())) {
                 VendingMachine.LOG.warn("Multiple trade groups with id {} exist in the file!", tg);
+                continue;
             }
-            tradeGroups.add(tg);
+            tradeGroups.put(tg.getId(), tg);
         }
         if (newIdCount > 0) {
-            VendingMachine.LOG.info("Updated {} new trades with UUIDs", newIdCount);
+            VendingMachine.LOG.info("Updating {} new trades with UUIDs", newIdCount);
             DirtyDbMarker.markDirty();
         }
 
@@ -59,10 +67,40 @@ public class TradeDatabase {
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
         nbt.setInteger("version", this.version);
         NBTTagList tgList = new NBTTagList();
-        for (TradeGroup tg : tradeGroups) {
+        for (TradeGroup tg : tradeGroups.values()) {
             tgList.appendTag(tg.writeToNBT(new NBTTagCompound()));
         }
         return nbt;
     }
 
+    public void populateTradeStateFromNBT(NBTTagCompound nbt, UUID player) {
+        NBTTagList tradeStateList = nbt.getTagList("tradeState", Constants.NBT.TAG_COMPOUND);
+        for (int i = 0; i < tradeStateList.tagCount(); i++) {
+            NBTTagCompound state = tradeStateList.getCompoundTagAt(i);
+            UUID tgId = NBTConverter.UuidValueType.TRADEGROUP.readId(state);
+            TradeGroup tg = TradeDatabase.INSTANCE.getTradeGroupFromId(tgId);
+            TradeHistory th = new TradeHistory(state.getLong("lastTrade"), state.getInteger("tradeCount"));
+            tg.setTradeState(player, th);
+        }
+    }
+
+    public NBTTagCompound writeTradeStateToNBT(NBTTagCompound nbt, UUID player) {
+        NBTTagList tradeStateList = new NBTTagList();
+        // This is not very efficient and can take a while to run if there are many trade groups.
+        // An alternative is to maintain two copies of this data, one indexing by tradegroup and
+        // another indexing by player uuid. Let's do that if it proves to be too slow.
+        for (Map.Entry<UUID, TradeGroup> entry : tradeGroups.entrySet()) {
+            TradeHistory history = entry.getValue()
+                .getTradeState(player);
+            if (!history.equals(TradeHistory.DEFAULT)) {
+                NBTTagCompound state = new NBTTagCompound();
+                NBTConverter.UuidValueType.TRADEGROUP.writeId(entry.getKey(), state);
+                state.setLong("lastTrade", history.lastTrade);
+                state.setInteger("tradeCount", history.tradeCount);
+                tradeStateList.appendTag(state);
+            }
+        }
+        nbt.setTag("tradeState", tradeStateList);
+        return nbt;
+    }
 }

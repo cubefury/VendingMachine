@@ -1,5 +1,6 @@
 package com.cubefury.vendingmachine.handlers;
 
+import com.cubefury.vendingmachine.events.MarkDirtyDbEvent;
 import com.cubefury.vendingmachine.events.MarkDirtyTradeEvent;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;

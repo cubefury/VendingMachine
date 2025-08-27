@@ -1,11 +1,7 @@
 package com.cubefury.vendingmachine.api;
 
-public class TradeWrapper {
-    public final Trade trade;
-    public final int cooldown;
+import com.cubefury.vendingmachine.trade.Trade;
+import com.github.bsideup.jabel.Desugar;
 
-    public TradeWrapper(Trade trade, int cooldown) {
-        this.trade = trade;
-        this.cooldown = cooldown;
-    }
-}
+@Desugar
+public record TradeWrapper(Trade trade, long cooldown, boolean enabled) {}

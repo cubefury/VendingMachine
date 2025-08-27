@@ -15,6 +15,8 @@ import java.util.concurrent.Future;
 
 import net.minecraft.util.ChatAllowedCharacters;
 
+import org.apache.commons.io.FilenameUtils;
+
 import com.cubefury.vendingmachine.VendingMachine;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -129,4 +131,7 @@ public class FileIO {
         return s;
     }
 
+    public static String getFileName(File file) {
+        return FilenameUtils.getBaseName(file.getName());
+    }
 }
