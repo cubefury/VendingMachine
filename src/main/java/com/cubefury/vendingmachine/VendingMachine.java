@@ -49,6 +49,9 @@ public class VendingMachine {
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);
         proxy.registerHandlers();
+
+        // Register network handlers
+
     }
 
     @Mod.EventHandler
@@ -71,6 +74,7 @@ public class VendingMachine {
 
         LOG.info("NEI Integration enabled: {}", isNeiLoaded);
         LOG.info("Better Questing Integration enabled: {}", isBqLoaded);
+
         proxy.postInit(event);
     }
 
