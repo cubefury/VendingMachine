@@ -4,9 +4,10 @@ import static com.cubefury.vendingmachine.util.FileIO.CopyPaste;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
@@ -61,17 +62,14 @@ public class SaveLoadHandler {
         if (dirTradeState.exists()) {
             CopyPaste(dirTradeState, new File(Config.worldDir + "/backup", "tradeState"));
             File[] fileList = dirTradeState.listFiles();
+
             if (fileList != null) {
-                List<File> fList = new ArrayList<>();
-                for (File f : fileList) {
-                    if (
-                        f.getName()
-                            .endsWith(".json")
-                    ) {
-                        fList.add(f);
-                    }
-                }
-                JsonHelper.populateTradeStateFromFiles(fList);
+                JsonHelper.populateTradeStateFromFiles(
+                    Arrays.stream(fileList)
+                        .filter(
+                            f -> f.getName()
+                                .endsWith(".json"))
+                        .collect(Collectors.toList()));
             } else {
                 JsonHelper.populateTradeStateFromFiles(new ArrayList<>());
             }
@@ -79,6 +77,13 @@ public class SaveLoadHandler {
     }
 
     public void writeTradeState(Collection<UUID> players) {
-
+        TradeDatabase db = TradeDatabase.INSTANCE;
+        for (UUID player : players) {
+            File playerFile = new File(dirTradeState, player.toString() + ".json");
+            CopyPaste(playerFile, new File(Config.worldDir + "/backup", player.toString() + ".json"));
+            NBTTagCompound state = db.writeTradeStateToNBT(new NBTTagCompound(), player);
+            FileIO.WriteToFile(playerFile, out -> NBTConverter.NBTtoJSON_Compound(state, out, true));
+        }
     }
+
 }

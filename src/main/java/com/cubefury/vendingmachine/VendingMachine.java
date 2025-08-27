@@ -1,5 +1,7 @@
 package com.cubefury.vendingmachine;
 
+import com.cubefury.vendingmachine.handlers.SaveLoadHandler;
+import cpw.mods.fml.common.event.FMLServerStoppedEvent;
 import net.minecraft.block.Block;
 
 import org.apache.logging.log4j.LogManager;
@@ -73,6 +75,10 @@ public class VendingMachine {
     // register server commands in this event handler (Remove if not needed)
     public void serverStarting(FMLServerStartingEvent event) {
         proxy.serverStarting(event);
+    }
+
+    @Mod.EventHandler
+    public void serverStop(FMLServerStoppedEvent event) {
     }
 
     @Mod.EventHandler
