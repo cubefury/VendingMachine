@@ -18,4 +18,4 @@ This can be used as a standalone mod with several dependencies. The vending mach
 
 ## Credits
 
-We would like to thank the contributors of BetterQuesting for their implementation of item and file serialization/deserialization, which are used in this project. We do not reference the classes directly to avoid having BetterQuesting as a required dependency. The BetterQuesting license may be found in the root directory of this project as LICENSE.betterquesting.
+We would like to thank the contributors of BetterQuesting for their implementation of networking and file serialization/deserialization, which are used in this project. We do not reference the classes directly to avoid having BetterQuesting as a required dependency. The BetterQuesting license may be found in the root directory of this project as LICENSE.betterquesting.

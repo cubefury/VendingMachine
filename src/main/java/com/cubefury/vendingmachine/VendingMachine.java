@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.cubefury.vendingmachine.blocks.BlockVendingMachine;
 import com.cubefury.vendingmachine.blocks.TileVendingMachine;
+import com.cubefury.vendingmachine.network.PacketTypeRegistry;
 import com.cubefury.vendingmachine.util.ItemPlaceholder;
 
 import cpw.mods.fml.common.Loader;
@@ -49,6 +50,7 @@ public class VendingMachine {
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);
         proxy.registerHandlers();
+        PacketTypeRegistry.INSTANCE.init();
 
         // Register network handlers
     }

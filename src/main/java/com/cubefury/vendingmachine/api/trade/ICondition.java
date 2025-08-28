@@ -1,4 +1,4 @@
-package com.cubefury.vendingmachine.trade;
+package com.cubefury.vendingmachine.api.trade;
 
 import net.minecraft.nbt.NBTTagCompound;
 

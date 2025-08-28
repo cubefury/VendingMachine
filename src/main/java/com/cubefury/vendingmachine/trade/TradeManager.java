@@ -1,4 +1,4 @@
-package com.cubefury.vendingmachine.api;
+package com.cubefury.vendingmachine.trade;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,10 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
-import com.cubefury.vendingmachine.trade.Trade;
-import com.cubefury.vendingmachine.trade.TradeDatabase;
-import com.cubefury.vendingmachine.trade.TradeGroup;
 
 public class TradeManager {
 

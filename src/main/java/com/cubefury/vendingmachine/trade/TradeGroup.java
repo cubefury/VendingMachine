@@ -13,7 +13,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
 
 import com.cubefury.vendingmachine.VendingMachine;
-import com.cubefury.vendingmachine.api.TradeManager;
+import com.cubefury.vendingmachine.api.trade.ICondition;
 import com.cubefury.vendingmachine.integration.betterquesting.BqAdapter;
 import com.cubefury.vendingmachine.integration.betterquesting.BqCondition;
 import com.cubefury.vendingmachine.util.NBTConverter;

@@ -1,6 +1,5 @@
-package com.cubefury.vendingmachine.api;
+package com.cubefury.vendingmachine.trade;
 
-import com.cubefury.vendingmachine.trade.Trade;
 import com.github.bsideup.jabel.Desugar;
 
 @Desugar
