@@ -15,7 +15,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 public class ItemPlaceholder extends Item {
 
     public static Item placeholder = new ItemPlaceholder();
-    public static String unlocalizedName = "vendingmachine:placeholder";
+    public static String unlocalizedName = "vendingmachine.placeholder";
 
     // Used solely for retaining info on missing items
     public ItemPlaceholder() {
