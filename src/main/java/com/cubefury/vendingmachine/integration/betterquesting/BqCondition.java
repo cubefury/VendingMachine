@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import net.minecraft.nbt.NBTTagCompound;
 
-import com.cubefury.vendingmachine.trade.ICondition;
+import com.cubefury.vendingmachine.api.trade.ICondition;
 
 import betterquesting.api.utils.NBTConverter;
 

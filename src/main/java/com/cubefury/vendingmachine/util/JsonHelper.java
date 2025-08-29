@@ -12,6 +12,7 @@ import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.util.Constants;
 
+import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
 import com.google.gson.JsonObject;
 
@@ -59,14 +60,22 @@ public class JsonHelper {
 
     public static void populateTradeStateFromFiles(List<File> files) {
         TradeDatabase db = TradeDatabase.INSTANCE;
-        db.clearTradeState();
+        db.clearTradeState(null);
         files.forEach(JsonHelper::populateTradeStateFromFile);
     }
 
     public static void populateTradeStateFromFile(File file) {
         JsonObject json = FileIO.ReadFromFile(file);
         NBTTagCompound nbt = NBTConverter.JSONtoNBT_Object(json, new NBTTagCompound(), true);
-        TradeDatabase.INSTANCE.populateTradeStateFromNBT(nbt, UUID.fromString(FileIO.getFileName(file)));
+        TradeDatabase.INSTANCE.populateTradeStateFromNBT(nbt, UUID.fromString(FileIO.getFileName(file)), false);
+    }
+
+    public static void populateNameCacheFromFile(File file) {
+        NameCache.INSTANCE.clear();
+        JsonObject json = FileIO.ReadFromFile(file);
+
+        NBTTagCompound nbt = NBTConverter.JSONtoNBT_Object(json, new NBTTagCompound(), true);
+        NameCache.INSTANCE.readFromNBT(nbt.getTagList("nameCache", Constants.NBT.TAG_COMPOUND), false);
     }
 
     @FunctionalInterface

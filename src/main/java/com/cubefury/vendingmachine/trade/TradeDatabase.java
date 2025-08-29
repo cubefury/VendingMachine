@@ -23,8 +23,8 @@ public class TradeDatabase {
         tradeGroups.clear();
     }
 
-    public void clearTradeState() {
-        tradeGroups.forEach((k, v) -> v.clearTradeState());
+    public void clearTradeState(UUID player) {
+        tradeGroups.forEach((k, v) -> v.clearTradeState(player));
     }
 
     public TradeGroup getTradeGroupFromId(UUID tgId) {
@@ -61,7 +61,6 @@ public class TradeDatabase {
             VendingMachine.LOG.info("Updating {} new trades with UUIDs", newIdCount);
             DirtyDbMarker.markDirty();
         }
-
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
@@ -74,8 +73,11 @@ public class TradeDatabase {
         return nbt;
     }
 
-    public void populateTradeStateFromNBT(NBTTagCompound nbt, UUID player) {
+    public void populateTradeStateFromNBT(NBTTagCompound nbt, UUID player, boolean merge) {
         NBTTagList tradeStateList = nbt.getTagList("tradeState", Constants.NBT.TAG_COMPOUND);
+        if (!merge) {
+            clearTradeState(player);
+        }
         for (int i = 0; i < tradeStateList.tagCount(); i++) {
             NBTTagCompound state = tradeStateList.getCompoundTagAt(i);
             UUID tgId = NBTConverter.UuidValueType.TRADEGROUP.readId(state);

@@ -1,4 +1,4 @@
-package com.cubefury.vendingmachine.api;
+package com.cubefury.vendingmachine.trade;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,16 +8,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import com.cubefury.vendingmachine.trade.Trade;
-import com.cubefury.vendingmachine.trade.TradeDatabase;
-import com.cubefury.vendingmachine.trade.TradeGroup;
+import com.cubefury.vendingmachine.util.BigItemStack;
 
+// This is a cache of available trades, maintained server-side
+// so we don't have to recompute what trades are available every time we send it
 public class TradeManager {
 
     public static TradeManager INSTANCE = new TradeManager();
 
-    private final TradeDatabase tradeDB = TradeDatabase.INSTANCE;
     private final Map<UUID, Set<UUID>> availableTrades = new HashMap<>();
+
+    private final Map<UUID, List<BigItemStack>> pendingOutputs = new HashMap<>();
 
     private TradeManager() {}
 
@@ -42,13 +43,21 @@ public class TradeManager {
         }
     }
 
-    public List<TradeWrapper> getTrades(UUID player) {
+    public void addPending(UUID player, List<BigItemStack> pending) {
+        if (!pendingOutputs.containsKey(player) || pendingOutputs.get(player) == null) {
+            pendingOutputs.put(player, new ArrayList<>());
+        }
+        pendingOutputs.get(player)
+            .addAll(pending);
+    }
+
+    public List<TradeGroupWrapper> getTrades(UUID player) {
         long currentTimestamp = System.currentTimeMillis();
         synchronized (availableTrades) {
             if (!availableTrades.containsKey(player) || availableTrades.get(player) == null) {
                 return new ArrayList<>();
             }
-            ArrayList<TradeWrapper> tradeList = new ArrayList<>();
+            ArrayList<TradeGroupWrapper> tradeList = new ArrayList<>();
             for (UUID tgId : availableTrades.get(player)) {
                 TradeGroup tg = TradeDatabase.INSTANCE.getTradeGroupFromId(tgId);
                 long lastTradeTime = tg.getTradeState(player).lastTrade;
@@ -58,16 +67,13 @@ public class TradeManager {
                 if (
                     tg.cooldown != -1 && lastTradeTime != -1 && (currentTimestamp - lastTradeTime) / 1000 < tg.cooldown
                 ) {
-                    // surely this type conversion is ok
                     cooldownRemaining = (currentTimestamp - lastTradeTime) / 1000;
                 } else {
                     cooldownRemaining = -1;
                 }
 
                 boolean enabled = tg.maxTrades == -1 || tradeCount < tg.maxTrades;
-                for (Trade trade : tg.getTrades()) {
-                    tradeList.add(new TradeWrapper(trade, cooldownRemaining, enabled));
-                }
+                tradeList.add(new TradeGroupWrapper(tg, cooldownRemaining, enabled));
             }
             return tradeList;
         }

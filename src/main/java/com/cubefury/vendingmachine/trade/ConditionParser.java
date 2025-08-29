@@ -3,6 +3,7 @@ package com.cubefury.vendingmachine.trade;
 import net.minecraft.nbt.NBTTagCompound;
 
 import com.cubefury.vendingmachine.VendingMachine;
+import com.cubefury.vendingmachine.api.trade.ICondition;
 import com.cubefury.vendingmachine.integration.betterquesting.BqCondition;
 
 import cpw.mods.fml.common.Optional;

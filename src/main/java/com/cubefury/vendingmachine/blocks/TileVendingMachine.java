@@ -1,6 +1,6 @@
 package com.cubefury.vendingmachine.blocks;
 
-import java.util.UUID;
+import java.util.List;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
@@ -8,10 +8,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
 import com.cubefury.vendingmachine.VendingMachine;
+import com.cubefury.vendingmachine.trade.TradeGroupWrapper;
 
 public class TileVendingMachine extends TileEntity implements IInventory {
 
-    public UUID owner = null;
+    public List<TradeGroupWrapper> visibleTrades;
 
     public TileVendingMachine() {
         super();
