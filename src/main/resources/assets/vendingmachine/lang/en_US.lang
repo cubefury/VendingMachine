@@ -1,3 +1,8 @@
 tile.vendingmachine.vending_machine.name=Vending Machine
 
 item.vendingmachine.placeholder.name=Placeholder Item
+
+vendingmachine.gui.requirement.unknown=Unknown Trade Requirement
+vendingmachine.gui.requirement.betterquesting=Quest: 
+vendingmachine.gui.neiQuestNameColor.complete=000000
+vendingmachine.gui.neiQuestNameColor.incomplete=A87A5E

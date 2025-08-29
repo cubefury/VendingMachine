@@ -30,13 +30,14 @@ import cpw.mods.fml.relauncher.Side;
 @Mod(
     modid = VendingMachine.MODID,
     version = Tags.VERSION,
-    name = "VendingMachine",
+    name = VendingMachine.NAME,
     acceptedMinecraftVersions = "[1.7.10]")
 public class VendingMachine {
 
     public static final String MODID = "vendingmachine";
     public static final Logger LOG = LogManager.getLogger(MODID);
     public static final String CHANNEL = "VM_NET_CHAN";
+    public static final String NAME = "Vending Machine";
 
     @Mod.Instance(MODID)
     public static VendingMachine instance;

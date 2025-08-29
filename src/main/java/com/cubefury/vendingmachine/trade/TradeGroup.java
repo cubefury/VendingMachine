@@ -90,6 +90,10 @@ public class TradeGroup {
         return trades;
     }
 
+    public List<ICondition> getRequirements() {
+        return new ArrayList<>(requirementSet);
+    }
+
     public void clearTradeState(UUID player) {
         synchronized (tradeState) {
             if (player == null) {

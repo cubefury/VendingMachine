@@ -46,4 +46,5 @@ public class BqCondition implements ICondition {
         nbt.setTag("quest", NBTConverter.UuidValueType.QUEST.writeId(this.questId));
         return nbt;
     }
+
 }

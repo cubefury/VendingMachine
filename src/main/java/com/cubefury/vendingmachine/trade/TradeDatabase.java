@@ -9,6 +9,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
 
 import com.cubefury.vendingmachine.VendingMachine;
+import com.cubefury.vendingmachine.integration.nei.NeiRecipeCache;
 import com.cubefury.vendingmachine.util.NBTConverter;
 
 public class TradeDatabase {
@@ -33,6 +34,10 @@ public class TradeDatabase {
 
     public int getTradeGroupCount() {
         return tradeGroups.size();
+    }
+
+    public Map<UUID, TradeGroup> getTradeGroups() {
+        return tradeGroups;
     }
 
     public int getTradeCount() {
@@ -60,6 +65,9 @@ public class TradeDatabase {
         if (newIdCount > 0) {
             VendingMachine.LOG.info("Updating {} new trades with UUIDs", newIdCount);
             DirtyDbMarker.markDirty();
+        }
+        if (VendingMachine.isNeiLoaded) {
+            NeiRecipeCache.refreshCache();
         }
 
         VendingMachine.LOG.info("Loaded {} trade groups containing {} trades.", getTradeGroupCount(), getTradeCount());
