@@ -61,6 +61,8 @@ public class TradeDatabase {
             VendingMachine.LOG.info("Updating {} new trades with UUIDs", newIdCount);
             DirtyDbMarker.markDirty();
         }
+
+        VendingMachine.LOG.info("Loaded {} trade groups containing {} trades.", getTradeGroupCount(), getTradeCount());
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
