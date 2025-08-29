@@ -12,6 +12,11 @@ import net.minecraft.util.ResourceLocation;
 
 import com.cubefury.vendingmachine.api.network.IPacketRegistry;
 import com.cubefury.vendingmachine.api.util.Tuple2;
+import com.cubefury.vendingmachine.network.handlers.NetBulkSync;
+import com.cubefury.vendingmachine.network.handlers.NetNameSync;
+import com.cubefury.vendingmachine.network.handlers.NetTradeDbSync;
+import com.cubefury.vendingmachine.network.handlers.NetTradeOutputSync;
+import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
 
 public class PacketTypeRegistry implements IPacketRegistry {
 
@@ -21,11 +26,12 @@ public class PacketTypeRegistry implements IPacketRegistry {
     private final HashMap<ResourceLocation, Consumer<NBTTagCompound>> clientHandlers = new HashMap<>();
 
     public void init() {
-        // NetTradeDbSync.registerHandler();
-        // NetTradeSync.registerHandler();
-        // NetTradeAction.registerHandler();
+        NetTradeDbSync.registerHandler();
+        NetTradeStateSync.registerHandler();
+        NetTradeOutputSync.registerHandler();
+        NetNameSync.registerHandler();
 
-        // NetBulkSync.registerHandler();
+        NetBulkSync.registerHandler();
     }
 
     @Override

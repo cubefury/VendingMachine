@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import com.cubefury.vendingmachine.blocks.BlockVendingMachine;
 import com.cubefury.vendingmachine.blocks.TileVendingMachine;
 import com.cubefury.vendingmachine.network.PacketTypeRegistry;
+import com.cubefury.vendingmachine.network.SerializedPacket;
 import com.cubefury.vendingmachine.util.ItemPlaceholder;
 
 import cpw.mods.fml.common.Loader;
@@ -20,8 +21,11 @@ import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import cpw.mods.fml.common.event.FMLServerStoppedEvent;
+import cpw.mods.fml.common.network.NetworkRegistry;
+import cpw.mods.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.GameRegistry.Type;
+import cpw.mods.fml.relauncher.Side;
 
 @Mod(
     modid = VendingMachine.MODID,
@@ -32,6 +36,7 @@ public class VendingMachine {
 
     public static final String MODID = "vendingmachine";
     public static final Logger LOG = LogManager.getLogger(MODID);
+    public static final String CHANNEL = "VM_NET_CHAN";
 
     @Mod.Instance(MODID)
     public static VendingMachine instance;
@@ -45,14 +50,21 @@ public class VendingMachine {
         clientSide = "com.cubefury.vendingmachine.ClientProxy",
         serverSide = "com.cubefury.vendingmachine.CommonProxy")
     public static CommonProxy proxy;
+    public SimpleNetworkWrapper network;
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         proxy.preInit(event);
+
+        network = NetworkRegistry.INSTANCE.newSimpleChannel(CHANNEL);
+
         proxy.registerHandlers();
         PacketTypeRegistry.INSTANCE.init();
 
         // Register network handlers
+        network.registerMessage(SerializedPacket.HandleClient.class, SerializedPacket.class, 0, Side.CLIENT);
+        network.registerMessage(SerializedPacket.HandleServer.class, SerializedPacket.class, 0, Side.SERVER);
+
     }
 
     @Mod.EventHandler

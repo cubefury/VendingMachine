@@ -3,13 +3,10 @@ package com.cubefury.vendingmachine.trade;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.Constants;
 
-import com.cubefury.vendingmachine.events.MarkDirtyTradeEvent;
 import com.cubefury.vendingmachine.integration.betterquesting.gui.PanelQBTrade;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.ItemPlaceholder;
@@ -56,10 +53,6 @@ public class Trade {
         for (int i = 0; i < toList.tagCount(); i++) {
             toItems.add(JsonHelper.JsonToItemStack(toList.getCompoundTagAt(i)));
         }
-    }
-
-    public void executeTrade(EntityPlayer player) {
-        MinecraftForge.EVENT_BUS.post(new MarkDirtyTradeEvent(player.getUniqueID()));
     }
 
     @Optional.Method(modid = "NotEnoughItems")

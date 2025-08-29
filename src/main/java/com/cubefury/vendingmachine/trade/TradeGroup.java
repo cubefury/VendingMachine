@@ -90,19 +90,13 @@ public class TradeGroup {
         return trades;
     }
 
-    public void clearTradeState() {
+    public void clearTradeState(UUID player) {
         synchronized (tradeState) {
-            tradeState.clear();
-        }
-    }
-
-    public void resetTradeState(UUID player) {
-        if (player != null) {
-            synchronized (tradeState) {
+            if (player == null) {
+                tradeState.clear();
+            } else {
                 tradeState.remove(player);
             }
-        } else {
-            clearTradeState();
         }
     }
 
@@ -119,6 +113,23 @@ public class TradeGroup {
         synchronized (tradeState) {
             tradeState.put(player, history);
         }
+    }
+
+    public boolean attemptExecuteTrade(UUID player) {
+
+        List<TradeGroupWrapper> availableTrades = TradeManager.INSTANCE.getTrades(player);
+        for (TradeGroupWrapper trade : availableTrades) {
+            if (trade == null) { // shouldn't happen
+                continue;
+            }
+            if (trade.trade().id == this.id && trade.enabled() && cooldown < 0) {
+                TradeHistory newTradeHistory = getTradeState(player);
+                newTradeHistory.executeTrade();
+                setTradeState(player, newTradeHistory);
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean readFromNBT(NBTTagCompound nbt) {
