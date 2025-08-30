@@ -72,6 +72,6 @@ public class NetTradeDbSync {
         if (!message.getBoolean("merge")) {
             db.clear();
         }
-        db.readFromNBT(message);
+        db.readFromNBT(message.getCompoundTag("data"));
     }
 }

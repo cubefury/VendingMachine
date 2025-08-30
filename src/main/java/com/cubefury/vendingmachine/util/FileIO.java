@@ -64,6 +64,11 @@ public class FileIO {
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static Future<Void> WriteToFile(File file, JsonHelper.IOConsumer<JsonWriter> jObj) {
+        if (file == null) {
+            VendingMachine.LOG.error("Could not write to JSON to null file.");
+            return null;
+        }
+
         final File tmp = new File(file.getAbsolutePath() + ".tmp");
 
         return ThreadedIO.DISK_IO.enqueue(() -> {
