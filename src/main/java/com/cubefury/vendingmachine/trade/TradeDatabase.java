@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
@@ -13,6 +11,10 @@ import net.minecraftforge.common.util.Constants;
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.integration.nei.NeiRecipeCache;
 import com.cubefury.vendingmachine.util.NBTConverter;
+
+import cpw.mods.fml.common.Optional;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
 public class TradeDatabase {
 
@@ -122,5 +124,12 @@ public class TradeDatabase {
     @SideOnly(Side.CLIENT)
     public void refreshNeiCache() {
         NeiRecipeCache.refreshCache();
+    }
+
+    @Optional.Method(modid = "betterquesting")
+    public void removeAllSatisfiedBqConditions(UUID player) {
+        for (TradeGroup tg : tradeGroups.values()) {
+            tg.removeAllSatisfiedBqConditions(player);
+        }
     }
 }

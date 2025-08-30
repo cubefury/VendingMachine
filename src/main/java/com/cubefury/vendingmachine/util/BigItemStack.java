@@ -188,7 +188,7 @@ public class BigItemStack {
         return nbt;
     }
 
-    @Optional.Method(modid = "BetterQuesting")
+    @Optional.Method(modid = "betterquesting")
     public betterquesting.api.utils.BigItemStack toBQBigItemStack() {
         betterquesting.api.utils.BigItemStack newBis = new betterquesting.api.utils.BigItemStack(
             Objects.requireNonNull(this.baseStack.getItem()),

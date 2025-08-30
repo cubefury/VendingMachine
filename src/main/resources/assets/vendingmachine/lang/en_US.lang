@@ -2,7 +2,9 @@ tile.vendingmachine.vending_machine.name=Vending Machine
 
 item.vendingmachine.placeholder.name=Placeholder Item
 
+vendingmachine.gui.requirementHeader=Requirements:
 vendingmachine.gui.requirement.unknown=Unknown Trade Requirement
-vendingmachine.gui.requirement.betterquesting=Quest: 
-vendingmachine.gui.neiQuestNameColor.complete=000000
-vendingmachine.gui.neiQuestNameColor.incomplete=A87A5E
+vendingmachine.gui.requirement.betterquesting=Quest
+vendingmachine.gui.neiColor.conditionDefault=000000
+vendingmachine.gui.neiColor.conditionSatisfied=55D441
+vendingmachine.gui.neiColor.conditionUnsatisfied=A87A5E

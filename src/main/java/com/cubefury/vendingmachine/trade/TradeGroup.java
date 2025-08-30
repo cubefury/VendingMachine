@@ -18,6 +18,8 @@ import com.cubefury.vendingmachine.integration.betterquesting.BqAdapter;
 import com.cubefury.vendingmachine.integration.betterquesting.BqCondition;
 import com.cubefury.vendingmachine.util.NBTConverter;
 
+import cpw.mods.fml.common.Optional;
+
 public class TradeGroup {
 
     private UUID id = new UUID(0, 0); // placeholder UUID
@@ -187,4 +189,21 @@ public class TradeGroup {
         return nbt;
     }
 
+    @Optional.Method(modid = "betterquesting")
+    public void removeAllSatisfiedBqConditions(UUID player) {
+        synchronized (tradeState) {
+            if (player == null) {
+                for (Map.Entry<UUID, Set<ICondition>> entry : playerDone.entrySet()) {
+                    if (entry.getValue() == null) { // just in case
+                        continue;
+                    }
+                    entry.getValue()
+                        .removeIf((condition) -> condition instanceof BqCondition);
+                }
+            } else if (playerDone.get(player) != null) {
+                playerDone.get(player)
+                    .removeIf((condition) -> condition instanceof BqCondition);
+            }
+        }
+    }
 }

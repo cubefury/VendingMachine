@@ -7,16 +7,23 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 
 import org.lwjgl.opengl.GL11;
 
 import com.cubefury.vendingmachine.VendingMachine;
+import com.cubefury.vendingmachine.api.trade.ICondition;
+import com.cubefury.vendingmachine.integration.betterquesting.BqAdapter;
+import com.cubefury.vendingmachine.integration.betterquesting.BqCondition;
+import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.Translator;
 
+import betterquesting.api2.utils.QuestTranslation;
 import codechicken.lib.gui.GuiDraw;
 import codechicken.nei.NEIServerUtils;
 import codechicken.nei.PositionedStack;
@@ -28,12 +35,22 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
     private static final int GUI_WIDTH = 166;
     private static final int GRID_COUNT = 4;
     private static final int LINE_SPACE = GuiDraw.fontRenderer.FONT_HEIGHT + 1;
-    private int textColorComplete;
-    private int textColorIncomplete;
+    private UUID currentPlayerId;
+    private int textColorConditionDefault;
+    private int textColorConditionSatisfied;
+    private int textColorConditionUnsatisfied;
+
+    private UUID getCurrentPlayerUUID() {
+        if (currentPlayerId == null) {
+            currentPlayerId = NameCache.INSTANCE.getUUIDFromPlayer(Minecraft.getMinecraft().thePlayer);
+        }
+        return currentPlayerId;
+    }
 
     private void setTextColors() {
-        textColorComplete = Translator.getColor("vendingmachine.gui.neiQuestNameColor.complete");
-        textColorIncomplete = Translator.getColor("vendingmachine.gui.neiQuestNameColor.incomplete");
+        textColorConditionDefault = Translator.getColor("vendingmachine.gui.neiColor.conditionDefault");
+        textColorConditionSatisfied = Translator.getColor("vendingmachine.gui.neiColor.conditionSatisfied");
+        textColorConditionUnsatisfied = Translator.getColor("vendingmachine.gui.neiColor.conditionUnsatisfied");
     }
 
     @Override
@@ -115,22 +132,53 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
     public void drawBackground(int recipe) {
         GL11.glColor4f(1, 1, 1, 1);
         changeTexture(getGuiTexture());
-        drawTexturedModalRect(0, 0, 0, 0, GUI_WIDTH, 105);
+        drawTexturedModalRect(0, 0, 0, 0, GUI_WIDTH, 108);
     }
 
     @Override
     public void drawExtras(int recipeIndex) {
-        // TODO: Draw underlines under questnames here
-        // CachedTradeRecipe recipe = (CachedTradeRecipe) this.arecipes.get(recipeIndex);
+        CachedTradeRecipe recipe = (CachedTradeRecipe) this.arecipes.get(recipeIndex);
+
+        GuiDraw.drawString(Translator.translate("vendingmachine.gui.requirementHeader"), 2, 27, textColorConditionDefault, false);
+        for (ICondition condition : recipe.requirements) {
+            StringBuilder requirementString = new StringBuilder();
+            int color = textColorConditionDefault;
+            if (VendingMachine.isBqLoaded && condition instanceof BqCondition) {
+                requirementString.append(Translator.translate("vendingmachine.gui.requirement.betterquesting"))
+                    .append(": ");
+                UUID questId = ((BqCondition) condition).getQuestId();
+                // Not sure how long these take to look up
+                String questKey = QuestTranslation.buildQuestNameKey(questId);
+                String translatedQuestKey = QuestTranslation.translate(questKey);
+                if (questKey.equals(translatedQuestKey)) {
+                    requirementString.append("Missing Quest");
+                } else {
+                    requirementString.append(translatedQuestKey);
+                }
+                color = BqAdapter.INSTANCE.checkPlayerCompletedQuest(currentPlayerId, questId)
+                    ? textColorConditionSatisfied
+                    : textColorConditionUnsatisfied;
+            } else {
+                requirementString.append(Translator.translate("vendingmachine.gui.requirement.unknown"));
+            }
+
+            List<String> requirementsArray = GuiDraw.fontRenderer
+                .listFormattedStringToWidth(requirementString.toString(), GUI_WIDTH);
+            int y = 27 + LINE_SPACE;
+            for (String line : requirementsArray) {
+                GuiDraw.drawString(line, 2, y, color, false);
+                y += LINE_SPACE;
+            }
+        }
     }
 
     public class CachedTradeRecipe extends CachedRecipe {
 
         private final List<PositionedStack> inputs = new ArrayList<>();
         private final List<PositionedStack> outputs = new ArrayList<>();
-        private final List<String> requirements = new ArrayList<>();
+        private final List<ICondition> requirements = new ArrayList<>();
 
-        private CachedTradeRecipe(Trade trade, List<String> requirements) {
+        private CachedTradeRecipe(Trade trade, List<ICondition> requirements) {
             loadInputs(trade);
             loadOutputs(trade);
 
@@ -138,7 +186,7 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
         }
 
         private void loadInputs(Trade trade) {
-            int xOffset = 3, y = 29;
+            int xOffset = 3, y = 7;
             int index = 0;
             for (BigItemStack stack : trade.fromItems) {
                 if (index >= GRID_COUNT) {
@@ -151,7 +199,7 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
         }
 
         private void loadOutputs(Trade trade) {
-            int xOffset = 93, y = 29;
+            int xOffset = 93, y = 7;
             int index = 0;
             for (BigItemStack stack : trade.toItems) {
                 if (index >= GRID_COUNT) {

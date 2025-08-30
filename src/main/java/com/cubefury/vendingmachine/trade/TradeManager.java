@@ -36,7 +36,7 @@ public class TradeManager {
 
     public void removeTradeGroup(UUID player, UUID tg) {
         synchronized (availableTrades) {
-            if (availableTrades.containsKey(player) && availableTrades.get(player) != null) {
+            if (availableTrades.get(player) != null) {
                 availableTrades.get(player)
                     .remove(tg);
             }
