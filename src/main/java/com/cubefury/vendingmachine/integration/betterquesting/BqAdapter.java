@@ -49,7 +49,7 @@ public class BqAdapter {
     public void setQuestUnfinished(UUID player, UUID quest) {
         for (TradeGroup tradeGroup : questUpdateTriggers.get(quest)) {
             tradeGroup.removeSatisfiedCondition(player, new BqCondition(quest));
-            if (playerSatisfiedCache.get(player) instanceof Set) {
+            if (playerSatisfiedCache.get(player) != null) {
                 playerSatisfiedCache.get(player)
                     .remove(quest);
             }
@@ -58,6 +58,11 @@ public class BqAdapter {
 
     public void resetQuests(UUID player) {
         TradeDatabase.INSTANCE.removeAllSatisfiedBqConditions(player);
+        if (player == null) {
+            playerSatisfiedCache.clear();
+        } else {
+            playerSatisfiedCache.remove(player);
+        }
     }
 
     public boolean checkPlayerCompletedQuest(UUID player, UUID quest) {
