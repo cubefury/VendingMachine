@@ -161,9 +161,7 @@ public class TradeGroup {
         NBTTagList reqList = nbt.getTagList("requirements", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < reqList.tagCount(); i++) {
             ICondition condition = ConditionParser.getConditionFromNBT(reqList.getCompoundTagAt(i));
-            if (condition != null) {
-                requirementSet.add(condition);
-            }
+            requirementSet.add(condition);
             if (VendingMachine.isBqLoaded && condition instanceof BqCondition) {
                 BqCondition bqc = (BqCondition) condition;
                 BqAdapter.INSTANCE.addQuestTrigger(bqc.getQuestId(), this);

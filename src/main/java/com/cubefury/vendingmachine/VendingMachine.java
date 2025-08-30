@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cubefury.vendingmachine.blocks.BlockVendingMachine;
+import com.cubefury.vendingmachine.blocks.ItemBlockVendingMachine;
 import com.cubefury.vendingmachine.blocks.TileVendingMachine;
 import com.cubefury.vendingmachine.network.PacketTypeRegistry;
 import com.cubefury.vendingmachine.network.SerializedPacket;
@@ -73,7 +74,7 @@ public class VendingMachine {
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
 
-        GameRegistry.registerBlock(vendingMachine, "vending_machine");
+        GameRegistry.registerBlock(vendingMachine, ItemBlockVendingMachine.class, "vending_machine");
         GameRegistry.registerTileEntity(TileVendingMachine.class, "vending_machine");
 
         GameRegistry.registerItem(ItemPlaceholder.placeholder, "placeholder");

@@ -145,6 +145,7 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
             27,
             textColorConditionDefault,
             false);
+        int y = 27 + LINE_SPACE;
         for (ICondition condition : recipe.requirements) {
             StringBuilder requirementString = new StringBuilder();
             int color = textColorConditionDefault;
@@ -169,7 +170,6 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
 
             List<String> requirementsArray = GuiDraw.fontRenderer
                 .listFormattedStringToWidth(requirementString.toString(), GUI_WIDTH);
-            int y = 27 + LINE_SPACE;
             for (String line : requirementsArray) {
                 GuiDraw.drawString(line, 2, y, color, false);
                 y += LINE_SPACE;

@@ -2,6 +2,8 @@ tile.vendingmachine.vending_machine.name=Vending Machine
 
 item.vendingmachine.placeholder.name=Placeholder Item
 
+tooltip.vendingmachine=Who's even restocking this...
+
 vendingmachine.gui.requirementHeader=Requirements:
 vendingmachine.gui.requirement.unknown=Unknown Trade Requirement
 vendingmachine.gui.requirement.betterquesting=Quest
