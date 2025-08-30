@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
@@ -66,8 +68,8 @@ public class TradeDatabase {
             VendingMachine.LOG.info("Updating {} new trades with UUIDs", newIdCount);
             DirtyDbMarker.markDirty();
         }
-        if (VendingMachine.isNeiLoaded) {
-            NeiRecipeCache.refreshCache();
+        if (VendingMachine.proxy.isClient() && VendingMachine.isNeiLoaded) {
+            refreshNeiCache();
         }
 
         VendingMachine.LOG.info("Loaded {} trade groups containing {} trades.", getTradeGroupCount(), getTradeCount());
@@ -115,5 +117,10 @@ public class TradeDatabase {
         }
         nbt.setTag("tradeState", tradeStateList);
         return nbt;
+    }
+
+    @SideOnly(Side.CLIENT)
+    public void refreshNeiCache() {
+        NeiRecipeCache.refreshCache();
     }
 }
