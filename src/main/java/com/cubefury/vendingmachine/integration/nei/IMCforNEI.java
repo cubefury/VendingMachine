@@ -9,7 +9,9 @@ import cpw.mods.fml.common.event.FMLInterModComms;
 public class IMCforNEI {
 
     public static void IMCSender() {
+
         sendCatalyst("vendingmachine", "vendingmachine:vending_machine");
+        sendHandler("vendingmachine", "vendingmachine:vending_machine");
     }
 
     private static void sendHandler(String name, String itemStack) {

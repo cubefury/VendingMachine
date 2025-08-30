@@ -2,10 +2,15 @@ package com.cubefury.vendingmachine.integration.nei;
 
 import static codechicken.lib.gui.GuiDraw.changeTexture;
 import static codechicken.lib.gui.GuiDraw.drawTexturedModalRect;
+import static net.minecraft.util.EnumChatFormatting.UNDERLINE;
+import static net.minecraft.util.EnumChatFormatting.getTextWithoutFormattingCodes;
 
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,10 +28,13 @@ import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.Translator;
 
+import betterquesting.api.questing.IQuest;
 import betterquesting.api2.utils.QuestTranslation;
+import betterquesting.questing.QuestDatabase;
 import codechicken.lib.gui.GuiDraw;
 import codechicken.nei.NEIServerUtils;
 import codechicken.nei.PositionedStack;
+import codechicken.nei.recipe.GuiRecipe;
 import codechicken.nei.recipe.TemplateRecipeHandler;
 
 public class NeiRecipeHandler extends TemplateRecipeHandler {
@@ -35,10 +43,13 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
     private static final int GUI_WIDTH = 166;
     private static final int GRID_COUNT = 4;
     private static final int LINE_SPACE = GuiDraw.fontRenderer.FONT_HEIGHT + 1;
+    private static final int CONDITIONS_START_Y = 27 + LINE_SPACE;
     private UUID currentPlayerId;
     private int textColorConditionDefault;
     private int textColorConditionSatisfied;
     private int textColorConditionUnsatisfied;
+
+    private UUID lastQuestId = null;
 
     private UUID getCurrentPlayerUUID() {
         if (currentPlayerId == null) {
@@ -51,6 +62,11 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
         textColorConditionDefault = Translator.getColor("vendingmachine.gui.neiColor.conditionDefault");
         textColorConditionSatisfied = Translator.getColor("vendingmachine.gui.neiColor.conditionSatisfied");
         textColorConditionUnsatisfied = Translator.getColor("vendingmachine.gui.neiColor.conditionUnsatisfied");
+    }
+
+    @Override
+    public String getOverlayIdentifier() {
+        return "vendingmachine";
     }
 
     @Override
@@ -132,7 +148,30 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
     public void drawBackground(int recipe) {
         GL11.glColor4f(1, 1, 1, 1);
         changeTexture(getGuiTexture());
-        drawTexturedModalRect(0, 0, 0, 0, GUI_WIDTH, 108);
+        drawTexturedModalRect(0, 0, 0, 0, GUI_WIDTH, 105);
+    }
+
+    // TODO: Clean up this code to allow for clicking the links to open questbook
+    public boolean isMouseOverBqCondition(int recipeIndex, int curY, String text) {
+        if (!(Minecraft.getMinecraft().currentScreen instanceof GuiRecipe)) return false;
+        GuiRecipe<?> gui = (GuiRecipe<?>) Minecraft.getMinecraft().currentScreen;
+
+        List<String> textArray = GuiDraw.fontRenderer.listFormattedStringToWidth(text, GUI_WIDTH);
+        int width = textArray.stream()
+            .map(GuiDraw::getStringWidth)
+            .max(Comparator.naturalOrder())
+            .orElse(0);
+        int height = GuiDraw.fontRenderer.FONT_HEIGHT + (textArray.size() - 1) * LINE_SPACE;
+
+        Point offset = gui.getRecipePosition(recipeIndex);
+
+        Point pos = GuiDraw.getMousePosition();
+
+        int guiLeft = (gui.width - gui.getWidgetSize().width) / 2;
+        int guiTop = 19 + (gui.height - gui.getWidgetSize().height) / 2;
+        Point relMousePos = new Point(pos.x - guiLeft - offset.x, pos.y - guiTop - offset.y);
+        Rectangle textArea = new Rectangle(2, curY - GuiDraw.fontRenderer.FONT_HEIGHT, width + 2, height + 1);
+        return textArea.contains(relMousePos);
     }
 
     @Override
@@ -145,21 +184,26 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
             27,
             textColorConditionDefault,
             false);
-        int y = 27 + LINE_SPACE;
+        int y = CONDITIONS_START_Y;
         for (ICondition condition : recipe.requirements) {
             StringBuilder requirementString = new StringBuilder();
             int color = textColorConditionDefault;
             if (VendingMachine.isBqLoaded && condition instanceof BqCondition) {
-                requirementString.append(Translator.translate("vendingmachine.gui.requirement.betterquesting"))
-                    .append(": ");
+                StringBuilder unformatted = new StringBuilder(
+                    Translator.translate("vendingmachine.gui.requirement.betterquesting"));
+                unformatted.append(": ");
                 UUID questId = ((BqCondition) condition).getQuestId();
-                // Not sure how long these take to look up
-                String questKey = QuestTranslation.buildQuestNameKey(questId);
-                String translatedQuestKey = QuestTranslation.translate(questKey);
-                if (questKey.equals(translatedQuestKey)) {
-                    requirementString.append("Missing Quest");
+                IQuest quest = QuestDatabase.INSTANCE.get(questId);
+                if (quest == null) {
+                    requirementString
+                        .append(Translator.translate("vendingmachine.gui.requirement.betterquesting.missing"));
                 } else {
-                    requirementString.append(translatedQuestKey);
+                    String translatedQuestKey = getTextWithoutFormattingCodes(
+                        QuestTranslation.translateQuestName(questId, quest));
+                    unformatted.append(translatedQuestKey);
+                    requirementString
+                        .append(isMouseOverBqCondition(recipeIndex, y, unformatted.toString()) ? UNDERLINE : "");
+                    requirementString.append(unformatted);
                 }
                 color = BqAdapter.INSTANCE.checkPlayerCompletedQuest(currentPlayerId, questId)
                     ? textColorConditionSatisfied
