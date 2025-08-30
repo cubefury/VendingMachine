@@ -139,7 +139,12 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
     public void drawExtras(int recipeIndex) {
         CachedTradeRecipe recipe = (CachedTradeRecipe) this.arecipes.get(recipeIndex);
 
-        GuiDraw.drawString(Translator.translate("vendingmachine.gui.requirementHeader"), 2, 27, textColorConditionDefault, false);
+        GuiDraw.drawString(
+            Translator.translate("vendingmachine.gui.requirementHeader"),
+            2,
+            27,
+            textColorConditionDefault,
+            false);
         for (ICondition condition : recipe.requirements) {
             StringBuilder requirementString = new StringBuilder();
             int color = textColorConditionDefault;
