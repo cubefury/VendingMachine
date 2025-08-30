@@ -2,6 +2,7 @@ package com.cubefury.vendingmachine;
 
 import net.minecraft.block.Block;
 
+import net.minecraft.item.Item;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -42,6 +43,7 @@ public class VendingMachine {
     @Mod.Instance(MODID)
     public static VendingMachine instance;
 
+    public static Item placeholder = new ItemPlaceholder();
     public static Block vendingMachine = new BlockVendingMachine();
 
     public static boolean isNeiLoaded = false;
@@ -76,7 +78,7 @@ public class VendingMachine {
         GameRegistry.registerBlock(vendingMachine, "vending_machine");
         GameRegistry.registerTileEntity(TileVendingMachine.class, "vending_machine");
 
-        GameRegistry.registerItem(ItemPlaceholder.placeholder, "placeholder");
+        GameRegistry.registerItem(placeholder, "placeholder");
 
     }
 
