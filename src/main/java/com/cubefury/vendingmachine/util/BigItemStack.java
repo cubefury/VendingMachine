@@ -182,7 +182,7 @@ public class BigItemStack {
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
         baseStack.writeToNBT(nbt);
         String iRes = Item.itemRegistry.getNameForObject(baseStack.getItem());
-        nbt.setString("id", iRes == null ? ItemPlaceholder.unlocalizedName : iRes);
+        nbt.setString("id", iRes == null ? "vendingmachine.placeholder" : iRes);
         nbt.setInteger("Count", this.stackSize);
         nbt.setString("OreDict", this.getOreDict());
         return nbt;

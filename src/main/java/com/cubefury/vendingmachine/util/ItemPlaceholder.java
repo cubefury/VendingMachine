@@ -15,12 +15,11 @@ import cpw.mods.fml.relauncher.SideOnly;
 public class ItemPlaceholder extends Item {
 
     public static Item placeholder = new ItemPlaceholder();
-    public static String unlocalizedName = "vendingmachine.placeholder";
 
     // Used solely for retaining info on missing items
     public ItemPlaceholder() {
         this.setTextureName("vendingmachine:placeholder");
-        this.setUnlocalizedName(unlocalizedName);
+        this.setUnlocalizedName("vendingmachine.placeholder");
     }
 
     public static BigItemStack getBigItemStackFrom(Item item, String name, int count, int damage, String oreDict,
