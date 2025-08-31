@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.item.ItemStack;
 
 import org.lwjgl.opengl.GL11;
@@ -29,7 +30,15 @@ import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.Translator;
 
 import betterquesting.api.questing.IQuest;
+import betterquesting.api.storage.BQ_Settings;
+import betterquesting.api2.client.gui.GuiScreenCanvas;
+import betterquesting.api2.client.gui.themes.gui_args.GArgsNone;
+import betterquesting.api2.client.gui.themes.presets.PresetGUIs;
 import betterquesting.api2.utils.QuestTranslation;
+import betterquesting.client.gui2.GuiHome;
+import betterquesting.client.gui2.GuiQuest;
+import betterquesting.client.gui2.GuiQuestLines;
+import betterquesting.client.themes.ThemeRegistry;
 import betterquesting.questing.QuestDatabase;
 import codechicken.lib.gui.GuiDraw;
 import codechicken.nei.NEIServerUtils;
@@ -48,6 +57,10 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
     private int textColorConditionDefault;
     private int textColorConditionSatisfied;
     private int textColorConditionUnsatisfied;
+
+    private int lastHoveredRecipeIndex = -1;
+    private Rectangle lastHoveredTextArea = null;
+    private UUID lastHoveredQuestId = null;
 
     private UUID lastQuestId = null;
 
@@ -151,8 +164,8 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
         drawTexturedModalRect(0, 0, 0, 0, GUI_WIDTH, 105);
     }
 
-    // TODO: Clean up this code to allow for clicking the links to open questbook
-    public boolean isMouseOverBqCondition(int recipeIndex, int curY, String text) {
+    // Caching the last hovered valid quest here is a bit jank, but it works I guess
+    public boolean isMouseOverBqCondition(int recipeIndex, int curY, UUID questId, String text) {
         if (!(Minecraft.getMinecraft().currentScreen instanceof GuiRecipe)) return false;
         GuiRecipe<?> gui = (GuiRecipe<?>) Minecraft.getMinecraft().currentScreen;
 
@@ -171,7 +184,63 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
         int guiTop = 19 + (gui.height - gui.getWidgetSize().height) / 2;
         Point relMousePos = new Point(pos.x - guiLeft - offset.x, pos.y - guiTop - offset.y);
         Rectangle textArea = new Rectangle(2, curY - GuiDraw.fontRenderer.FONT_HEIGHT, width + 2, height + 1);
-        return textArea.contains(relMousePos);
+        if (textArea.contains(relMousePos)) {
+            lastHoveredRecipeIndex = recipeIndex;
+            lastHoveredTextArea = textArea;
+            lastHoveredQuestId = questId;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isMouseOnLastHovered(GuiRecipe<?> gui, int recipeIndex) {
+        VendingMachine.LOG.info("{} {}", recipeIndex, lastHoveredRecipeIndex);
+        VendingMachine.LOG.info(lastHoveredQuestId);
+        VendingMachine.LOG.info(lastHoveredTextArea);
+        if (lastHoveredTextArea == null || lastHoveredQuestId == null || lastHoveredRecipeIndex != recipeIndex) {
+            return false;
+        }
+        int guiLeft = (gui.width - gui.getWidgetSize().width) / 2;
+        int guiTop = 19 + (gui.height - gui.getWidgetSize().height) / 2;
+
+        Point offset = gui.getRecipePosition(recipeIndex);
+        Point pos = GuiDraw.getMousePosition();
+        Point relMousePos = new Point(pos.x - guiLeft - offset.x, pos.y - guiTop - offset.y);
+        VendingMachine.LOG.info("relmousepos {}", relMousePos);
+        return lastHoveredTextArea.contains(relMousePos);
+    }
+
+    @Override
+    public boolean mouseClicked(GuiRecipe<?> gui, int button, int recipeIndex) {
+        if (super.mouseClicked(gui, button, recipeIndex)) return true;
+
+        if (isMouseOnLastHovered(gui, recipeIndex)) {
+            // prepare "Back" behavior
+            GuiScreen parentScreen;
+            if (GuiHome.bookmark instanceof GuiQuest && BQ_Settings.useBookmark) {
+                // back to GuiQuestLines
+                parentScreen = ((GuiScreenCanvas) GuiHome.bookmark).parent;
+            } else if (GuiHome.bookmark instanceof GuiScreenCanvas && BQ_Settings.useBookmark) {
+                // for example, GuiQuestLines.parent is GuiHome
+                // going back to home screen is not good
+                parentScreen = GuiHome.bookmark;
+            } else {
+                // init quest screen
+                parentScreen = ThemeRegistry.INSTANCE.getGui(PresetGUIs.HOME, GArgsNone.NONE);
+                if (BQ_Settings.useBookmark && BQ_Settings.skipHome) {
+                    parentScreen = new GuiQuestLines(parentScreen);
+                }
+            }
+            GuiQuest toDisplay = new GuiQuest(parentScreen, lastHoveredQuestId);
+            toDisplay.setPreviousScreen(Minecraft.getMinecraft().currentScreen);
+            Minecraft.getMinecraft()
+                .displayGuiScreen(toDisplay);
+            if (BQ_Settings.useBookmark) {
+                GuiHome.bookmark = toDisplay;
+            }
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -201,8 +270,8 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
                     String translatedQuestKey = getTextWithoutFormattingCodes(
                         QuestTranslation.translateQuestName(questId, quest));
                     unformatted.append(translatedQuestKey);
-                    requirementString
-                        .append(isMouseOverBqCondition(recipeIndex, y, unformatted.toString()) ? UNDERLINE : "");
+                    requirementString.append(
+                        isMouseOverBqCondition(recipeIndex, y, questId, unformatted.toString()) ? UNDERLINE : "");
                     requirementString.append(unformatted);
                 }
                 color = BqAdapter.INSTANCE.checkPlayerCompletedQuest(currentPlayerId, questId)
