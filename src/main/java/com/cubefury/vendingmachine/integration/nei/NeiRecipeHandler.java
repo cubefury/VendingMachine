@@ -45,6 +45,7 @@ import codechicken.nei.NEIServerUtils;
 import codechicken.nei.PositionedStack;
 import codechicken.nei.recipe.GuiRecipe;
 import codechicken.nei.recipe.TemplateRecipeHandler;
+import cpw.mods.fml.common.Optional;
 
 public class NeiRecipeHandler extends TemplateRecipeHandler {
 
@@ -61,8 +62,6 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
     private int lastHoveredRecipeIndex = -1;
     private Rectangle lastHoveredTextArea = null;
     private UUID lastHoveredQuestId = null;
-
-    private UUID lastQuestId = null;
 
     private UUID getCurrentPlayerUUID() {
         if (currentPlayerId == null) {
@@ -194,9 +193,6 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
     }
 
     public boolean isMouseOnLastHovered(GuiRecipe<?> gui, int recipeIndex) {
-        VendingMachine.LOG.info("{} {}", recipeIndex, lastHoveredRecipeIndex);
-        VendingMachine.LOG.info(lastHoveredQuestId);
-        VendingMachine.LOG.info(lastHoveredTextArea);
         if (lastHoveredTextArea == null || lastHoveredQuestId == null || lastHoveredRecipeIndex != recipeIndex) {
             return false;
         }
@@ -206,41 +202,44 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
         Point offset = gui.getRecipePosition(recipeIndex);
         Point pos = GuiDraw.getMousePosition();
         Point relMousePos = new Point(pos.x - guiLeft - offset.x, pos.y - guiTop - offset.y);
-        VendingMachine.LOG.info("relmousepos {}", relMousePos);
         return lastHoveredTextArea.contains(relMousePos);
     }
 
     @Override
     public boolean mouseClicked(GuiRecipe<?> gui, int button, int recipeIndex) {
         if (super.mouseClicked(gui, button, recipeIndex)) return true;
-
-        if (isMouseOnLastHovered(gui, recipeIndex)) {
+        if (VendingMachine.isBqLoaded && isMouseOnLastHovered(gui, recipeIndex)) {
             // prepare "Back" behavior
-            GuiScreen parentScreen;
-            if (GuiHome.bookmark instanceof GuiQuest && BQ_Settings.useBookmark) {
-                // back to GuiQuestLines
-                parentScreen = ((GuiScreenCanvas) GuiHome.bookmark).parent;
-            } else if (GuiHome.bookmark instanceof GuiScreenCanvas && BQ_Settings.useBookmark) {
-                // for example, GuiQuestLines.parent is GuiHome
-                // going back to home screen is not good
-                parentScreen = GuiHome.bookmark;
-            } else {
-                // init quest screen
-                parentScreen = ThemeRegistry.INSTANCE.getGui(PresetGUIs.HOME, GArgsNone.NONE);
-                if (BQ_Settings.useBookmark && BQ_Settings.skipHome) {
-                    parentScreen = new GuiQuestLines(parentScreen);
-                }
-            }
-            GuiQuest toDisplay = new GuiQuest(parentScreen, lastHoveredQuestId);
-            toDisplay.setPreviousScreen(Minecraft.getMinecraft().currentScreen);
-            Minecraft.getMinecraft()
-                .displayGuiScreen(toDisplay);
-            if (BQ_Settings.useBookmark) {
-                GuiHome.bookmark = toDisplay;
-            }
+            processBqGui();
             return true;
         }
         return false;
+    }
+
+    @Optional.Method(modid = "betterquesting")
+    public void processBqGui() {
+        GuiScreen parentScreen;
+        if (GuiHome.bookmark instanceof GuiQuest && BQ_Settings.useBookmark) {
+            // back to GuiQuestLines
+            parentScreen = ((GuiScreenCanvas) GuiHome.bookmark).parent;
+        } else if (GuiHome.bookmark instanceof GuiScreenCanvas && BQ_Settings.useBookmark) {
+            // for example, GuiQuestLines.parent is GuiHome
+            // going back to home screen is not good
+            parentScreen = GuiHome.bookmark;
+        } else {
+            // init quest screen
+            parentScreen = ThemeRegistry.INSTANCE.getGui(PresetGUIs.HOME, GArgsNone.NONE);
+            if (BQ_Settings.useBookmark && BQ_Settings.skipHome) {
+                parentScreen = new GuiQuestLines(parentScreen);
+            }
+        }
+        GuiQuest toDisplay = new GuiQuest(parentScreen, lastHoveredQuestId);
+        toDisplay.setPreviousScreen(Minecraft.getMinecraft().currentScreen);
+        Minecraft.getMinecraft()
+            .displayGuiScreen(toDisplay);
+        if (BQ_Settings.useBookmark) {
+            GuiHome.bookmark = toDisplay;
+        }
     }
 
     @Override
@@ -274,7 +273,7 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
                         isMouseOverBqCondition(recipeIndex, y, questId, unformatted.toString()) ? UNDERLINE : "");
                     requirementString.append(unformatted);
                 }
-                color = BqAdapter.INSTANCE.checkPlayerCompletedQuest(currentPlayerId, questId)
+                color = BqAdapter.INSTANCE.checkPlayerCompletedQuest(getCurrentPlayerUUID(), questId)
                     ? textColorConditionSatisfied
                     : textColorConditionUnsatisfied;
             } else {

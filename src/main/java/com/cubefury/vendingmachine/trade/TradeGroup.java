@@ -29,6 +29,8 @@ public class TradeGroup {
     private final Set<ICondition> requirementSet = new HashSet<>();
 
     // List of completed conditions for each player
+    // This is only updated server-side, since players only need to know what trades
+    // they have and their status.
     private final Map<UUID, Set<ICondition>> playerDone = new HashMap<>();
 
     // List of players with trade history
@@ -44,25 +46,9 @@ public class TradeGroup {
         return this.id.toString();
     }
 
-    // Check if trade would be available upon adding this condition
-    // Used for questbook trade GUI display
-    public boolean isAvailableUponSatisfied(UUID player, ICondition c) {
-        Set<ICondition> tmp = new HashSet<>();
-        synchronized (playerDone) {
-            if (playerDone.containsKey(player) && playerDone.get(player) == null) {
-                tmp.addAll(playerDone.get(player));
-            }
-        }
-        tmp.add(c);
-        return tmp.equals(requirementSet);
-
-    }
-
     public void addSatisfiedCondition(UUID player, ICondition c) {
         synchronized (playerDone) {
-            if (!playerDone.containsKey(player) || playerDone.get(player) == null) {
-                playerDone.put(player, new HashSet<>());
-            }
+            playerDone.computeIfAbsent(player, k -> new HashSet<>());
             playerDone.get(player)
                 .add(c);
             if (
@@ -141,7 +127,6 @@ public class TradeGroup {
     }
 
     public boolean attemptExecuteTrade(UUID player) {
-
         List<TradeGroupWrapper> availableTrades = TradeManager.INSTANCE.getTrades(player);
         for (TradeGroupWrapper trade : availableTrades) {
             if (trade == null) { // shouldn't happen

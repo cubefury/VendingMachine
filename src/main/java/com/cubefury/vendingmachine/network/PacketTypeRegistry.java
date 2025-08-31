@@ -15,6 +15,7 @@ import com.cubefury.vendingmachine.api.util.Tuple2;
 import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
 import com.cubefury.vendingmachine.network.handlers.NetBulkSync;
 import com.cubefury.vendingmachine.network.handlers.NetNameSync;
+import com.cubefury.vendingmachine.network.handlers.NetSatisfiedQuestSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeDbSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeOutputSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
@@ -31,6 +32,7 @@ public class PacketTypeRegistry implements IPacketRegistry {
         NetTradeStateSync.registerHandler();
         NetTradeOutputSync.registerHandler();
         NetAvailableTradeSync.registerHandler();
+        NetSatisfiedQuestSync.registerHandler();
         NetNameSync.registerHandler();
 
         NetBulkSync.registerHandler();
