@@ -1,3 +1,13 @@
 tile.vendingmachine.vending_machine.name=Vending Machine
 
 item.vendingmachine.placeholder.name=Placeholder Item
+
+tooltip.vendingmachine=Who's even restocking this...
+
+vendingmachine.gui.requirementHeader=Requirements:
+vendingmachine.gui.requirement.unknown=Unknown Requirement
+vendingmachine.gui.requirement.betterquesting=Quest
+vendingmachine.gui.requirement.betterquesting.missing=Missing Quest
+vendingmachine.gui.neiColor.conditionDefault=000000
+vendingmachine.gui.neiColor.conditionSatisfied=55D441
+vendingmachine.gui.neiColor.conditionUnsatisfied=A87A5E

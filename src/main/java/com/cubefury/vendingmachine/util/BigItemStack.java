@@ -182,13 +182,13 @@ public class BigItemStack {
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
         baseStack.writeToNBT(nbt);
         String iRes = Item.itemRegistry.getNameForObject(baseStack.getItem());
-        nbt.setString("id", iRes == null ? ItemPlaceholder.unlocalizedName : iRes);
+        nbt.setString("id", iRes == null ? "vendingmachine.placeholder" : iRes);
         nbt.setInteger("Count", this.stackSize);
         nbt.setString("OreDict", this.getOreDict());
         return nbt;
     }
 
-    @Optional.Method(modid = "BetterQuesting")
+    @Optional.Method(modid = "betterquesting")
     public betterquesting.api.utils.BigItemStack toBQBigItemStack() {
         betterquesting.api.utils.BigItemStack newBis = new betterquesting.api.utils.BigItemStack(
             Objects.requireNonNull(this.baseStack.getItem()),

@@ -44,13 +44,26 @@ public class SaveLoadHandler {
         dirTradeState = new File(Config.worldDir, "tradeState");
         fileNames = new File(Config.worldDir, "names.json");
 
-        if (dirTradeState.mkdirs()) {
-            VendingMachine.LOG.info("Created trade state directory");
-        }
+        createFilesAndDirectories();
 
         loadDatabase();
         loadTradeState();
         loadNames();
+    }
+
+    public void createFilesAndDirectories() {
+        if (!fileNames.exists()) {
+            try {
+                if (fileNames.createNewFile()) {
+                    VendingMachine.LOG.info("Created new name cache file");
+                }
+            } catch (Exception ignored) {
+                VendingMachine.LOG.warn("Could not create new name cache file");
+            }
+        }
+        if (dirTradeState.mkdirs()) {
+            VendingMachine.LOG.info("Created trade state directory");
+        }
     }
 
     public void loadDatabase() {

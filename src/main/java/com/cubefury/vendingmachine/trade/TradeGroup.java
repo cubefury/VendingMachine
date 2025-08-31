@@ -18,6 +18,8 @@ import com.cubefury.vendingmachine.integration.betterquesting.BqAdapter;
 import com.cubefury.vendingmachine.integration.betterquesting.BqCondition;
 import com.cubefury.vendingmachine.util.NBTConverter;
 
+import cpw.mods.fml.common.Optional;
+
 public class TradeGroup {
 
     private UUID id = new UUID(0, 0); // placeholder UUID
@@ -42,6 +44,8 @@ public class TradeGroup {
         return this.id.toString();
     }
 
+    // Check if trade would be available upon adding this condition
+    // Used for questbook trade GUI display
     public boolean isAvailableUponSatisfied(UUID player, ICondition c) {
         Set<ICondition> tmp = new HashSet<>();
         synchronized (playerDone) {
@@ -90,6 +94,10 @@ public class TradeGroup {
         return trades;
     }
 
+    public List<ICondition> getRequirements() {
+        return new ArrayList<>(requirementSet);
+    }
+
     public void clearTradeState(UUID player) {
         synchronized (tradeState) {
             if (player == null) {
@@ -98,6 +106,23 @@ public class TradeGroup {
                 tradeState.remove(player);
             }
         }
+    }
+
+    public boolean isUnlockedPlayer(UUID player) {
+        return requirementSet.equals(playerDone.get(player));
+    }
+
+    public Set<UUID> getAllUnlockedPlayers() {
+        Set<UUID> playerList = new HashSet<>();
+        for (Map.Entry<UUID, Set<ICondition>> entry : playerDone.entrySet()) {
+            if (
+                entry.getValue()
+                    .equals(requirementSet)
+            ) {
+                playerList.add(entry.getKey());
+            }
+        }
+        return playerList;
     }
 
     public TradeHistory getTradeState(UUID player) {
@@ -155,9 +180,7 @@ public class TradeGroup {
         NBTTagList reqList = nbt.getTagList("requirements", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < reqList.tagCount(); i++) {
             ICondition condition = ConditionParser.getConditionFromNBT(reqList.getCompoundTagAt(i));
-            if (condition != null) {
-                requirementSet.add(condition);
-            }
+            requirementSet.add(condition);
             if (VendingMachine.isBqLoaded && condition instanceof BqCondition) {
                 BqCondition bqc = (BqCondition) condition;
                 BqAdapter.INSTANCE.addQuestTrigger(bqc.getQuestId(), this);
@@ -183,4 +206,21 @@ public class TradeGroup {
         return nbt;
     }
 
+    @Optional.Method(modid = "betterquesting")
+    public void removeAllSatisfiedBqConditions(UUID player) {
+        synchronized (tradeState) {
+            if (player == null) {
+                for (Map.Entry<UUID, Set<ICondition>> entry : playerDone.entrySet()) {
+                    if (entry.getValue() == null) { // just in case
+                        continue;
+                    }
+                    entry.getValue()
+                        .removeIf((condition) -> condition instanceof BqCondition);
+                }
+            } else if (playerDone.get(player) != null) {
+                playerDone.get(player)
+                    .removeIf((condition) -> condition instanceof BqCondition);
+            }
+        }
+    }
 }

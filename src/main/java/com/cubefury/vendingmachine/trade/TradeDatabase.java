@@ -9,7 +9,13 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
 
 import com.cubefury.vendingmachine.VendingMachine;
+import com.cubefury.vendingmachine.integration.betterquesting.BqAdapter;
+import com.cubefury.vendingmachine.integration.nei.NeiRecipeCache;
 import com.cubefury.vendingmachine.util.NBTConverter;
+
+import cpw.mods.fml.common.Optional;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 
 public class TradeDatabase {
 
@@ -35,6 +41,10 @@ public class TradeDatabase {
         return tradeGroups.size();
     }
 
+    public Map<UUID, TradeGroup> getTradeGroups() {
+        return tradeGroups;
+    }
+
     public int getTradeCount() {
         return tradeGroups.values()
             .stream()
@@ -44,7 +54,13 @@ public class TradeDatabase {
             .sum();
     }
 
-    public void readFromNBT(NBTTagCompound nbt) {
+    public void readFromNBT(NBTTagCompound nbt, boolean merge) {
+        if (!merge) {
+            this.clear();
+            if (VendingMachine.isBqLoaded) {
+                BqAdapter.INSTANCE.resetQuestTriggers(null);
+            }
+        }
         int newIdCount = 0;
         this.version = nbt.getInteger("version");
         NBTTagList trades = nbt.getTagList("tradeGroups", Constants.NBT.TAG_COMPOUND);
@@ -61,6 +77,11 @@ public class TradeDatabase {
             VendingMachine.LOG.info("Updating {} new trades with UUIDs", newIdCount);
             DirtyDbMarker.markDirty();
         }
+        if (VendingMachine.proxy.isClient() && VendingMachine.isNeiLoaded) {
+            refreshNeiCache();
+        }
+        TradeManager.INSTANCE.recomputeAvailableTrades(null);
+        VendingMachine.LOG.info("Loaded {} trade groups containing {} trades.", getTradeGroupCount(), getTradeCount());
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
@@ -105,5 +126,18 @@ public class TradeDatabase {
         }
         nbt.setTag("tradeState", tradeStateList);
         return nbt;
+    }
+
+    @SideOnly(Side.CLIENT)
+    public void refreshNeiCache() {
+        NeiRecipeCache.refreshCache();
+    }
+
+    @Optional.Method(modid = "betterquesting")
+    public void removeAllSatisfiedBqConditions(UUID player) {
+        for (TradeGroup tg : tradeGroups.values()) {
+            tg.removeAllSatisfiedBqConditions(player);
+        }
+        TradeManager.INSTANCE.recomputeAvailableTrades(player);
     }
 }

@@ -55,7 +55,7 @@ public class JsonHelper {
         Function<File, NBTTagCompound> readNbt = f -> NBTConverter
             .JSONtoNBT_Object(FileIO.ReadFromFile(f), new NBTTagCompound(), true);
 
-        db.readFromNBT(readNbt.apply(file));
+        db.readFromNBT(readNbt.apply(file), false);
     }
 
     public static void populateTradeStateFromFiles(List<File> files) {

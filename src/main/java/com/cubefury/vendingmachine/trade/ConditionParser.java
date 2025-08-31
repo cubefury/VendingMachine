@@ -5,6 +5,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.api.trade.ICondition;
 import com.cubefury.vendingmachine.integration.betterquesting.BqCondition;
+import com.cubefury.vendingmachine.trade.conditions.UnknownCondition;
 
 import cpw.mods.fml.common.Optional;
 
@@ -21,11 +22,17 @@ public class ConditionParser {
             }
         }
 
+        UnknownCondition newCondition = new UnknownCondition();
+        newCondition.readFromNBT(nbt);
+
         VendingMachine.LOG.error("Could not deserialize condition with name: {}", condition);
-        return null;
+        return newCondition;
     }
 
     public static NBTTagCompound getNBTFromCondition(ICondition condition) {
+        if (condition instanceof UnknownCondition) {
+            return condition.writeToNBT(null); // ignores input tag
+        }
         return condition.writeToNBT(new NBTTagCompound());
     }
 

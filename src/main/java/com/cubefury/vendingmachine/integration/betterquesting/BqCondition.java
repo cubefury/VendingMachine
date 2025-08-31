@@ -37,7 +37,7 @@ public class BqCondition implements ICondition {
 
     @Override
     public void readFromNBT(NBTTagCompound nbt) {
-        this.questId = NBTConverter.UuidValueType.QUEST.readId(nbt);
+        this.questId = NBTConverter.UuidValueType.QUEST.readId(nbt.getCompoundTag("quest"));
     }
 
     @Override
@@ -46,4 +46,5 @@ public class BqCondition implements ICondition {
         nbt.setTag("quest", NBTConverter.UuidValueType.QUEST.writeId(this.questId));
         return nbt;
     }
+
 }

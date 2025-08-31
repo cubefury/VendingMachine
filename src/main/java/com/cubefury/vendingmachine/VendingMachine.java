@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cubefury.vendingmachine.blocks.BlockVendingMachine;
+import com.cubefury.vendingmachine.blocks.ItemBlockVendingMachine;
 import com.cubefury.vendingmachine.blocks.TileVendingMachine;
 import com.cubefury.vendingmachine.network.PacketTypeRegistry;
 import com.cubefury.vendingmachine.network.SerializedPacket;
@@ -30,13 +31,14 @@ import cpw.mods.fml.relauncher.Side;
 @Mod(
     modid = VendingMachine.MODID,
     version = Tags.VERSION,
-    name = "VendingMachine",
+    name = VendingMachine.NAME,
     acceptedMinecraftVersions = "[1.7.10]")
 public class VendingMachine {
 
     public static final String MODID = "vendingmachine";
     public static final Logger LOG = LogManager.getLogger(MODID);
     public static final String CHANNEL = "VM_NET_CHAN";
+    public static final String NAME = "Vending Machine";
 
     @Mod.Instance(MODID)
     public static VendingMachine instance;
@@ -72,7 +74,7 @@ public class VendingMachine {
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
 
-        GameRegistry.registerBlock(vendingMachine, "vending_machine");
+        GameRegistry.registerBlock(vendingMachine, ItemBlockVendingMachine.class, "vending_machine");
         GameRegistry.registerTileEntity(TileVendingMachine.class, "vending_machine");
 
         GameRegistry.registerItem(ItemPlaceholder.placeholder, "placeholder");
