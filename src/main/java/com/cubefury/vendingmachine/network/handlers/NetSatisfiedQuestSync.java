@@ -77,7 +77,6 @@ public class NetSatisfiedQuestSync {
         newCache.put(playerId, new HashSet<>());
         NBTTagList questList = message.getTagList("questData", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < questList.tagCount(); i++) {
-            VendingMachine.LOG.info(NBTConverter.UuidValueType.QUEST.readId(questList.getCompoundTagAt(i)));
             newCache.get(playerId)
                 .add(NBTConverter.UuidValueType.QUEST.readId(questList.getCompoundTagAt(i)));
         }

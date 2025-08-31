@@ -10,7 +10,6 @@ import javax.annotation.Nullable;
 
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
-import com.cubefury.vendingmachine.network.handlers.NetSatisfiedQuestSync;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
 import com.cubefury.vendingmachine.trade.TradeGroup;
 import com.google.common.collect.ImmutableMap;
@@ -54,6 +53,7 @@ public class BqAdapter {
 
     @SideOnly(Side.CLIENT)
     public void setPlayerSatisifedCache(Map<UUID, Set<UUID>> newCache) {
+        // Player -> Set<QuestDone>
         synchronized (playerSatisfiedCache) {
             playerSatisfiedCache.clear();
             playerSatisfiedCache.putAll(newCache);
@@ -108,22 +108,32 @@ public class BqAdapter {
         }
     }
 
-    public void sendPlayerSatisfiedCache() {
-        // Pushes satisfied quest completion data to client,
-        NetSatisfiedQuestSync.sendSync();
-    }
-
     public boolean checkPlayerCompletedQuest(UUID player, UUID quest) {
         synchronized (playerSatisfiedCache) {
-            VendingMachine.LOG.info(
-                "checking {}, {}",
-                playerSatisfiedCache.get(player),
-                playerSatisfiedCache.get(player) == null ? null
-                    : playerSatisfiedCache.get(player)
-                        .size());
             return playerSatisfiedCache.get(player) != null && playerSatisfiedCache.get(player)
                 .contains(quest);
         }
+    }
+
+    @SideOnly(Side.CLIENT)
+    public Set<UUID> getTrades(UUID quest) {
+        Set<UUID> output = new HashSet<>();
+        if (questUpdateTriggers.get(quest) == null) {
+            return output;
+        }
+
+        // Cannot use TradeManager.availableTrades since it is only updated
+        // when Vending Machine GUI is open
+        for (TradeGroup tradeGroup : questUpdateTriggers.get(quest)) {
+            output.add(tradeGroup.getId());
+        }
+        return output;
+    }
+
+    @SideOnly(Side.CLIENT)
+    public boolean questHasTrades(UUID quest) {
+        return questUpdateTriggers.get(quest) != null && !questUpdateTriggers.get(quest)
+            .isEmpty();
     }
 
 }
