@@ -55,7 +55,7 @@ public class Trade {
         }
     }
 
-    @Optional.Method(modid = "NotEnoughItems")
+    @Optional.Method(modid = "betterquesting")
     @SideOnly(Side.CLIENT)
     public IGuiPanel getTradeGui(IGuiRect rect) {
         return new PanelQBTrade(rect, this);
