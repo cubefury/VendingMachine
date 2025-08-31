@@ -63,8 +63,6 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
     private Rectangle lastHoveredTextArea = null;
     private UUID lastHoveredQuestId = null;
 
-    private UUID lastQuestId = null;
-
     private UUID getCurrentPlayerUUID() {
         if (currentPlayerId == null) {
             currentPlayerId = NameCache.INSTANCE.getUUIDFromPlayer(Minecraft.getMinecraft().thePlayer);
@@ -195,9 +193,6 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
     }
 
     public boolean isMouseOnLastHovered(GuiRecipe<?> gui, int recipeIndex) {
-        VendingMachine.LOG.info("{} {}", recipeIndex, lastHoveredRecipeIndex);
-        VendingMachine.LOG.info(lastHoveredQuestId);
-        VendingMachine.LOG.info(lastHoveredTextArea);
         if (lastHoveredTextArea == null || lastHoveredQuestId == null || lastHoveredRecipeIndex != recipeIndex) {
             return false;
         }
@@ -207,7 +202,6 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
         Point offset = gui.getRecipePosition(recipeIndex);
         Point pos = GuiDraw.getMousePosition();
         Point relMousePos = new Point(pos.x - guiLeft - offset.x, pos.y - guiTop - offset.y);
-        VendingMachine.LOG.info("relmousepos {}", relMousePos);
         return lastHoveredTextArea.contains(relMousePos);
     }
 
@@ -279,7 +273,7 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
                         isMouseOverBqCondition(recipeIndex, y, questId, unformatted.toString()) ? UNDERLINE : "");
                     requirementString.append(unformatted);
                 }
-                color = BqAdapter.INSTANCE.checkPlayerCompletedQuest(currentPlayerId, questId)
+                color = BqAdapter.INSTANCE.checkPlayerCompletedQuest(getCurrentPlayerUUID(), questId)
                     ? textColorConditionSatisfied
                     : textColorConditionUnsatisfied;
             } else {
