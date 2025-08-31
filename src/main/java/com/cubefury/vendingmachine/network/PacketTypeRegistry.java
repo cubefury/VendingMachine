@@ -12,6 +12,7 @@ import net.minecraft.util.ResourceLocation;
 
 import com.cubefury.vendingmachine.api.network.IPacketRegistry;
 import com.cubefury.vendingmachine.api.util.Tuple2;
+import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
 import com.cubefury.vendingmachine.network.handlers.NetBulkSync;
 import com.cubefury.vendingmachine.network.handlers.NetNameSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeDbSync;
@@ -29,6 +30,7 @@ public class PacketTypeRegistry implements IPacketRegistry {
         NetTradeDbSync.registerHandler();
         NetTradeStateSync.registerHandler();
         NetTradeOutputSync.registerHandler();
+        NetAvailableTradeSync.registerHandler();
         NetNameSync.registerHandler();
 
         NetBulkSync.registerHandler();

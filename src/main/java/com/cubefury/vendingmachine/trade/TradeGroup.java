@@ -44,6 +44,8 @@ public class TradeGroup {
         return this.id.toString();
     }
 
+    // Check if trade would be available upon adding this condition
+    // Used for questbook trade GUI display
     public boolean isAvailableUponSatisfied(UUID player, ICondition c) {
         Set<ICondition> tmp = new HashSet<>();
         synchronized (playerDone) {
@@ -104,6 +106,23 @@ public class TradeGroup {
                 tradeState.remove(player);
             }
         }
+    }
+
+    public boolean isUnlockedPlayer(UUID player) {
+        return requirementSet.equals(playerDone.get(player));
+    }
+
+    public Set<UUID> getAllUnlockedPlayers() {
+        Set<UUID> playerList = new HashSet<>();
+        for (Map.Entry<UUID, Set<ICondition>> entry : playerDone.entrySet()) {
+            if (
+                entry.getValue()
+                    .equals(requirementSet)
+            ) {
+                playerList.add(entry.getKey());
+            }
+        }
+        return playerList;
     }
 
     public TradeHistory getTradeState(UUID player) {

@@ -9,6 +9,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
 
 import com.cubefury.vendingmachine.VendingMachine;
+import com.cubefury.vendingmachine.integration.betterquesting.BqAdapter;
 import com.cubefury.vendingmachine.integration.nei.NeiRecipeCache;
 import com.cubefury.vendingmachine.util.NBTConverter;
 
@@ -53,7 +54,13 @@ public class TradeDatabase {
             .sum();
     }
 
-    public void readFromNBT(NBTTagCompound nbt) {
+    public void readFromNBT(NBTTagCompound nbt, boolean merge) {
+        if (!merge) {
+            this.clear();
+            if (VendingMachine.isBqLoaded) {
+                BqAdapter.INSTANCE.resetQuestTriggers(null);
+            }
+        }
         int newIdCount = 0;
         this.version = nbt.getInteger("version");
         NBTTagList trades = nbt.getTagList("tradeGroups", Constants.NBT.TAG_COMPOUND);
@@ -73,7 +80,7 @@ public class TradeDatabase {
         if (VendingMachine.proxy.isClient() && VendingMachine.isNeiLoaded) {
             refreshNeiCache();
         }
-
+        TradeManager.INSTANCE.recomputeAvailableTrades(null);
         VendingMachine.LOG.info("Loaded {} trade groups containing {} trades.", getTradeGroupCount(), getTradeCount());
     }
 
@@ -131,5 +138,6 @@ public class TradeDatabase {
         for (TradeGroup tg : tradeGroups.values()) {
             tg.removeAllSatisfiedBqConditions(player);
         }
+        TradeManager.INSTANCE.recomputeAvailableTrades(player);
     }
 }
