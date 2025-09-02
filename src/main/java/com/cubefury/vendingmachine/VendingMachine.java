@@ -6,8 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cubefury.vendingmachine.blocks.BlockVendingMachine;
-import com.cubefury.vendingmachine.blocks.ItemBlockVendingMachine;
-import com.cubefury.vendingmachine.blocks.TileVendingMachine;
+import com.cubefury.vendingmachine.items.VMItems;
 import com.cubefury.vendingmachine.network.PacketTypeRegistry;
 import com.cubefury.vendingmachine.network.SerializedPacket;
 import com.cubefury.vendingmachine.util.ItemPlaceholder;
@@ -47,6 +46,11 @@ public class VendingMachine {
 
     public static boolean isNeiLoaded = false;
     public static boolean isBqLoaded = false;
+    public static boolean isGtLoaded = false;
+    public static boolean isAeLoaded = false;
+
+    public static int CONTROLLER_MTE_ID = 2741;
+    // public static int ME_UPLINK_MTE_ID = 2742;
 
     @SidedProxy(
         clientSide = "com.cubefury.vendingmachine.ClientProxy",
@@ -74,21 +78,27 @@ public class VendingMachine {
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
 
-        GameRegistry.registerBlock(vendingMachine, ItemBlockVendingMachine.class, "vending_machine");
-        GameRegistry.registerTileEntity(TileVendingMachine.class, "vending_machine");
+        isNeiLoaded = Loader.isModLoaded("NotEnoughItems");
+        isBqLoaded = Loader.isModLoaded("betterquesting");
+        isGtLoaded = Loader.isModLoaded("gregtech");
+        isAeLoaded = Loader.isModLoaded("appliedenergistics2");
+
+        LOG.info("NEI Integration enabled: {}", isNeiLoaded);
+        LOG.info("Better Questing Integration enabled: {}", isBqLoaded);
+        LOG.info("Gregtech Integration enabled: {}", isGtLoaded);
+        LOG.info("AE2 Integration enabled {}", isAeLoaded);
 
         GameRegistry.registerItem(ItemPlaceholder.placeholder, "placeholder");
+
+        if (isGtLoaded) {
+            VMItems.registerMultis();
+        }
 
     }
 
     @Mod.EventHandler
     // postInit "Handle interaction with other mods, complete your setup based on this." (Remove if not needed)
     public void postInit(FMLPostInitializationEvent event) {
-        isNeiLoaded = Loader.isModLoaded("NotEnoughItems");
-        isBqLoaded = Loader.isModLoaded("betterquesting");
-
-        LOG.info("NEI Integration enabled: {}", isNeiLoaded);
-        LOG.info("Better Questing Integration enabled: {}", isBqLoaded);
 
         proxy.postInit(event);
     }
