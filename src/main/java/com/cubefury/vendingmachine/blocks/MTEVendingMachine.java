@@ -45,6 +45,8 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     public static final int INPUT_SLOTS = 7;
     public static final int OUTPUT_SLOTS = 1;
 
+    public static final int MAX_TRADES = 999;
+
     public static final int STRUCTURE_CHECK_TICKS = 20;
 
     private static final IStructureDefinition<MTEVendingMachine> STRUCTURE_DEFINITION = IStructureDefinition

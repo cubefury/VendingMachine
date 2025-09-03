@@ -1,5 +1,9 @@
 package com.cubefury.vendingmachine.blocks.gui;
 
+import com.cleanroommc.modularui.utils.item.IItemHandlerModifiable;
+import com.cleanroommc.modularui.utils.item.ItemStackHandler;
+import com.cleanroommc.modularui.widget.ScrollWidget;
+import com.cleanroommc.modularui.widget.scroll.VerticalScrollData;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -35,6 +39,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     private final int height;
 
     private boolean ejectItems = false;
+    private IItemHandlerModifiable tradeItemHandler = new ItemStackHandler(MTEVendingMachine.MAX_TRADES);
 
     public MTEVendingMachineGui(MTEVendingMachine base, int height) {
         super(base);
@@ -51,11 +56,11 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             new Column().width(170)
                 .child(createTitleTextStyle(base.getLocalName()))
                 .child(createInputRow(syncManager))
+                .child(createTradeUI())
                 .child(createInventoryRow(panel, syncManager)));
         panel = panel.child(
             new Column().size(20)
                 .right(5)
-
                 .child(createOutputSlot()));
         return panel;
     }
@@ -98,7 +103,6 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                     .getDirection().offsetY;
                 int offsetZ = base.getExtendedFacing()
                     .getDirection().offsetZ;
-                VendingMachine.LOG.info("{} {} {}", offsetX, offsetY, offsetZ);
                 for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
                     ItemStack stack = base.inputItems.getStackInSlot(i);
                     if (stack != null) {
@@ -159,6 +163,18 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                         .slotGroup("outputSlotGroup"));
             })
             .build();
+    }
+
+    private IWidget createTradeUI() {
+        ScrollWidget<?> sw = new ScrollWidget<>(new VerticalScrollData()).size(9*18).margin(0);
+        sw.getScrollArea().getScrollY().setScrollSize(18*(MTEVendingMachine.MAX_TRADES)/9);
+        for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
+            int x = i % 9;
+            int y = i / 9;
+            sw.child(new TradeSlot().pos(x*18, y*18)
+                .slot(new ModularSlot(tradeItemHandler, i)));
+        }
+        return new Row().child(sw.top(0)).left(4).top(38);
     }
 
     // why is this method private lmao
