@@ -26,6 +26,7 @@ public class TradeGroup {
     private final List<Trade> trades = new ArrayList<>();
     public int cooldown = -1;
     public int maxTrades = -1;
+    public String label = "";
     private final Set<ICondition> requirementSet = new HashSet<>();
 
     // List of completed conditions for each player
@@ -155,6 +156,7 @@ public class TradeGroup {
         }
         this.cooldown = nbt.getInteger("cooldown");
         this.maxTrades = nbt.getInteger("maxTrades");
+        this.label = nbt.getString("label");
         NBTTagList tradeList = nbt.getTagList("trades", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < tradeList.tagCount(); i++) {
             NBTTagCompound trade = tradeList.getCompoundTagAt(i);
@@ -178,6 +180,7 @@ public class TradeGroup {
         nbt.setTag("id", NBTConverter.UuidValueType.TRADEGROUP.writeId(this.id));
         nbt.setInteger("cooldown", this.cooldown);
         nbt.setInteger("maxTrades", this.maxTrades);
+        nbt.setString("label", this.label);
         NBTTagList tList = new NBTTagList();
         for (Trade t : trades) {
             tList.appendTag(t.writeToNBT(new NBTTagCompound()));
