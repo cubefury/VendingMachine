@@ -1,5 +1,10 @@
 package com.cubefury.vendingmachine.blocks.gui;
 
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.World;
+
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.api.widget.IWidget;
 import com.cleanroommc.modularui.factory.PosGuiData;
@@ -18,6 +23,8 @@ import com.cleanroommc.modularui.widgets.slot.ModularSlot;
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
 
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.relauncher.Side;
 import gregtech.api.metatileentity.implementations.gui.MTEMultiBlockBaseGui;
 import gregtech.api.modularui2.GTGuiTextures;
 import gregtech.api.modularui2.GTWidgetThemes;
@@ -71,33 +78,52 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     }
 
     private void ejectItems() {
-
-        VendingMachine.LOG.info("Ejecting Items");
-        /*
-         * World world = base.getBaseMetaTileEntity().getWorld();
-         * int posX = base.getBaseMetaTileEntity().getXCoord();
-         * int posY = base.getBaseMetaTileEntity().getYCoord();
-         * int posZ = base.getBaseMetaTileEntity().getZCoord();
-         * int offsetX = base.getExtendedFacing().getDirection().offsetX;
-         * int offsetY = base.getExtendedFacing().getDirection().offsetY;
-         * int offsetZ = base.getExtendedFacing().getDirection().offsetZ;
-         * for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
-         * ItemStack stack = base.inputItems.getStackInSlot(i);
-         * if (stack != null) {
-         * ItemStack extracted = base.inputItems.extractItem(i, stack.stackSize, false);
-         * final EntityItem itemEntity = new EntityItem(
-         * world,
-         * posX + offsetX, posY + offsetY, posZ + offsetZ,
-         * new ItemStack(extracted.getItem(), extracted.stackSize, extracted.getItemDamage())
-         * );
-         * if (extracted.hasTagCompound()) {
-         * itemEntity.getEntityItem().setTagCompound((NBTTagCompound) extracted.getTagCompound().copy());
-         * }
-         * itemEntity.delayBeforeCanPickup = 0;
-         * world.spawnEntityInWorld(itemEntity);
-         * }
-         * }
-         */
+        Side side = FMLCommonHandler.instance()
+            .getEffectiveSide();
+        if (side.isServer()) {
+            if (base.getBaseMetaTileEntity() == null) {
+                VendingMachine.LOG.info("Unable to eject items as the base MTE for the Vending Machine was null.");
+            } else {
+                World world = base.getBaseMetaTileEntity()
+                    .getWorld();
+                int posX = base.getBaseMetaTileEntity()
+                    .getXCoord();
+                int posY = base.getBaseMetaTileEntity()
+                    .getYCoord();
+                int posZ = base.getBaseMetaTileEntity()
+                    .getZCoord();
+                int offsetX = base.getExtendedFacing()
+                    .getDirection().offsetX;
+                int offsetY = base.getExtendedFacing()
+                    .getDirection().offsetY;
+                int offsetZ = base.getExtendedFacing()
+                    .getDirection().offsetZ;
+                VendingMachine.LOG.info("{} {} {}", offsetX, offsetY, offsetZ);
+                for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
+                    ItemStack stack = base.inputItems.getStackInSlot(i);
+                    if (stack != null) {
+                        ItemStack extracted = base.inputItems.extractItem(i, stack.stackSize, false);
+                        final EntityItem itemEntity = new EntityItem(
+                            world,
+                            posX + offsetX * 0.5,
+                            posY + offsetY * 0.5,
+                            posZ + offsetZ * 0.5,
+                            new ItemStack(extracted.getItem(), extracted.stackSize, extracted.getItemDamage()));
+                        if (extracted.hasTagCompound()) {
+                            itemEntity.getEntityItem()
+                                .setTagCompound(
+                                    (NBTTagCompound) extracted.getTagCompound()
+                                        .copy());
+                        }
+                        itemEntity.delayBeforeCanPickup = 0;
+                        itemEntity.motionX = 0.05f * offsetX;
+                        itemEntity.motionY = 0.05f * offsetY;
+                        itemEntity.motionZ = 0.05f * offsetZ;
+                        world.spawnEntityInWorld(itemEntity);
+                    }
+                }
+            }
+        }
         ejectItems = false;
     }
 
@@ -155,7 +181,9 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
         BooleanSyncValue ejectItemsSyncer = new BooleanSyncValue(() -> this.ejectItems, val -> {
             this.ejectItems = val;
-            ejectItems();
+            if (this.ejectItems) {
+                ejectItems();
+            }
         });
         syncManager.syncValue("ejectItems", ejectItemsSyncer);
 
