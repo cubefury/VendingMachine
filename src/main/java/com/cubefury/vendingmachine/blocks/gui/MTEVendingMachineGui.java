@@ -1,6 +1,13 @@
 package com.cubefury.vendingmachine.blocks.gui;
 
+import com.cubefury.vendingmachine.api.storage.INameCache;
+import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
+import com.cubefury.vendingmachine.storage.NameCache;
+import com.cubefury.vendingmachine.trade.TradeGroup;
+import com.cubefury.vendingmachine.trade.TradeGroupWrapper;
+import com.cubefury.vendingmachine.trade.TradeManager;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
@@ -33,13 +40,20 @@ import gregtech.api.metatileentity.implementations.gui.MTEMultiBlockBaseGui;
 import gregtech.api.modularui2.GTGuiTextures;
 import gregtech.api.modularui2.GTWidgetThemes;
 
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
 public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     private final MTEVendingMachine base;
     private final int height;
 
     private boolean ejectItems = false;
-    private IItemHandlerModifiable tradeItemHandler = new ItemStackHandler(MTEVendingMachine.MAX_TRADES);
+    private final IItemHandlerModifiable tradeItemHandler = new ItemStackHandler(MTEVendingMachine.MAX_TRADES);
+    private final ItemSlot[] tradeSlotList = new ItemSlot[MTEVendingMachine.MAX_TRADES];
+
+    private int debug_updateCount = 0;
 
     public MTEVendingMachineGui(MTEVendingMachine base, int height) {
         super(base);
@@ -50,13 +64,13 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     @Override
     public ModularPanel build(PosGuiData guiData, PanelSyncManager syncManager, UISettings uiSettings) {
         registerSyncValues(syncManager);
-        ModularPanel panel = new ModularPanel("MTEMultiBlockBase").size(198, height)
+        ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, syncManager).size(198, height)
             .padding(4);
         panel = panel.child(
             new Column().width(170)
                 .child(createTitleTextStyle(base.getLocalName()))
                 .child(createInputRow(syncManager))
-                .child(createTradeUI())
+                .child(createTradeUI((TradeMainPanel) panel, syncManager))
                 .child(createInventoryRow(panel, syncManager)));
         panel = panel.child(
             new Column().size(20)
@@ -106,7 +120,12 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                 for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
                     ItemStack stack = base.inputItems.getStackInSlot(i);
                     if (stack != null) {
+                        // TODO: There's still a race condition here where the stack size changes between these
+                        // two null checks. Fix
                         ItemStack extracted = base.inputItems.extractItem(i, stack.stackSize, false);
+                        if (extracted == null) { // if somehow it got pulled out already
+                            continue;
+                        }
                         final EntityItem itemEntity = new EntityItem(
                             world,
                             posX + offsetX * 0.5,
@@ -165,7 +184,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .build();
     }
 
-    private IWidget createTradeUI() {
+    private IWidget createTradeUI(TradeMainPanel rootPanel, PanelSyncManager syncManager) {
         ScrollWidget<?> sw = new ScrollWidget<>(new VerticalScrollData()).size(9 * 18)
             .margin(0);
         sw.getScrollArea()
@@ -174,9 +193,11 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
             int x = i % 9;
             int y = i / 9;
-            sw.child(
-                new TradeSlot(x, y).pos(x * 18, y * 18)
-                    .slot(new ModularSlot(tradeItemHandler, i)));
+            tradeSlotList[i] = new TradeSlot(x, y, rootPanel).pos(x * 18, y * 18)
+                .slot(new ModularSlot(tradeItemHandler, i)).tooltipDynamic(builder -> {
+                    builder.add("yes " + debug_updateCount);
+                });
+            sw.child(tradeSlotList[i]);
         }
 
         return new Row().child(sw.top(0))
@@ -209,7 +230,15 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             }
         });
         syncManager.syncValue("ejectItems", ejectItemsSyncer);
+    }
 
+    public void attemptPurchase(int x, int y) {
+        VendingMachine.LOG.info("Attempted Purchase of {} {}", x, y);
+    }
+
+    public void updateSlots() {
+        // this.tradeItemHandler.setStackInSlot();
+        debug_updateCount += 1;
     }
 
 }

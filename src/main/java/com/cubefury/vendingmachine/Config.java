@@ -10,7 +10,7 @@ public class Config {
 
     public static String data_dir = "vendingmachine";
     public static String config_dir = "config/vendingmachine";
-    public static int gui_refresh_interval = 1;
+    public static int gui_refresh_interval = 20;
 
     public static File worldDir = null;
 
@@ -24,7 +24,7 @@ public class Config {
 
         configuration.addCustomCategoryComment(CONFIG_CATEGORY_GUI, "GUI Settings");
         gui_refresh_interval = configuration
-            .getInt("gui_refresh_interval", CONFIG_CATEGORY_GUI, gui_refresh_interval, 1, 3600, "");
+            .getInt("gui_refresh_interval", CONFIG_CATEGORY_GUI, gui_refresh_interval, 20, 3600, "In number of ticks");
 
         if (configuration.hasChanged()) {
             configuration.save();

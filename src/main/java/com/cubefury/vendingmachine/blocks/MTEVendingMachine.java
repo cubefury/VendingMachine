@@ -6,6 +6,7 @@ import static com.gtnewhorizon.structurelib.structure.StructureUtility.ofBlock;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -111,6 +112,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     @Override
     protected @NotNull MTEVendingMachineGui getGui() {
+        NetAvailableTradeSync.requestSync();
         return new MTEVendingMachineGui(this, CUSTOM_UI_HEIGHT);
     }
 
