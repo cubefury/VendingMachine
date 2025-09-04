@@ -1,6 +1,5 @@
 package com.cubefury.vendingmachine.blocks.gui;
 
-import com.cubefury.vendingmachine.VendingMachine;
 import net.minecraft.item.ItemStack;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,8 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import com.cleanroommc.modularui.widgets.slot.PhantomItemSlot;
 
 import gregtech.api.modularui2.GTGuiTextures;
-
-import java.util.List;
 
 public class TradeSlot extends PhantomItemSlot {
 
@@ -45,9 +42,5 @@ public class TradeSlot extends PhantomItemSlot {
     @Override
     public boolean handleDragAndDrop(@NotNull ItemStack draggedStack, int button) {
         return false;
-    }
-
-    public void onTradeRefresh() {
-
     }
 }

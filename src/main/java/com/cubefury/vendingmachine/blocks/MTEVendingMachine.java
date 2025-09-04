@@ -6,7 +6,6 @@ import static com.gtnewhorizon.structurelib.structure.StructureUtility.ofBlock;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -16,7 +15,9 @@ import net.minecraftforge.common.util.ForgeDirection;
 import org.jetbrains.annotations.NotNull;
 
 import com.cleanroommc.modularui.utils.item.ItemStackHandler;
+import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.blocks.gui.MTEVendingMachineGui;
+import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
 import com.gtnewhorizon.structurelib.StructureLibAPI;
 import com.gtnewhorizon.structurelib.alignment.IAlignment;
 import com.gtnewhorizon.structurelib.alignment.IAlignmentLimits;
@@ -112,7 +113,9 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     @Override
     protected @NotNull MTEVendingMachineGui getGui() {
-        NetAvailableTradeSync.requestSync();
+        if (VendingMachine.proxy.isClient()) {
+            NetAvailableTradeSync.requestSync();
+        }
         return new MTEVendingMachineGui(this, CUSTOM_UI_HEIGHT);
     }
 

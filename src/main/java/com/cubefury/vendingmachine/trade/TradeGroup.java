@@ -194,6 +194,10 @@ public class TradeGroup {
         return nbt;
     }
 
+    public String getLabel() {
+        return this.label;
+    }
+
     @Optional.Method(modid = "betterquesting")
     public void removeAllSatisfiedBqConditions(UUID player) {
         synchronized (tradeState) {
