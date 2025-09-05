@@ -1,3 +1,13 @@
 tile.vendingmachine.vending_machine.name=自动售货机
 
-item.vendingmachine.placeholder.name=占位符物品
+item.vendingmachine.placeholder.name=占位物品
+
+tooltip.vendingmachine=到底是谁在补货啊...
+
+vendingmachine.gui.requirementHeader=需求条件：
+vendingmachine.gui.requirement.unknown=未知要求
+vendingmachine.gui.requirement.betterquesting=任务
+vendingmachine.gui.requirement.betterquesting.missing=未完成任务
+vendingmachine.gui.neiColor.conditionDefault=000000
+vendingmachine.gui.neiColor.conditionSatisfied=55D441
+vendingmachine.gui.neiColor.conditionUnsatisfied=A87A5E
