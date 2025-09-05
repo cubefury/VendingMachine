@@ -10,8 +10,8 @@ public class IMCforNEI {
 
     public static void IMCSender() {
 
-        sendCatalyst("vendingmachine", "vendingmachine:vending_machine");
-        sendHandler("vendingmachine", "vendingmachine:vending_machine");
+        sendCatalyst("vendingmachine", "vendingmachine:gt.blockmachines.multimachine.vendingmachine");
+        sendHandler("vendingmachine", "vendingmachine:gt.blockmachines.multimachine.vendingmachine");
     }
 
     private static void sendHandler(String name, String itemStack) {

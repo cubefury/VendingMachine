@@ -15,3 +15,5 @@ vendingmachine.gui.cooldown_display.second=s
 vendingmachine.gui.cooldown_display.minute=m
 vendingmachine.gui.cooldown_display.hour=h
 vendingmachine.gui.cooldown_display.day=d
+
+gt.blockmachines.multimachine.vendingmachine.name=Vending Machine
