@@ -13,4 +13,4 @@ public record TradeItemDisplay(List<BigItemStack> fromItems, List<BigItemStack> 
                                                                                                                        // UUID
     int tradeGroupOrder, // ordering within tradegroup
     String label, // additional text for tooltip
-    long cooldown, String cooldownText, boolean hasCooldown, boolean enabled) {}
+    long cooldown, String cooldownText, boolean hasCooldown, boolean enabled, boolean tradeableNow) {}

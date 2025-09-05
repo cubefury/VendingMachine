@@ -10,6 +10,7 @@ import net.minecraft.world.World;
 
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.api.widget.IWidget;
+import com.cleanroommc.modularui.drawable.DynamicDrawable;
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
@@ -29,6 +30,7 @@ import com.cleanroommc.modularui.widgets.slot.ItemSlot;
 import com.cleanroommc.modularui.widgets.slot.ModularSlot;
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
+import com.cubefury.vendingmachine.gui.GuiTextures;
 
 import gregtech.api.metatileentity.implementations.gui.MTEMultiBlockBaseGui;
 import gregtech.api.modularui2.GTGuiTextures;
@@ -51,6 +53,10 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         this.height = height;
     }
 
+    public MTEVendingMachine getBase() {
+        return base;
+    }
+
     @Override
     public ModularPanel build(PosGuiData guiData, PanelSyncManager syncManager, UISettings uiSettings) {
         this.guiData = guiData;
@@ -70,7 +76,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         return panel;
     }
 
-    // why is this method private lmao
+    // why is the original method private lmao
     private IWidget createTitleTextStyle(String title) {
         return new SingleChildWidget<>().coverChildren()
             .topRel(0, -4, 1)
@@ -186,6 +192,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             tradeSlotList[i] = new TradeSlot(x, y, rootPanel).pos(x * 18, y * 18)
                 .slot(new ModularSlot(tradeItemHandler, i))
                 .tooltipDynamic(builder -> {
+                    // builder.clearText();
                     synchronized (displayedTrades) {
                         if (slotNumber < displayedTrades.size()) {
                             TradeItemDisplay cur = displayedTrades.get(slotNumber);
@@ -195,6 +202,26 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                         }
                     }
                 });
+            DynamicDrawable slotOverlay = new DynamicDrawable(() -> {
+                if (
+                    slotNumber < displayedTrades.size() && displayedTrades.get(slotNumber)
+                        .tradeableNow()
+                ) {
+                    return GuiTextures.OVERLAY_TRADE_AVAILABLE_HIGHLIGHT;
+                }
+                return null;
+            });
+            DynamicDrawable slotBackground = new DynamicDrawable(() -> {
+                if (
+                    slotNumber < displayedTrades.size() && displayedTrades.get(slotNumber)
+                        .tradeableNow()
+                ) {
+                    return GuiTextures.TRADE_AVAILABLE_BACKGROUND;
+                }
+                return GTGuiTextures.SLOT_ITEM_STANDARD;
+            });
+            tradeSlotList[i].background(slotBackground);
+            tradeSlotList[i].overlay(slotOverlay);
             sw.child(tradeSlotList[i]);
         }
 
@@ -203,7 +230,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .top(38);
     }
 
-    // why is this method private lmao
+    // why is the original method private lmao
     private IWidget createInventoryRow(ModularPanel panel, PanelSyncManager syncManager) {
         return new Row().widthRel(1)
             .height(76)

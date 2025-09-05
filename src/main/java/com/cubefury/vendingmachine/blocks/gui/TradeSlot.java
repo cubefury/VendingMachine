@@ -6,8 +6,6 @@ import org.jetbrains.annotations.NotNull;
 
 import com.cleanroommc.modularui.widgets.slot.PhantomItemSlot;
 
-import gregtech.api.modularui2.GTGuiTextures;
-
 public class TradeSlot extends PhantomItemSlot {
 
     private final int x;
@@ -18,17 +16,6 @@ public class TradeSlot extends PhantomItemSlot {
         this.x = x;
         this.y = y;
         this.rootPanel = rootPanel;
-    }
-
-    @Override
-    public void onMouseStartHover() {
-        // VendingMachine.LOG.info("Hovering over {} {}", x, y);
-        this.hoverOverlay(GTGuiTextures.OVERLAY_BUTTON_BOUNDING_BOX);
-    }
-
-    @Override
-    public void onMouseEndHover() {
-        this.disableHoverOverlay();
     }
 
     @Override

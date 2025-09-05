@@ -1,7 +1,10 @@
 package com.cubefury.vendingmachine.blocks.gui;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -12,11 +15,11 @@ import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cubefury.vendingmachine.Config;
-import com.cubefury.vendingmachine.VendingMachine;
-import com.cubefury.vendingmachine.storage.NameCache;
+import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
 import com.cubefury.vendingmachine.trade.Trade;
+import com.cubefury.vendingmachine.trade.TradeDatabase;
+import com.cubefury.vendingmachine.trade.TradeGroup;
 import com.cubefury.vendingmachine.trade.TradeGroupWrapper;
-import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.Translator;
 
@@ -65,9 +68,15 @@ public class TradeMainPanel extends ModularPanel {
             this.player = syncManager.getPlayer();
         }
         if (this.ticksOpen % Config.gui_refresh_interval == 0 && player != null && !shiftHeld) {
-            VendingMachine.LOG.info("Refreshing Trade Info");
-            List<TradeItemDisplay> trades = formatTrades(
-                TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer())));
+            List<TradeGroupWrapper> testTGW = new ArrayList<>();
+            for (Map.Entry<UUID, TradeGroup> entry : TradeDatabase.INSTANCE.getTradeGroups()
+                .entrySet()) {
+                testTGW.add(new TradeGroupWrapper(entry.getValue(), -1, true));
+            }
+            List<TradeItemDisplay> trades = formatTrades(testTGW);
+            // TODO: SWAP BACK
+            // List<TradeItemDisplay> trades =
+            // formatTrades(TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer())));
             gui.updateSlots(trades);
         }
         this.ticksOpen += 1;
@@ -93,7 +102,37 @@ public class TradeMainPanel extends ModularPanel {
         return display;
     }
 
+    public boolean checkItemsSatisfied(List<BigItemStack> trade, Map<ItemStack, Integer> availableItems) {
+        for (BigItemStack bis : trade) {
+            ItemStack base = bis.getBaseStack();
+            base.stackSize = 1; // shouldn't need this, but just in case
+            if (availableItems.get(base) == null || availableItems.get(base) < bis.stackSize) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public Map<ItemStack, Integer> getAvailableItems() {
+        Map<ItemStack, Integer> items = new HashMap<>();
+        for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
+            ItemStack stack = this.gui.getBase().inputItems.getStackInSlot(i);
+            if (stack != null) {
+                ItemStack tmp = stack.copy();
+                tmp.stackSize = 1;
+                items.putIfAbsent(tmp, 0);
+                items.replace(tmp, items.get(tmp) + stack.stackSize);
+            }
+        }
+        return items;
+    }
+
     public List<TradeItemDisplay> formatTrades(List<TradeGroupWrapper> tradeGroups) {
+
+        Map<ItemStack, Integer> availableItems = this.guiData.isClient() && this.gui.getBase() != null
+            ? getAvailableItems()
+            : new HashMap<>();
+
         List<TradeItemDisplay> trades = new ArrayList<>();
         for (TradeGroupWrapper tgw : tradeGroups) {
             List<Trade> tradeList = tgw.trade()
@@ -117,7 +156,8 @@ public class TradeMainPanel extends ModularPanel {
                         tgw.cooldown(),
                         convertCooldownText(tgw.cooldown()),
                         tgw.cooldown() > 0,
-                        tgw.enabled()));
+                        tgw.enabled(),
+                        checkItemsSatisfied(trade.fromItems, availableItems)));
             }
         }
         // Build from bottom of list up
@@ -135,6 +175,13 @@ public class TradeMainPanel extends ModularPanel {
                 if (b.enabled()) {
                     return -1;
                 }
+            }
+            // tradeable
+            if(a.tradeableNow() || b.tradeableNow()) {
+                if (a.tradeableNow() == b.tradeableNow()) {
+                    return 0;
+                }
+                return a.tradeableNow() ? 1 : -1;
             }
             // trades on cooldown - filter down if equal
             if ((a.hasCooldown() || b.hasCooldown()) && (a.cooldown() != b.cooldown())) {
