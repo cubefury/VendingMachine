@@ -133,7 +133,7 @@ public class TradeGroup {
             if (trade == null) { // shouldn't happen
                 continue;
             }
-            if (trade.trade().id == this.id && trade.enabled() && cooldown < 0) {
+            if (trade.trade().id.equals(this.id) && trade.enabled() && trade.cooldown() < 0) {
                 return true;
             }
         }

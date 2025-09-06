@@ -21,6 +21,7 @@ import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
 import com.cubefury.vendingmachine.trade.TradeGroup;
 import com.cubefury.vendingmachine.trade.TradeGroupWrapper;
+import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.Translator;
 
@@ -67,10 +68,10 @@ public class TradeMainPanel extends ModularPanel {
             .entrySet()) {
             testTGW.add(new TradeGroupWrapper(entry.getValue(), -1, true));
         }
-        List<TradeItemDisplay> trades = formatTrades(testTGW);
+        // List<TradeItemDisplay> trades = formatTrades(testTGW);
         // TODO: SWAP BACK
-        // List<TradeItemDisplay> trades =
-        // formatTrades(TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer())));
+        List<TradeItemDisplay> trades = formatTrades(
+            TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer())));
         gui.updateSlots(trades);
     }
 

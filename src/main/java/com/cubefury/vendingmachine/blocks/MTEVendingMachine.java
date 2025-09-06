@@ -119,7 +119,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             this.newBufferedOutputs
                 || (!this.outputBuffer.isEmpty() && this.ticksSinceOutput % Config.dispense_frequency == 0)
         ) {
-            VendingMachine.LOG.info("Dispensing");
+            VendingMachine.LOG.info("stack in output slot: {}", this.outputItems.getStackInSlot(0));
             int remainingDispensables = Config.dispense_amount;
             while (!this.outputBuffer.isEmpty() && remainingDispensables > 0) {
                 ItemStack next = this.outputBuffer.peek();
@@ -136,13 +136,14 @@ public class MTEVendingMachine extends MTEMultiBlockBase
                         if (cur != null) {
                             ItemStack curCopy = cur.copy();
                             curCopy.stackSize = 1;
-                            if (ItemStack.areItemStacksEqual(curCopy, nextCopy)) {
+                            if (
+                                ItemStack.areItemStacksEqual(curCopy, nextCopy)
+                                    && ItemStack.areItemStackTagsEqual(curCopy, nextCopy)
+                            ) {
                                 int change = Math.min(
                                     Math.min(remainingDispensables, curCopy.getMaxStackSize() - cur.stackSize),
                                     next.stackSize);
                                 cur.stackSize += change;
-                                // technically not required, but we do this in case down the line
-                                // the ItemStackHandlers passes copies instead
                                 this.outputItems.setStackInSlot(i, cur);
                                 toAdd -= change;
                                 remainingDispensables -= change;
@@ -150,10 +151,12 @@ public class MTEVendingMachine extends MTEMultiBlockBase
                             }
                         }
                     }
+                    VendingMachine.LOG.info("Make new stack: {} {}", remainingDispensables, toAdd);
 
                     for (int i = 0; i < MTEVendingMachine.OUTPUT_SLOTS && remainingDispensables > 0 && toAdd > 0; i++) {
                         // make new stack
                         ItemStack cur = this.outputItems.getStackInSlot(i);
+                        VendingMachine.LOG.info("slot data: {}", cur);
                         if (cur == null) {
                             int change = Math.min(remainingDispensables, toAdd);
                             ItemStack output = next.copy();
@@ -171,12 +174,13 @@ public class MTEVendingMachine extends MTEMultiBlockBase
                     }
                 }
             }
-            ticksSinceOutput = this.newBufferedOutputs ? 0 : ticksSinceOutput + 1;
-            this.newBufferedOutputs = false;
         }
+        ticksSinceOutput = this.newBufferedOutputs ? 0 : ticksSinceOutput + 1;
+        this.newBufferedOutputs = false;
     }
 
     private boolean processTradeOnServer(TradeItemDisplay trade) {
+        VendingMachine.LOG.info("breakpoint 1");
         if (
             trade == null || !TradeDatabase.INSTANCE.getTradeGroups()
                 .get(trade.tgID)
@@ -184,6 +188,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         ) {
             return false;
         }
+        VendingMachine.LOG.info("breakpoint 2");
         ItemStack[] inputSlots = new ItemStack[MTEVendingMachine.INPUT_SLOTS];
         for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
             ItemStack curStack = this.inputItems.getStackInSlot(i);
@@ -195,6 +200,9 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             int requiredAmount = stack.stackSize;
             // Remove Items from last stacks if possible
             for (int i = MTEVendingMachine.INPUT_SLOTS - 1; i >= 0 && requiredAmount > 0; i--) {
+                if (inputSlots[i] == null) {
+                    continue;
+                }
                 ItemStack tmp = inputSlots[i].copy();
                 tmp.stackSize = 1;
                 if (
@@ -214,6 +222,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
                 return false;
             }
         }
+        VendingMachine.LOG.info("breakpoint 3");
 
         for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
             this.inputItems.setStackInSlot(i, inputSlots[i]);
@@ -294,24 +303,6 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         return FACING_SIDE;
     }
 
-    /*
-     * Use this to implement the items slowly dispensing? idk
-     * temp code copied from bricked blast furnace implementation
-     * Make sure to add progresstime and maxprogresstime to save/load nbt
-     * @Override
-     * public int getProgresstime() {
-     * return this.mProgresstime;
-     * }
-     * @Override
-     * public int maxProgresstime() {
-     * return this.mMaxProgresstime;
-     * }
-     * @Override
-     * public int increaseProgress(int aProgress) {
-     * this.mProgresstime += aProgress;
-     * return this.mMaxProgresstime - this.mProgresstime;
-     * }
-     */
     @Override
     public String[] getDescription() {
         return getCurrentDescription();

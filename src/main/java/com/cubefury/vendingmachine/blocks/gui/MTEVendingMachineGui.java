@@ -179,9 +179,13 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         return SlotGroupWidget.builder()
             .matrix("I")
             .key('I', index -> {
-                return new ItemSlot().slot(
-                    new ModularSlot(base.outputItems, index).accessibility(false, true)
-                        .slotGroup("outputSlotGroup"));
+                ModularSlot ms = new ModularSlot(base.outputItems, index).accessibility(false, true)
+                    .slotGroup("outputSlotGroup");
+                ms.changeListener((newItem, onlyAmountChanged, client, init) -> {
+                    VendingMachine.LOG.info("Changed output slot");
+                    VendingMachine.LOG.info(base.outputItems.getStackInSlot(0));
+                });
+                return new ItemSlot().slot(ms);
             })
             .build();
     }
@@ -233,9 +237,9 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                 }
                 return GTGuiTextures.SLOT_ITEM_STANDARD;
             });
+
             tradeSlotList[i].background(slotBackground);
-            tradeSlotList[i].overlay(tradeAvailableOverlay);
-            tradeSlotList[i].overlay(tradeCooldownOverlay);
+            tradeSlotList[i].overlay(tradeAvailableOverlay, tradeCooldownOverlay);
             sw.child(tradeSlotList[i]);
         }
 
@@ -273,13 +277,17 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     public void attemptPurchase(int x, int y) {
         TradeItemDisplay trade = null;
+
         synchronized (displayedTrades) {
+            if (displayedTrades.size() < y * 9 + x - 1) {
+                return;
+            }
             trade = displayedTrades.get(y * 9 + x);
+            if (trade == null) {
+                return;
+            }
+            submitTradesToServer(displayedTrades.get(y * 9 + x));
         }
-        if (trade == null) {
-            return;
-        }
-        submitTradesToServer(displayedTrades.get(y * 9 + x));
         this.forceRefresh = true;
     }
 
