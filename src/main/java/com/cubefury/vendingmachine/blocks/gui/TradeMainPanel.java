@@ -194,8 +194,14 @@ public class TradeMainPanel extends ModularPanel {
                 return a.tradeableNow ? -1 : 1;
             }
             // trades on cooldown - filter down if equal
-            if ((a.hasCooldown || b.hasCooldown) && (a.cooldown != b.cooldown)) {
-                return a.cooldown > b.cooldown ? -1 : 1;
+            if (a.hasCooldown && b.hasCooldown && a.cooldown != b.cooldown) {
+                return a.cooldown > b.cooldown ? 1 : -1;
+            }
+            if (a.hasCooldown || b.hasCooldown) {
+                if (a.cooldown == b.cooldown) {
+                    return 0;
+                }
+                return a.hasCooldown ? -1 : 1;
             }
             // tradegroupID - sort ascending
             if (a.tgID != b.tgID) {

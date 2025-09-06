@@ -109,7 +109,6 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     public void dispenseItems() {
         if (!this.pendingTrades.isEmpty()) {
-            VendingMachine.LOG.info("Received trade on server");
             if (!processTradeOnServer(this.pendingTrades.poll())) {
                 VendingMachine.LOG.warn(
                     "Unable to complete trade. Either input items changed after trade submission, or a double click was sent.");
@@ -119,7 +118,6 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             this.newBufferedOutputs
                 || (!this.outputBuffer.isEmpty() && this.ticksSinceOutput % Config.dispense_frequency == 0)
         ) {
-            VendingMachine.LOG.info("stack in output slot: {}", this.outputItems.getStackInSlot(0));
             int remainingDispensables = Config.dispense_amount;
             while (!this.outputBuffer.isEmpty() && remainingDispensables > 0) {
                 ItemStack next = this.outputBuffer.peek();
@@ -151,12 +149,9 @@ public class MTEVendingMachine extends MTEMultiBlockBase
                             }
                         }
                     }
-                    VendingMachine.LOG.info("Make new stack: {} {}", remainingDispensables, toAdd);
-
                     for (int i = 0; i < MTEVendingMachine.OUTPUT_SLOTS && remainingDispensables > 0 && toAdd > 0; i++) {
                         // make new stack
                         ItemStack cur = this.outputItems.getStackInSlot(i);
-                        VendingMachine.LOG.info("slot data: {}", cur);
                         if (cur == null) {
                             int change = Math.min(remainingDispensables, toAdd);
                             ItemStack output = next.copy();
@@ -180,7 +175,6 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     }
 
     private boolean processTradeOnServer(TradeItemDisplay trade) {
-        VendingMachine.LOG.info("breakpoint 1");
         if (
             trade == null || !TradeDatabase.INSTANCE.getTradeGroups()
                 .get(trade.tgID)
@@ -188,7 +182,6 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         ) {
             return false;
         }
-        VendingMachine.LOG.info("breakpoint 2");
         ItemStack[] inputSlots = new ItemStack[MTEVendingMachine.INPUT_SLOTS];
         for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
             ItemStack curStack = this.inputItems.getStackInSlot(i);
@@ -222,7 +215,6 @@ public class MTEVendingMachine extends MTEMultiBlockBase
                 return false;
             }
         }
-        VendingMachine.LOG.info("breakpoint 3");
 
         for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
             this.inputItems.setStackInSlot(i, inputSlots[i]);
@@ -235,6 +227,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         TradeDatabase.INSTANCE.getTradeGroups()
             .get(trade.tgID)
             .executeTrade(trade.playerID);
+
         return true;
     }
 

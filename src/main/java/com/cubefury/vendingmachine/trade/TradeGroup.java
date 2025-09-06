@@ -1,6 +1,7 @@
 package com.cubefury.vendingmachine.trade;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +15,7 @@ import net.minecraftforge.common.util.Constants;
 
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.api.trade.ICondition;
+import com.cubefury.vendingmachine.handlers.SaveLoadHandler;
 import com.cubefury.vendingmachine.integration.betterquesting.BqAdapter;
 import com.cubefury.vendingmachine.integration.betterquesting.BqCondition;
 import com.cubefury.vendingmachine.util.NBTConverter;
@@ -124,6 +126,7 @@ public class TradeGroup {
     public void setTradeState(UUID player, TradeHistory history) {
         synchronized (tradeState) {
             tradeState.put(player, history);
+
         }
     }
 
@@ -144,6 +147,7 @@ public class TradeGroup {
         TradeHistory newTradeHistory = getTradeState(player);
         newTradeHistory.executeTrade();
         setTradeState(player, newTradeHistory);
+        SaveLoadHandler.INSTANCE.writeTradeState(Collections.singleton(player));
     }
 
     public boolean readFromNBT(NBTTagCompound nbt) {
