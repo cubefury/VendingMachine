@@ -41,6 +41,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     private final MTEVendingMachine base;
     private final int height;
 
+    public boolean forceRefresh = false;
+
     private boolean ejectItems = false;
     private final IItemHandlerModifiable tradeItemHandler = new ItemStackHandler(MTEVendingMachine.MAX_TRADES);
     private final ItemSlot[] tradeSlotList = new ItemSlot[MTEVendingMachine.MAX_TRADES];
@@ -150,11 +152,15 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         row.child(
             SlotGroupWidget.builder()
                 .matrix("IIIIIII")
-                .key(
-                    'I',
-                    index -> {
-                        return new ItemSlot().slot(new ModularSlot(base.inputItems, index).slotGroup("inputSlotGroup"));
-                    })
+                .key('I', index -> {
+                    return new ItemSlot().slot(
+                        new ModularSlot(base.inputItems, index).slotGroup("inputSlotGroup")
+                            .changeListener((newItem, onlyAmountChanged, client, init) -> {
+                                if (guiData.isClient()) {
+                                    forceRefresh = true;
+                                }
+                            }));
+                })
                 .build());
         row.child(
             new ToggleButton().overlay(GTGuiTextures.OVERLAY_BUTTON_CYCLIC)
@@ -259,6 +265,11 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     public void attemptPurchase(int x, int y) {
         VendingMachine.LOG.info("Attempted Purchase of {} {}", x, y);
+        this.forceRefresh = true;
+    }
+
+    public void resetForceRefresh() {
+        this.forceRefresh = false;
     }
 
     public void updateSlots(List<TradeItemDisplay> trades) {

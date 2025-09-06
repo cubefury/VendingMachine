@@ -58,6 +58,19 @@ public class TradeMainPanel extends ModularPanel {
         return super.onKeyRelease(typedChar, keyCode);
     }
 
+    public void updateGui() {
+        List<TradeGroupWrapper> testTGW = new ArrayList<>();
+        for (Map.Entry<UUID, TradeGroup> entry : TradeDatabase.INSTANCE.getTradeGroups()
+            .entrySet()) {
+            testTGW.add(new TradeGroupWrapper(entry.getValue(), -1, true));
+        }
+        List<TradeItemDisplay> trades = formatTrades(testTGW);
+        // TODO: SWAP BACK
+        // List<TradeItemDisplay> trades =
+        // formatTrades(TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer())));
+        gui.updateSlots(trades);
+    }
+
     @Override
     public void onUpdate() {
         super.onUpdate();
@@ -67,17 +80,9 @@ public class TradeMainPanel extends ModularPanel {
         if (this.player == null && this.syncManager.isInitialised()) {
             this.player = syncManager.getPlayer();
         }
-        if (this.ticksOpen % Config.gui_refresh_interval == 0 && player != null && !shiftHeld) {
-            List<TradeGroupWrapper> testTGW = new ArrayList<>();
-            for (Map.Entry<UUID, TradeGroup> entry : TradeDatabase.INSTANCE.getTradeGroups()
-                .entrySet()) {
-                testTGW.add(new TradeGroupWrapper(entry.getValue(), -1, true));
-            }
-            List<TradeItemDisplay> trades = formatTrades(testTGW);
-            // TODO: SWAP BACK
-            // List<TradeItemDisplay> trades =
-            // formatTrades(TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer())));
-            gui.updateSlots(trades);
+        if (gui.forceRefresh || (this.ticksOpen % Config.gui_refresh_interval == 0 && player != null && !shiftHeld)) {
+            updateGui();
+            gui.resetForceRefresh();
         }
         this.ticksOpen += 1;
     }
@@ -102,9 +107,9 @@ public class TradeMainPanel extends ModularPanel {
         return display;
     }
 
-    public boolean checkItemsSatisfied(List<BigItemStack> trade, Map<ItemStack, Integer> availableItems) {
+    public boolean checkItemsSatisfied(List<BigItemStack> trade, Map<BigItemStack, Integer> availableItems) {
         for (BigItemStack bis : trade) {
-            ItemStack base = bis.getBaseStack();
+            BigItemStack base = bis.copy();
             base.stackSize = 1; // shouldn't need this, but just in case
             if (availableItems.get(base) == null || availableItems.get(base) < bis.stackSize) {
                 return false;
@@ -113,12 +118,12 @@ public class TradeMainPanel extends ModularPanel {
         return true;
     }
 
-    public Map<ItemStack, Integer> getAvailableItems() {
-        Map<ItemStack, Integer> items = new HashMap<>();
+    public Map<BigItemStack, Integer> getAvailableItems() {
+        Map<BigItemStack, Integer> items = new HashMap<>();
         for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
             ItemStack stack = this.gui.getBase().inputItems.getStackInSlot(i);
             if (stack != null) {
-                ItemStack tmp = stack.copy();
+                BigItemStack tmp = new BigItemStack(stack);
                 tmp.stackSize = 1;
                 items.putIfAbsent(tmp, 0);
                 items.replace(tmp, items.get(tmp) + stack.stackSize);
@@ -129,7 +134,7 @@ public class TradeMainPanel extends ModularPanel {
 
     public List<TradeItemDisplay> formatTrades(List<TradeGroupWrapper> tradeGroups) {
 
-        Map<ItemStack, Integer> availableItems = this.guiData.isClient() && this.gui.getBase() != null
+        Map<BigItemStack, Integer> availableItems = this.guiData.isClient() && this.gui.getBase() != null
             ? getAvailableItems()
             : new HashMap<>();
 
@@ -165,29 +170,29 @@ public class TradeMainPanel extends ModularPanel {
             // null case
             if (a == null || b == null) {
                 if (a == b) return 0;
-                return b == null ? 1 : -1;
+                return b == null ? -1 : 1;
             }
             // disabled trades - will filter down if both are disabled
             if (!a.enabled() || !b.enabled()) {
                 if (a.enabled()) {
-                    return 1;
+                    return -1;
                 }
                 if (b.enabled()) {
-                    return -1;
+                    return 1;
                 }
             }
             // tradeable
-            if(a.tradeableNow() || b.tradeableNow()) {
+            if (a.tradeableNow() || b.tradeableNow()) {
                 if (a.tradeableNow() == b.tradeableNow()) {
                     return 0;
                 }
-                return a.tradeableNow() ? 1 : -1;
+                return a.tradeableNow() ? -1 : 1;
             }
             // trades on cooldown - filter down if equal
             if ((a.hasCooldown() || b.hasCooldown()) && (a.cooldown() != b.cooldown())) {
-                return a.cooldown() > b.cooldown() ? 1 : -1;
+                return a.cooldown() > b.cooldown() ? -1 : 1;
             }
-            // tradegroupID
+            // tradegroupID - sort ascending
             if (a.tgID() != b.tgID()) {
                 return a.tgID()
                     .compareTo(b.tgID());
@@ -196,7 +201,7 @@ public class TradeMainPanel extends ModularPanel {
             if (a.tradeGroupOrder() == b.tradeGroupOrder()) {
                 return 0;
             }
-            return a.tradeGroupOrder() > b.tradeGroupOrder() ? 1 : -1;
+            return a.tradeGroupOrder() > b.tradeGroupOrder() ? -1 : 1;
         });
         return trades;
     }

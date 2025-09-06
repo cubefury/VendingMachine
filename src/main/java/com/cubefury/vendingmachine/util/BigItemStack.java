@@ -142,14 +142,25 @@ public class BigItemStack {
 
     @Override
     public boolean equals(Object stack) {
-        if (stack == baseStack) return true;
+        if (stack == baseStack) return true; // idk why this was in BQ but ok
 
         if (stack instanceof ItemStack) {
             return baseStack.isItemEqual((ItemStack) stack)
                 && ItemStack.areItemStackTagsEqual(baseStack, (ItemStack) stack);
         }
 
+        if (stack instanceof BigItemStack) {
+            BigItemStack castStack = (BigItemStack) stack;
+            return baseStack.isItemEqual(castStack.baseStack) && baseStack.stackSize == castStack.stackSize
+                && ItemStack.areItemStackTagsEqual(baseStack, castStack.baseStack);
+        }
+
         return super.equals(stack);
+    }
+
+    @Override
+    public int hashCode() {
+        return writeToNBT(new NBTTagCompound()).hashCode();
     }
 
     @Nullable
