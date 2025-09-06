@@ -47,6 +47,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     private final IItemHandlerModifiable tradeItemHandler = new ItemStackHandler(MTEVendingMachine.MAX_TRADES);
     private final ItemSlot[] tradeSlotList = new ItemSlot[MTEVendingMachine.MAX_TRADES];
     private final List<TradeItemDisplay> displayedTrades = new ArrayList<>();
+
     private PosGuiData guiData;
 
     public MTEVendingMachineGui(MTEVendingMachine base, int height) {
@@ -202,32 +203,39 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                     synchronized (displayedTrades) {
                         if (slotNumber < displayedTrades.size()) {
                             TradeItemDisplay cur = displayedTrades.get(slotNumber);
-                            if (cur != null && cur.display() != null) {
+                            if (cur != null && cur.display != null) {
                                 builder.add("yes trade");
                             }
                         }
                     }
                 });
-            DynamicDrawable slotOverlay = new DynamicDrawable(() -> {
+            DynamicDrawable tradeAvailableOverlay = new DynamicDrawable(() -> {
                 if (
-                    slotNumber < displayedTrades.size() && displayedTrades.get(slotNumber)
-                        .tradeableNow()
+                    slotNumber < displayedTrades.size()
+                        && (displayedTrades.get(slotNumber).hasCooldown || !displayedTrades.get(slotNumber).enabled)
                 ) {
+                    return GuiTextures.OVERLAY_TRADE_DISABLED;
+                }
+                if (slotNumber < displayedTrades.size() && displayedTrades.get(slotNumber).tradeableNow) {
                     return GuiTextures.OVERLAY_TRADE_AVAILABLE_HIGHLIGHT;
                 }
                 return null;
             });
+            DynamicDrawable tradeCooldownOverlay = new DynamicDrawable(() -> {
+                if (slotNumber < displayedTrades.size() && displayedTrades.get(slotNumber).hasCooldown) {
+                    return IKey.str(displayedTrades.get(slotNumber).cooldownText);
+                }
+                return null;
+            });
             DynamicDrawable slotBackground = new DynamicDrawable(() -> {
-                if (
-                    slotNumber < displayedTrades.size() && displayedTrades.get(slotNumber)
-                        .tradeableNow()
-                ) {
+                if (slotNumber < displayedTrades.size() && displayedTrades.get(slotNumber).tradeableNow) {
                     return GuiTextures.TRADE_AVAILABLE_BACKGROUND;
                 }
                 return GTGuiTextures.SLOT_ITEM_STANDARD;
             });
             tradeSlotList[i].background(slotBackground);
-            tradeSlotList[i].overlay(slotOverlay);
+            tradeSlotList[i].overlay(tradeAvailableOverlay);
+            tradeSlotList[i].overlay(tradeCooldownOverlay);
             sw.child(tradeSlotList[i]);
         }
 
@@ -264,8 +272,22 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     }
 
     public void attemptPurchase(int x, int y) {
-        VendingMachine.LOG.info("Attempted Purchase of {} {}", x, y);
+        TradeItemDisplay trade = null;
+        synchronized (displayedTrades) {
+            trade = displayedTrades.get(y * 9 + x);
+        }
+        if (trade == null) {
+            return;
+        }
+        submitTradesToServer(displayedTrades.get(y * 9 + x));
         this.forceRefresh = true;
+    }
+
+    private void submitTradesToServer(TradeItemDisplay trade) {
+        if (!trade.tradeableNow || !trade.enabled) {
+            return;
+        }
+        base.sendTradeRequest(trade);
     }
 
     public void resetForceRefresh() {
@@ -279,10 +301,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             int displayedSize = displayedTrades.size();
             for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
                 if (i < displayedSize) {
-                    tradeItemHandler.setStackInSlot(
-                        i,
-                        displayedTrades.get(i) != null ? displayedTrades.get(i)
-                            .display() : null);
+                    tradeItemHandler
+                        .setStackInSlot(i, displayedTrades.get(i) != null ? displayedTrades.get(i).display : null);
                 } else {
                     tradeItemHandler.setStackInSlot(i, null);
                 }

@@ -16,6 +16,7 @@ import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
+import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
 import com.cubefury.vendingmachine.trade.TradeGroup;
@@ -31,6 +32,7 @@ public class TradeMainPanel extends ModularPanel {
     private final PosGuiData guiData;
     private EntityPlayer player = null;
     private int ticksOpen = 0;
+    private UUID playerID = null;
 
     public TradeMainPanel(@NotNull String name, MTEVendingMachineGui gui, PosGuiData guiData,
         PanelSyncManager syncManager) {
@@ -38,6 +40,7 @@ public class TradeMainPanel extends ModularPanel {
         this.gui = gui;
         this.guiData = guiData;
         this.syncManager = syncManager;
+        this.playerID = NameCache.INSTANCE.getUUIDFromPlayer(guiData.getPlayer());
     }
 
     @Override
@@ -162,7 +165,8 @@ public class TradeMainPanel extends ModularPanel {
                         convertCooldownText(tgw.cooldown()),
                         tgw.cooldown() > 0,
                         tgw.enabled(),
-                        checkItemsSatisfied(trade.fromItems, availableItems)));
+                        checkItemsSatisfied(trade.fromItems, availableItems),
+                        playerID));
             }
         }
         // Build from bottom of list up
@@ -173,35 +177,34 @@ public class TradeMainPanel extends ModularPanel {
                 return b == null ? -1 : 1;
             }
             // disabled trades - will filter down if both are disabled
-            if (!a.enabled() || !b.enabled()) {
-                if (a.enabled()) {
+            if (!a.enabled || !b.enabled) {
+                if (a.enabled) {
                     return -1;
                 }
-                if (b.enabled()) {
+                if (b.enabled) {
                     return 1;
                 }
             }
             // tradeable
-            if (a.tradeableNow() || b.tradeableNow()) {
-                if (a.tradeableNow() == b.tradeableNow()) {
+            if (a.tradeableNow || b.tradeableNow) {
+                if (a.tradeableNow == b.tradeableNow) {
                     return 0;
                 }
-                return a.tradeableNow() ? -1 : 1;
+                return a.tradeableNow ? -1 : 1;
             }
             // trades on cooldown - filter down if equal
-            if ((a.hasCooldown() || b.hasCooldown()) && (a.cooldown() != b.cooldown())) {
-                return a.cooldown() > b.cooldown() ? -1 : 1;
+            if ((a.hasCooldown || b.hasCooldown) && (a.cooldown != b.cooldown)) {
+                return a.cooldown > b.cooldown ? -1 : 1;
             }
             // tradegroupID - sort ascending
-            if (a.tgID() != b.tgID()) {
-                return a.tgID()
-                    .compareTo(b.tgID());
+            if (a.tgID != b.tgID) {
+                return a.tgID.compareTo(b.tgID);
             }
             // tradegroup index
-            if (a.tradeGroupOrder() == b.tradeGroupOrder()) {
+            if (a.tradeGroupOrder == b.tradeGroupOrder) {
                 return 0;
             }
-            return a.tradeGroupOrder() > b.tradeGroupOrder() ? -1 : 1;
+            return a.tradeGroupOrder > b.tradeGroupOrder ? -1 : 1;
         });
         return trades;
     }

@@ -17,7 +17,7 @@ import com.cubefury.vendingmachine.network.handlers.NetBulkSync;
 import com.cubefury.vendingmachine.network.handlers.NetNameSync;
 import com.cubefury.vendingmachine.network.handlers.NetSatisfiedQuestSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeDbSync;
-import com.cubefury.vendingmachine.network.handlers.NetTradeOutputSync;
+import com.cubefury.vendingmachine.network.handlers.NetTradeRequestSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
 
 public class PacketTypeRegistry implements IPacketRegistry {
@@ -30,8 +30,8 @@ public class PacketTypeRegistry implements IPacketRegistry {
     public void init() {
         NetTradeDbSync.registerHandler();
         NetTradeStateSync.registerHandler();
-        NetTradeOutputSync.registerHandler();
         NetAvailableTradeSync.registerHandler();
+        NetTradeRequestSync.registerHandler();
         NetSatisfiedQuestSync.registerHandler();
         NetNameSync.registerHandler();
 

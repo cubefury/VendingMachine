@@ -3,8 +3,9 @@ package com.cubefury.vendingmachine.blocks;
 import static com.gtnewhorizon.structurelib.structure.StructureUtility.lazy;
 import static com.gtnewhorizon.structurelib.structure.StructureUtility.ofBlock;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -15,9 +16,15 @@ import net.minecraftforge.common.util.ForgeDirection;
 import org.jetbrains.annotations.NotNull;
 
 import com.cleanroommc.modularui.utils.item.ItemStackHandler;
+import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.blocks.gui.MTEVendingMachineGui;
+import com.cubefury.vendingmachine.blocks.gui.TradeItemDisplay;
 import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
+import com.cubefury.vendingmachine.network.handlers.NetTradeRequestSync;
+import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
+import com.cubefury.vendingmachine.trade.TradeDatabase;
+import com.cubefury.vendingmachine.util.BigItemStack;
 import com.gtnewhorizon.structurelib.StructureLibAPI;
 import com.gtnewhorizon.structurelib.alignment.IAlignment;
 import com.gtnewhorizon.structurelib.alignment.IAlignmentLimits;
@@ -73,10 +80,153 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     public ItemStackHandler inputItems = new ItemStackHandler(INPUT_SLOTS);
     public ItemStackHandler outputItems = new ItemStackHandler(OUTPUT_SLOTS);
-    public List<ItemStack> outputBuffer = new ArrayList<>();
+    public Queue<ItemStack> outputBuffer = new ConcurrentLinkedQueue<>();
+
+    public final Queue<TradeItemDisplay> pendingTrades = new LinkedBlockingQueue<>();
+    private boolean newBufferedOutputs = false;
+    private int ticksSinceOutput = 0;
 
     public MTEVendingMachine(final int aID, final String aName, final String aNameRegional) {
         super(aID, aName, aNameRegional);
+    }
+
+    public void sendTradeRequest(TradeItemDisplay trade) {
+        IGregTechTileEntity baseTile = getBaseMetaTileEntity();
+        if (baseTile == null) {
+            return;
+        }
+        NetTradeRequestSync.sendTradeRequest(
+            trade,
+            baseTile.getWorld(),
+            baseTile.getXCoord(),
+            baseTile.getYCoord(),
+            baseTile.getZCoord());
+    }
+
+    public void addTradeRequest(TradeItemDisplay trade) {
+        this.pendingTrades.add(trade);
+    }
+
+    public void dispenseItems() {
+        if (!this.pendingTrades.isEmpty()) {
+            VendingMachine.LOG.info("Received trade on server");
+            if (!processTradeOnServer(this.pendingTrades.poll())) {
+                VendingMachine.LOG.warn(
+                    "Unable to complete trade. Either input items changed after trade submission, or a double click was sent.");
+            }
+        }
+        if (
+            this.newBufferedOutputs
+                || (!this.outputBuffer.isEmpty() && this.ticksSinceOutput % Config.dispense_frequency == 0)
+        ) {
+            VendingMachine.LOG.info("Dispensing");
+            int remainingDispensables = Config.dispense_amount;
+            while (!this.outputBuffer.isEmpty() && remainingDispensables > 0) {
+                ItemStack next = this.outputBuffer.peek();
+
+                if (next == null) { // impossible, but just in case
+                    this.outputBuffer.poll();
+                } else {
+                    int toAdd = next.stackSize;
+                    ItemStack nextCopy = next.copy();
+                    nextCopy.stackSize = 1;
+                    for (int i = 0; i < MTEVendingMachine.OUTPUT_SLOTS && remainingDispensables > 0 && toAdd > 0; i++) {
+                        // check for existing stacks
+                        ItemStack cur = this.outputItems.getStackInSlot(i);
+                        if (cur != null) {
+                            ItemStack curCopy = cur.copy();
+                            curCopy.stackSize = 1;
+                            if (ItemStack.areItemStacksEqual(curCopy, nextCopy)) {
+                                int change = Math.min(
+                                    Math.min(remainingDispensables, curCopy.getMaxStackSize() - cur.stackSize),
+                                    next.stackSize);
+                                cur.stackSize += change;
+                                // technically not required, but we do this in case down the line
+                                // the ItemStackHandlers passes copies instead
+                                this.outputItems.setStackInSlot(i, cur);
+                                toAdd -= change;
+                                remainingDispensables -= change;
+                                next.stackSize -= change;
+                            }
+                        }
+                    }
+
+                    for (int i = 0; i < MTEVendingMachine.OUTPUT_SLOTS && remainingDispensables > 0 && toAdd > 0; i++) {
+                        // make new stack
+                        ItemStack cur = this.outputItems.getStackInSlot(i);
+                        if (cur == null) {
+                            int change = Math.min(remainingDispensables, toAdd);
+                            ItemStack output = next.copy();
+                            output.stackSize = change;
+                            this.outputItems.setStackInSlot(i, output);
+                            remainingDispensables -= change;
+                            toAdd -= change;
+                        }
+                    }
+
+                    if (toAdd == 0) {
+                        this.outputBuffer.poll();
+                    } else { // outputs full or dispensed enough items this cycle
+                        break;
+                    }
+                }
+            }
+            ticksSinceOutput = this.newBufferedOutputs ? 0 : ticksSinceOutput + 1;
+            this.newBufferedOutputs = false;
+        }
+    }
+
+    private boolean processTradeOnServer(TradeItemDisplay trade) {
+        if (
+            trade == null || !TradeDatabase.INSTANCE.getTradeGroups()
+                .get(trade.tgID)
+                .canExecuteTrade(trade.playerID)
+        ) {
+            return false;
+        }
+        ItemStack[] inputSlots = new ItemStack[MTEVendingMachine.INPUT_SLOTS];
+        for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
+            ItemStack curStack = this.inputItems.getStackInSlot(i);
+            inputSlots[i] = curStack == null ? null : curStack.copy();
+        }
+
+        for (BigItemStack stack : trade.fromItems) {
+            ItemStack requiredStack = stack.getBaseStack();
+            int requiredAmount = stack.stackSize;
+            // Remove Items from last stacks if possible
+            for (int i = MTEVendingMachine.INPUT_SLOTS - 1; i >= 0 && requiredAmount > 0; i--) {
+                ItemStack tmp = inputSlots[i].copy();
+                tmp.stackSize = 1;
+                if (
+                    ItemStack.areItemStacksEqual(requiredStack, tmp)
+                        && ItemStack.areItemStackTagsEqual(requiredStack, tmp)
+                ) {
+                    if (requiredAmount >= inputSlots[i].stackSize) {
+                        requiredAmount -= inputSlots[i].stackSize;
+                        inputSlots[i] = null;
+                    } else {
+                        inputSlots[i].stackSize -= requiredAmount;
+                        requiredAmount = 0;
+                    }
+                }
+            }
+            if (requiredAmount > 0) {
+                return false;
+            }
+        }
+
+        for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
+            this.inputItems.setStackInSlot(i, inputSlots[i]);
+        }
+
+        for (BigItemStack toItem : trade.toItems) {
+            this.outputBuffer.addAll(toItem.getCombinedStacks());
+            this.newBufferedOutputs = true;
+        }
+        TradeDatabase.INSTANCE.getTradeGroups()
+            .get(trade.tgID)
+            .executeTrade(trade.playerID);
+        return true;
     }
 
     @Override
@@ -115,6 +265,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     protected @NotNull MTEVendingMachineGui getGui() {
         if (VendingMachine.proxy.isClient()) {
             NetAvailableTradeSync.requestSync();
+            NetTradeStateSync.requestSync();
         }
         return new MTEVendingMachineGui(this, CUSTOM_UI_HEIGHT);
     }
@@ -272,6 +423,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             // spawn something maybe
         }
         if (aBaseMetaTileEntity.isServerSide()) {
+            dispenseItems();
             if (this.mUpdate++ % STRUCTURE_CHECK_TICKS == 0) {
                 this.mMachine = checkMachine(aBaseMetaTileEntity, null);
                 aBaseMetaTileEntity.setActive(this.mMachine);

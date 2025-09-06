@@ -127,20 +127,23 @@ public class TradeGroup {
         }
     }
 
-    public boolean attemptExecuteTrade(UUID player) {
+    public boolean canExecuteTrade(UUID player) {
         List<TradeGroupWrapper> availableTrades = TradeManager.INSTANCE.getTrades(player);
         for (TradeGroupWrapper trade : availableTrades) {
             if (trade == null) { // shouldn't happen
                 continue;
             }
             if (trade.trade().id == this.id && trade.enabled() && cooldown < 0) {
-                TradeHistory newTradeHistory = getTradeState(player);
-                newTradeHistory.executeTrade();
-                setTradeState(player, newTradeHistory);
                 return true;
             }
         }
         return false;
+    }
+
+    public void executeTrade(UUID player) {
+        TradeHistory newTradeHistory = getTradeState(player);
+        newTradeHistory.executeTrade();
+        setTradeState(player, newTradeHistory);
     }
 
     public boolean readFromNBT(NBTTagCompound nbt) {
