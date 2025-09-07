@@ -1,6 +1,7 @@
 package com.cubefury.vendingmachine.trade;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,7 +55,9 @@ public class TradeDatabase {
     }
 
     public List<TradeCategory> getTradeCategories() {
-        return new ArrayList<>(tradeCategories.keySet());
+        List<TradeCategory> tradeCategoryList = new ArrayList<>(tradeCategories.keySet());
+        tradeCategoryList.sort(Comparator.comparing(TradeCategory::getKey));
+        return tradeCategoryList;
     }
 
     public Set<UUID> getTradeGroupsFromCategory(TradeCategory category) {

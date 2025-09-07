@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.cleanroommc.modularui.screen.RichTooltip;
+import com.cubefury.vendingmachine.util.Translator;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -111,6 +113,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .coverChildren();
 
         for (int i = 0; i < this.tradeCategories.size(); i++) {
+            int index = i;
             tabColumn = tabColumn.child(
                 new PageButton(i, tabController).tab(com.cleanroommc.modularui.drawable.GuiTextures.TAB_LEFT, -1)
                     .overlay(
@@ -118,7 +121,11 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                             .getTexture()
                             .asIcon()
                             .margin(4)
-                            .center()));
+                            .center())
+                    .tooltipBuilder(builder -> {
+                        builder.clearText();
+                        builder.addLine(Translator.translate(this.tradeCategories.get(index).getUnlocalized_name()));
+                    }));
         }
         return tabColumn;
     }

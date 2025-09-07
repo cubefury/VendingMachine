@@ -19,6 +19,7 @@ vendingmachine.gui.cooldown_display.day=d
 gt.blockmachines.multimachine.vendingmachine.name=Vending Machine
 
 vendingmachine.category.unknown=Unknown Category
+vendingmachine.category.all=All Items
 vendingmachine.category.components=Components
 vendingmachine.category.raw=Raw Materials
 vendingmachine.category.farming=Farming
