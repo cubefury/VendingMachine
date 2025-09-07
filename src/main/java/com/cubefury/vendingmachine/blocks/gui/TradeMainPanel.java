@@ -15,14 +15,15 @@ import org.jetbrains.annotations.NotNull;
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
+import com.cleanroommc.modularui.widgets.PagedWidget;
 import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
 import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.Trade;
+import com.cubefury.vendingmachine.trade.TradeCategory;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
 import com.cubefury.vendingmachine.trade.TradeGroup;
 import com.cubefury.vendingmachine.trade.TradeGroupWrapper;
-import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.Translator;
 
@@ -35,14 +36,16 @@ public class TradeMainPanel extends ModularPanel {
     private EntityPlayer player = null;
     private int ticksOpen = 0;
     private UUID playerID = null;
+    private PagedWidget.Controller tabController = null;
 
     public TradeMainPanel(@NotNull String name, MTEVendingMachineGui gui, PosGuiData guiData,
-        PanelSyncManager syncManager) {
+        PanelSyncManager syncManager, PagedWidget.Controller tabController) {
         super(name);
         this.gui = gui;
         this.guiData = guiData;
         this.syncManager = syncManager;
         this.playerID = NameCache.INSTANCE.getUUIDFromPlayer(guiData.getPlayer());
+        this.tabController = tabController;
     }
 
     @Override
@@ -69,15 +72,18 @@ public class TradeMainPanel extends ModularPanel {
             .entrySet()) {
             testTGW.add(new TradeGroupWrapper(entry.getValue(), -1, true));
         }
-        // List<TradeItemDisplay> trades = formatTrades(testTGW);
+        Map<TradeCategory, List<TradeItemDisplay>> trades = formatTrades(testTGW);
         // TODO: SWAP BACK
-        List<TradeItemDisplay> trades = formatTrades(
-            TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer())));
+        /*
+         * List<TradeItemDisplay> trades = formatTrades(
+         * TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer())));
+         */
         gui.updateSlots(trades);
     }
 
     @Override
     public void onUpdate() {
+
         super.onUpdate();
         if (!this.guiData.isClient()) {
             return;
@@ -137,75 +143,87 @@ public class TradeMainPanel extends ModularPanel {
         return items;
     }
 
-    public List<TradeItemDisplay> formatTrades(List<TradeGroupWrapper> tradeGroups) {
+    public Map<TradeCategory, List<TradeItemDisplay>> formatTrades(List<TradeGroupWrapper> tradeGroups) {
 
         Map<BigItemStack, Integer> availableItems = this.guiData.isClient() && this.gui.getBase() != null
             ? getAvailableItems()
             : new HashMap<>();
 
-        List<TradeItemDisplay> trades = new ArrayList<>();
+        Map<TradeCategory, List<TradeItemDisplay>> trades = new HashMap<>();
+        trades.put(TradeCategory.ALL, new ArrayList<>());
+
         for (TradeGroupWrapper tgw : tradeGroups) {
             List<Trade> tradeList = tgw.trade()
                 .getTrades();
+            TradeCategory category = tgw.trade()
+                .getCategory();
+            trades.putIfAbsent(category, new ArrayList<>());
             for (int i = 0; i < tradeList.size(); i++) {
                 Trade trade = tgw.trade()
                     .getTrades()
                     .get(i);
                 BigItemStack displayItem = trade.toItems.get(0);
+                TradeItemDisplay tid = new TradeItemDisplay(
+                    trade.fromItems,
+                    trade.toItems,
+                    convertToItemStack(displayItem == null ? trade.displayItem : displayItem),
+                    tgw.trade()
+                        .getId(),
+                    i,
+                    tgw.trade()
+                        .getLabel(),
+                    tgw.cooldown(),
+                    convertCooldownText(tgw.cooldown()),
+                    tgw.cooldown() > 0,
+                    tgw.enabled(),
+                    checkItemsSatisfied(trade.fromItems, availableItems),
+                    playerID);
 
-                trades.add(
-                    new TradeItemDisplay(
-                        trade.fromItems,
-                        trade.toItems,
-                        convertToItemStack(displayItem == null ? trade.displayItem : displayItem),
-                        tgw.trade()
-                            .getId(),
-                        i,
-                        tgw.trade()
-                            .getLabel(),
-                        tgw.cooldown(),
-                        convertCooldownText(tgw.cooldown()),
-                        tgw.cooldown() > 0,
-                        tgw.enabled(),
-                        checkItemsSatisfied(trade.fromItems, availableItems),
-                        playerID));
+                trades.get(category)
+                    .add(tid);
+                trades.get(TradeCategory.ALL)
+                    .add(tid);
             }
         }
-        trades.sort((a, b) -> {
-            // null case
-            if (a == null && b == null) return 0;
-            if (a == null) return 1;
-            if (b == null) return -1;
-            if (a.display.getItem() == null && b.display.getItem() == null) return 0;
-            if (a.display.getItem() == null) return 1;
-            if (b.display.getItem() == null) return -1;
 
-            int rankA = getCategoryRank(a);
-            int rankB = getCategoryRank(b);
+        for (List<TradeItemDisplay> filteredTrades : trades.values()) {
+            filteredTrades.sort((a, b) -> {
+                // null case
+                if (a == null && b == null) return 0;
+                if (a == null) return 1;
+                if (b == null) return -1;
+                if (a.display.getItem() == null && b.display.getItem() == null) return 0;
+                if (a.display.getItem() == null) return 1;
+                if (b.display.getItem() == null) return -1;
 
-            if (rankA != rankB) {
-                return Integer.compare(rankA, rankB);
-            }
+                // enabled or has cooldown
+                int rankA = getRank(a);
+                int rankB = getRank(b);
 
-            // cooldown
-            int cooldownCmp = Long.compare(b.cooldown, a.cooldown);
-            if (cooldownCmp != 0) return cooldownCmp;
+                if (rankA != rankB) {
+                    return Integer.compare(rankA, rankB);
+                }
 
-            // display item ordering
-            int idCmp = Integer
-                .compare(Item.getIdFromItem(a.display.getItem()), Item.getIdFromItem(b.display.getItem()));
-            if (idCmp != 0) return idCmp;
-            int dmgCmp = Integer.compare(a.display.getItemDamage(), b.display.getItemDamage());
-            if (dmgCmp != 0) return dmgCmp;
+                // cooldown time
+                int cooldownCmp = Long.compare(b.cooldown, a.cooldown);
+                if (cooldownCmp != 0) return cooldownCmp;
 
-            // sort by tradegroup Order
-            return Integer.compare(a.tradeGroupOrder, b.tradeGroupOrder);
+                // display item ordering
+                int idCmp = Integer
+                    .compare(Item.getIdFromItem(a.display.getItem()), Item.getIdFromItem(b.display.getItem()));
+                if (idCmp != 0) return idCmp;
+                int dmgCmp = Integer.compare(a.display.getItemDamage(), b.display.getItemDamage());
+                if (dmgCmp != 0) return dmgCmp;
 
-        });
+                // sort by tradegroup Order
+                return Integer.compare(a.tradeGroupOrder, b.tradeGroupOrder);
+
+            });
+        }
         return trades;
     }
 
-    private static int getCategoryRank(TradeItemDisplay t) {
+    private static int getRank(TradeItemDisplay t) {
         if (!t.enabled) {
             return 5;
         }
@@ -215,7 +233,7 @@ public class TradeMainPanel extends ModularPanel {
         return t.hasCooldown ? 4 : 3;
     }
 
-    public void attemptPurchase(int x, int y) {
-        gui.attemptPurchase(x, y);
+    public void attemptPurchase(TradeCategory category, int index) {
+        gui.attemptPurchase(category, index);
     }
 }

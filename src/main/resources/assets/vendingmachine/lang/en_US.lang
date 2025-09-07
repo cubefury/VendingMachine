@@ -17,3 +17,12 @@ vendingmachine.gui.cooldown_display.hour=h
 vendingmachine.gui.cooldown_display.day=d
 
 gt.blockmachines.multimachine.vendingmachine.name=Vending Machine
+
+vendingmachine.category.unknown=Unknown Category
+vendingmachine.category.components=Components
+vendingmachine.category.raw=Raw Materials
+vendingmachine.category.farming=Farming
+vendingmachine.category.chemistry=Chemistry
+vendingmachine.category.magic=Magic
+vendingmachine.category.bees=Bees
+vendingmachine.category.misc=Miscellaneous

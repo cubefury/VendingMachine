@@ -5,23 +5,24 @@ import net.minecraft.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import com.cleanroommc.modularui.widgets.slot.PhantomItemSlot;
+import com.cubefury.vendingmachine.trade.TradeCategory;
 
 public class TradeSlot extends PhantomItemSlot {
 
-    private final int x;
-    private final int y;
+    private TradeCategory category;
+    private int index;
     TradeMainPanel rootPanel;
 
-    public TradeSlot(int x, int y, TradeMainPanel rootPanel) {
-        this.x = x;
-        this.y = y;
+    public TradeSlot(TradeCategory category, int index, TradeMainPanel rootPanel) {
+        this.category = category;
+        this.index = index;
         this.rootPanel = rootPanel;
     }
 
     @Override
     public @NotNull Result onMousePressed(int mouseButton) {
         if (rootPanel.shiftHeld) {
-            rootPanel.attemptPurchase(x, y);
+            rootPanel.attemptPurchase(category, index);
         }
         return Result.SUCCESS;
     }

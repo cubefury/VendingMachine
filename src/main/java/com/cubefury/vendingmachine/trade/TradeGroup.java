@@ -29,6 +29,8 @@ public class TradeGroup {
     public int cooldown = -1;
     public int maxTrades = -1;
     public String label = "";
+    private TradeCategory category = TradeCategory.UNKNOWN;
+    private String original_category_str = "";
     private final Set<ICondition> requirementSet = new HashSet<>();
 
     // List of completed conditions for each player
@@ -81,6 +83,10 @@ public class TradeGroup {
 
     public List<Trade> getTrades() {
         return trades;
+    }
+
+    public TradeCategory getCategory() {
+        return category;
     }
 
     public List<ICondition> getRequirements() {
@@ -154,12 +160,20 @@ public class TradeGroup {
         this.trades.clear();
         this.requirementSet.clear();
 
-        boolean generatedRandomUUID = false;
+        boolean generatedMetadata = false;
         if (nbt.hasKey("id")) {
             this.id = NBTConverter.UuidValueType.TRADEGROUP.readId(nbt.getCompoundTag("id"));
         } else {
             this.id = UUID.randomUUID();
-            generatedRandomUUID = true;
+            generatedMetadata = true;
+        }
+        if (nbt.hasKey("category")) {
+            this.original_category_str = nbt.getString("category");
+            this.category = TradeCategory.ofString(original_category_str);
+        } else {
+            this.original_category_str = TradeCategory.UNKNOWN.getUnlocalized_name();
+            this.category = TradeCategory.UNKNOWN;
+            generatedMetadata = true;
         }
         this.cooldown = nbt.getInteger("cooldown");
         this.maxTrades = nbt.getInteger("maxTrades");
@@ -180,7 +194,7 @@ public class TradeGroup {
                 BqAdapter.INSTANCE.addQuestTrigger(bqc.getQuestId(), this);
             }
         }
-        return generatedRandomUUID;
+        return generatedMetadata;
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
@@ -188,6 +202,7 @@ public class TradeGroup {
         nbt.setInteger("cooldown", this.cooldown);
         nbt.setInteger("maxTrades", this.maxTrades);
         nbt.setString("label", this.label);
+        nbt.setString("category", this.category.getKey());
         NBTTagList tList = new NBTTagList();
         for (Trade t : trades) {
             tList.appendTag(t.writeToNBT(new NBTTagCompound()));
