@@ -13,6 +13,7 @@ import net.minecraft.world.World;
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.api.widget.IWidget;
 import com.cleanroommc.modularui.drawable.DynamicDrawable;
+import com.cleanroommc.modularui.drawable.Rectangle;
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
@@ -21,9 +22,8 @@ import com.cleanroommc.modularui.utils.item.IItemHandlerModifiable;
 import com.cleanroommc.modularui.utils.item.ItemStackHandler;
 import com.cleanroommc.modularui.value.sync.BooleanSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
-import com.cleanroommc.modularui.widget.ScrollWidget;
 import com.cleanroommc.modularui.widget.SingleChildWidget;
-import com.cleanroommc.modularui.widget.scroll.VerticalScrollData;
+import com.cleanroommc.modularui.widgets.ListWidget;
 import com.cleanroommc.modularui.widgets.PageButton;
 import com.cleanroommc.modularui.widgets.PagedWidget;
 import com.cleanroommc.modularui.widgets.SlotGroupWidget;
@@ -56,8 +56,11 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     private final List<TradeCategory> tradeCategories = new ArrayList<>();
 
     private PosGuiData guiData;
+    private PagedWidget.Controller tabController;
 
-    private static final int ITEMS_PER_ROW = 3;
+    public static final int ITEMS_PER_ROW = 3;
+    private static final int ITEM_HEIGHT = 18;
+    private static final int ROW_SEPARATOR_HEIGHT = 5;
 
     public MTEVendingMachineGui(MTEVendingMachine base, int height) {
         super(base);
@@ -70,6 +73,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         for (TradeCategory c : this.tradeCategories) {
             tradeItemHandlers.put(c, new ItemStackHandler(MTEVendingMachine.MAX_TRADES));
         }
+
+        this.tabController = new PagedWidget.Controller();
     }
 
     public MTEVendingMachine getBase() {
@@ -80,18 +85,16 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     public ModularPanel build(PosGuiData guiData, PanelSyncManager syncManager, UISettings uiSettings) {
         this.guiData = guiData;
 
-        PagedWidget.Controller tabController = new PagedWidget.Controller();
-
         registerSyncValues(syncManager);
-        ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, guiData, syncManager, tabController)
+        ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, guiData, syncManager, this.tabController)
             .size(198, height)
             .padding(4);
-        panel = panel.child(createCategoryTabs(tabController));
+        panel = panel.child(createCategoryTabs(this.tabController));
         panel = panel.child(
             new Column().width(170)
                 .child(createTitleTextStyle(base.getLocalName()))
                 .child(createInputRow(syncManager))
-                .child(createTradeUI((TradeMainPanel) panel, tabController))
+                .child(createTradeUI((TradeMainPanel) panel, this.tabController))
                 .child(createInventoryRow(panel, syncManager)));
         panel = panel.child(
             new Column().size(20)
@@ -233,19 +236,20 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     // spotless:off
     private IWidget createTradeUI(TradeMainPanel rootPanel, PagedWidget.Controller tabController) {
-        PagedWidget<?> paged = new PagedWidget<>().expanded().debugName("paged").controller(tabController).height(100);
-
+        PagedWidget<?> paged = new PagedWidget<>().expanded().debugName("paged").controller(tabController).heightRel(0.5f);
         for (TradeCategory category : this.tradeCategories) {
-            ScrollWidget<?> tradeList = new ScrollWidget<>(new VerticalScrollData()).size(9 * 18)
-                .margin(0);
-            tradeList.getScrollArea()
-                .getScrollY()
-                .setScrollSize(18 * (MTEVendingMachine.MAX_TRADES) / 9);
+            ListWidget<IWidget, ?> tradeList = new ListWidget<>().debugName("items").heightRel(1.0f)
+                .widthRel(1.0f).childSeparator(new Rectangle().setColor(0x0).asIcon().size(ROW_SEPARATOR_HEIGHT))
+                .collapseDisabledChild(true);
+
+            Flow row = new Row().height(ITEM_HEIGHT).collapseDisabledChild(true).setEnabledIf(r ->
+                r.getChildren().stream().anyMatch(IWidget::isEnabled));
+
             for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
                 int index = i;
                 int x = i % ITEMS_PER_ROW;
                 int y = i / ITEMS_PER_ROW;
-                tradeList.child(new TradeSlot(category, i, rootPanel).pos(x * 30, y * 30)
+                row.child(new TradeSlot(category, i, rootPanel)
                     .slot(new ModularSlot(tradeItemHandlers.get(category), i))
                     .tooltipDynamic(builder -> {
                         // builder.clearText();
@@ -283,7 +287,17 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                             if (index < displayedTrades.get(category).size() && displayedTrades.get(category).get(index).hasCooldown) {
                                 return IKey.str(displayedTrades.get(category).get(index).cooldownText);
                             }
-                            return null; })));
+                            return null; }))
+                    .setEnabledIf(slot -> tradeItemHandlers.get(category).getStackInSlot(index) != null));
+                if (i % ITEMS_PER_ROW == ITEMS_PER_ROW - 1) {
+                    tradeList.child(row);
+
+                    row = new Row().height(ITEM_HEIGHT).collapseDisabledChild(true).setEnabledIf(r ->
+                        r.getChildren().stream().anyMatch(IWidget::isEnabled));
+                }
+            }
+            if (row.hasChildren()) {
+                tradeList.child(row);
             }
             paged.addPage(tradeList);
         }
