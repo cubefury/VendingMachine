@@ -242,8 +242,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                 .widthRel(1.0f).childSeparator(new Rectangle().setColor(0x0).asIcon().size(ROW_SEPARATOR_HEIGHT))
                 .collapseDisabledChild(true);
 
-            Flow row = new Row().height(ITEM_HEIGHT).collapseDisabledChild(true).setEnabledIf(r ->
-                r.getChildren().stream().anyMatch(IWidget::isEnabled));
+            Flow row = new TradeRow().height(ITEM_HEIGHT);
 
             for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
                 int index = i;
@@ -292,8 +291,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                 if (i % ITEMS_PER_ROW == ITEMS_PER_ROW - 1) {
                     tradeList.child(row);
 
-                    row = new Row().height(ITEM_HEIGHT).collapseDisabledChild(true).setEnabledIf(r ->
-                        r.getChildren().stream().anyMatch(IWidget::isEnabled));
+                    row = new TradeRow().height(ITEM_HEIGHT);
                 }
             }
             if (row.hasChildren()) {
