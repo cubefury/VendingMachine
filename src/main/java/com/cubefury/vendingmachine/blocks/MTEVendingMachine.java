@@ -125,10 +125,10 @@ public class MTEVendingMachine extends MTEMultiBlockBase
                 if (next == null) { // impossible, but just in case
                     this.outputBuffer.poll();
                 } else {
-                    int toAdd = next.stackSize;
                     ItemStack nextCopy = next.copy();
                     nextCopy.stackSize = 1;
-                    for (int i = 0; i < MTEVendingMachine.OUTPUT_SLOTS && remainingDispensables > 0 && toAdd > 0; i++) {
+                    for (int i = 0; i < MTEVendingMachine.OUTPUT_SLOTS && remainingDispensables > 0
+                        && next.stackSize > 0; i++) {
                         // check for existing stacks
                         ItemStack cur = this.outputItems.getStackInSlot(i);
                         if (cur != null) {
@@ -143,26 +143,26 @@ public class MTEVendingMachine extends MTEMultiBlockBase
                                     next.stackSize);
                                 cur.stackSize += change;
                                 this.outputItems.setStackInSlot(i, cur);
-                                toAdd -= change;
-                                remainingDispensables -= change;
                                 next.stackSize -= change;
+                                remainingDispensables -= change;
                             }
                         }
                     }
-                    for (int i = 0; i < MTEVendingMachine.OUTPUT_SLOTS && remainingDispensables > 0 && toAdd > 0; i++) {
+                    for (int i = 0; i < MTEVendingMachine.OUTPUT_SLOTS && remainingDispensables > 0
+                        && next.stackSize > 0; i++) {
                         // make new stack
                         ItemStack cur = this.outputItems.getStackInSlot(i);
                         if (cur == null) {
-                            int change = Math.min(remainingDispensables, toAdd);
+                            int change = Math.min(remainingDispensables, next.stackSize);
                             ItemStack output = next.copy();
                             output.stackSize = change;
                             this.outputItems.setStackInSlot(i, output);
                             remainingDispensables -= change;
-                            toAdd -= change;
+                            next.stackSize -= change;
                         }
                     }
 
-                    if (toAdd == 0) {
+                    if (next.stackSize == 0) {
                         this.outputBuffer.poll();
                     } else { // outputs full or dispensed enough items this cycle
                         break;
@@ -221,6 +221,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         }
 
         for (BigItemStack toItem : trade.toItems) {
+            if (toItem == null) continue;
             this.outputBuffer.addAll(toItem.getCombinedStacks());
             this.newBufferedOutputs = true;
         }

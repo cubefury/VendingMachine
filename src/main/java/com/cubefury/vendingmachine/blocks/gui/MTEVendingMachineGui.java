@@ -3,6 +3,7 @@ package com.cubefury.vendingmachine.blocks.gui;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cleanroommc.modularui.widgets.ListWidget;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;

@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
 import org.jetbrains.annotations.NotNull;
@@ -170,50 +171,48 @@ public class TradeMainPanel extends ModularPanel {
                         playerID));
             }
         }
-        // Build from bottom of list up
         trades.sort((a, b) -> {
             // null case
-            if (a == null || b == null) {
-                if (a == b) return 0;
-                return b == null ? -1 : 1;
+            if (a == null && b == null) return 0;
+            if (a == null) return 1;
+            if (b == null) return -1;
+            if (a.display.getItem() == null && b.display.getItem() == null) return 0;
+            if (a.display.getItem() == null) return 1;
+            if (b.display.getItem() == null) return -1;
+
+            int rankA = getCategoryRank(a);
+            int rankB = getCategoryRank(b);
+
+            if (rankA != rankB) {
+                return Integer.compare(rankA, rankB);
             }
-            // disabled trades - will filter down if both are disabled
-            if (!a.enabled || !b.enabled) {
-                if (a.enabled) {
-                    return -1;
-                }
-                if (b.enabled) {
-                    return 1;
-                }
-            }
-            // tradeable
-            if (a.tradeableNow || b.tradeableNow) {
-                if (a.tradeableNow == b.tradeableNow) {
-                    return 0;
-                }
-                return a.tradeableNow ? -1 : 1;
-            }
-            // trades on cooldown - filter down if equal
-            if (a.hasCooldown && b.hasCooldown && a.cooldown != b.cooldown) {
-                return a.cooldown > b.cooldown ? 1 : -1;
-            }
-            if (a.hasCooldown || b.hasCooldown) {
-                if (a.cooldown == b.cooldown) {
-                    return 0;
-                }
-                return a.hasCooldown ? -1 : 1;
-            }
-            // tradegroupID - sort ascending
-            if (a.tgID != b.tgID) {
-                return a.tgID.compareTo(b.tgID);
-            }
-            // tradegroup index
-            if (a.tradeGroupOrder == b.tradeGroupOrder) {
-                return 0;
-            }
-            return a.tradeGroupOrder > b.tradeGroupOrder ? -1 : 1;
+
+            // cooldown
+            int cooldownCmp = Long.compare(b.cooldown, a.cooldown);
+            if (cooldownCmp != 0) return cooldownCmp;
+
+            // display item ordering
+            int idCmp = Integer
+                .compare(Item.getIdFromItem(a.display.getItem()), Item.getIdFromItem(b.display.getItem()));
+            if (idCmp != 0) return idCmp;
+            int dmgCmp = Integer.compare(a.display.getItemDamage(), b.display.getItemDamage());
+            if (dmgCmp != 0) return dmgCmp;
+
+            // sort by tradegroup Order
+            return Integer.compare(a.tradeGroupOrder, b.tradeGroupOrder);
+
         });
         return trades;
+    }
+
+    private static int getCategoryRank(TradeItemDisplay t) {
+        if (!t.enabled) {
+            return 5;
+        }
+        if (t.tradeableNow) {
+            return t.hasCooldown ? 2 : 1;
+        }
+        return t.hasCooldown ? 4 : 3;
     }
 
     public void attemptPurchase(int x, int y) {
