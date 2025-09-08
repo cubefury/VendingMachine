@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -26,6 +27,9 @@ import com.cubefury.vendingmachine.trade.TradeGroup;
 import com.cubefury.vendingmachine.trade.TradeGroupWrapper;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.Translator;
+
+import codechicken.nei.SearchField;
+import codechicken.nei.api.ItemFilter;
 
 public class TradeMainPanel extends ModularPanel {
 
@@ -186,7 +190,14 @@ public class TradeMainPanel extends ModularPanel {
             }
         }
 
-        for (List<TradeItemDisplay> filteredTrades : trades.values()) {
+        String searchString = gui.getSearchBarText();
+        ItemFilter filter = SearchField.getFilter(searchString);
+
+        for (TradeCategory category : trades.keySet()) {
+            List<TradeItemDisplay> filteredTrades = trades.get(category);
+            filteredTrades = filteredTrades.stream()
+                .filter(tid -> tid.satisfiesSearch(filter, searchString.toLowerCase()))
+                .collect(Collectors.toList());
             filteredTrades.sort((a, b) -> {
                 // null case
                 if (a == null && b == null) return 0;
@@ -219,6 +230,7 @@ public class TradeMainPanel extends ModularPanel {
                 return Integer.compare(a.tradeGroupOrder, b.tradeGroupOrder);
 
             });
+            trades.replace(category, filteredTrades);
         }
         return trades;
     }

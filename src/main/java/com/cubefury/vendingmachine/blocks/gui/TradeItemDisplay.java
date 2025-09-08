@@ -12,6 +12,8 @@ import net.minecraftforge.common.util.Constants;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.NBTConverter;
 
+import codechicken.nei.api.ItemFilter;
+
 public class TradeItemDisplay {
 
     public List<BigItemStack> fromItems;
@@ -113,5 +115,16 @@ public class TradeItemDisplay {
             && this.enabled == other.enabled
             && this.tradeableNow == other.tradeableNow
             && this.playerID == other.playerID;
+    }
+
+    public boolean satisfiesSearch(ItemFilter filter, String searchStringNoCase) {
+        if (filter == null) {
+            return this.label.toLowerCase()
+                .contains(searchStringNoCase);
+        }
+        return filter.matches(this.display) || this.toItems.stream()
+            .anyMatch(bis -> filter.matches(bis.getBaseStack()))
+            || this.fromItems.stream()
+                .anyMatch(bis -> filter.matches(bis.getBaseStack()));
     }
 }

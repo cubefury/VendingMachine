@@ -100,9 +100,9 @@ public class TradeDatabase {
             VendingMachine.LOG.info("Appended metadata to {} new trades", newMetadataCount);
             DirtyDbMarker.markDirty();
         }
-        if (VendingMachine.proxy.isClient() && VendingMachine.isNeiLoaded) {
-            refreshNeiCache();
-        }
+
+        refreshNeiCache();
+
         TradeManager.INSTANCE.recomputeAvailableTrades(null);
         VendingMachine.LOG
             .info("Loaded {} trade groups containing {} trade groups.", getTradeGroupCount(), getTradeCount());
@@ -153,6 +153,7 @@ public class TradeDatabase {
     }
 
     @SideOnly(Side.CLIENT)
+    @Optional.Method(modid = "NotEnoughItems")
     public void refreshNeiCache() {
         NeiRecipeCache.refreshCache();
     }

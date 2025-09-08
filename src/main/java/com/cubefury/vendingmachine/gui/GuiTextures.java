@@ -33,4 +33,12 @@ public final class GuiTextures {
         .canApplyTheme()
         .name("panel_side_background")
         .build();
+
+    public static final UITexture TEXT_FIELD_BACKGROUND = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/background/text_field_light_gray")
+        .imageSize(61, 12)
+        .adaptable(1)
+        .canApplyTheme()
+        .name("text_field_background")
+        .build();
 }

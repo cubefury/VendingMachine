@@ -60,6 +60,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     private PosGuiData guiData;
     private PagedWidget.Controller tabController;
+    private SearchBar searchBar;
 
     public static final int ITEMS_PER_ROW = 3;
     private static final int ITEM_HEIGHT = 18;
@@ -78,10 +79,15 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         }
 
         this.tabController = new PagedWidget.Controller();
+        this.searchBar = createSearchBar();
     }
 
     public MTEVendingMachine getBase() {
         return base;
+    }
+
+    public void setForceRefresh() {
+        this.forceRefresh = true;
     }
 
     @Override
@@ -96,6 +102,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         panel = panel.child(
             new Column().width(170)
                 .child(createTitleTextStyle(base.getLocalName()))
+                .child(this.searchBar)
                 .child(createTradeUI((TradeMainPanel) panel, this.tabController))
                 .child(createInventoryRow(panel, syncManager)));
         panel = panel.child(
@@ -148,6 +155,13 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                     .marginRight(5)
                     .marginTop(5)
                     .marginBottom(1));
+    }
+
+    private SearchBar createSearchBar() {
+        return new SearchBar(this).width(163)
+            .left(3)
+            .top(5)
+            .height(10);
     }
 
     private void ejectItems() {
@@ -416,6 +430,10 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                 }
             }
         }
+    }
+
+    public String getSearchBarText() {
+        return this.searchBar.getText();
     }
 
 }

@@ -45,7 +45,6 @@ public class VendingMachine {
 
     public static Block vendingMachine = new BlockVendingMachine();
 
-    public static boolean isNeiLoaded = false;
     public static boolean isBqLoaded = false;
     public static boolean isGtLoaded = false;
     public static boolean isAeLoaded = false;
@@ -82,12 +81,10 @@ public class VendingMachine {
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
 
-        isNeiLoaded = Loader.isModLoaded("NotEnoughItems");
         isBqLoaded = Loader.isModLoaded("betterquesting");
         isGtLoaded = Loader.isModLoaded("gregtech");
         isAeLoaded = Loader.isModLoaded("appliedenergistics2");
 
-        LOG.info("NEI Integration enabled: {}", isNeiLoaded);
         LOG.info("Better Questing Integration enabled: {}", isBqLoaded);
         LOG.info("Gregtech Integration enabled: {}", isGtLoaded);
         LOG.info("AE2 Integration enabled {}", isAeLoaded);
