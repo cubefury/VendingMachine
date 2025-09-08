@@ -388,6 +388,9 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     public void attemptPurchase(TradeCategory category, int index) {
         TradeItemDisplay trade = null;
+        if (!base.getActive()) {
+            return;
+        }
 
         synchronized (displayedTrades) {
             if (

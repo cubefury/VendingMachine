@@ -407,13 +407,18 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         if ((aBaseMetaTileEntity.isClientSide()) && (aBaseMetaTileEntity.isActive())) {
             // spawn something maybe
         }
-        if (aBaseMetaTileEntity.isServerSide()) {
+        if (aBaseMetaTileEntity.isServerSide() && aBaseMetaTileEntity.isActive()) {
             dispenseItems();
             if (this.mUpdate++ % STRUCTURE_CHECK_TICKS == 0) {
                 this.mMachine = checkMachine(aBaseMetaTileEntity, null);
                 aBaseMetaTileEntity.setActive(this.mMachine);
             }
         }
+    }
+
+    public boolean getActive() {
+        return this.getBaseMetaTileEntity() != null && this.getBaseMetaTileEntity()
+            .isActive();
     }
 
     @Override
