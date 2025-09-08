@@ -40,6 +40,7 @@ import com.cubefury.vendingmachine.gui.GuiTextures;
 import com.cubefury.vendingmachine.gui.WidgetThemes;
 import com.cubefury.vendingmachine.trade.TradeCategory;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
+import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.Translator;
 
 import gregtech.api.metatileentity.implementations.gui.MTEMultiBlockBaseGui;
@@ -296,7 +297,19 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                             if (index < displayedTrades.get(category).size()) {
                                 TradeItemDisplay cur = displayedTrades.get(category).get(index);
                                 if (cur != null && cur.display != null) {
-                                    builder.add("yes trade");
+                                    builder.clearText();
+                                    for (BigItemStack toItem : cur.toItems) {
+                                        builder.addLine(IKey.str(toItem.stackSize + " " + toItem.getBaseStack().getDisplayName()).style(IKey.AQUA));
+                                        // builder.add(new ItemDrawable(toItem.getBaseStack()));
+                                    }
+                                    builder.emptyLine();
+                                    builder.addLine(IKey.str(Translator.translate("vendingmachine.gui.required_inputs")).style(IKey.DARK_GREEN, IKey.ITALIC));
+                                    for (BigItemStack fromItem : cur.fromItems) {
+                                        builder.addLine(IKey.str(fromItem.stackSize + " " + fromItem.getBaseStack().getDisplayName()).style(IKey.DARK_GREEN));
+                                    }
+
+                                    builder.emptyLine();
+                                    builder.addLine(IKey.str(cur.label).style(IKey.GRAY));
                                 }
                             }
                         }
