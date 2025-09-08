@@ -25,4 +25,12 @@ public final class GuiTextures {
         .canApplyTheme()
         .name("trade_available_background")
         .build();
+
+    public static final UITexture SIDE_PANEL_BACKGROUND = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/background/panel_side")
+        .imageSize(195, 136)
+        .adaptable(4)
+        .canApplyTheme()
+        .name("panel_side_background")
+        .build();
 }

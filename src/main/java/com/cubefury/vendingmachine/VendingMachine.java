@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.cubefury.vendingmachine.blocks.BlockVendingMachine;
+import com.cubefury.vendingmachine.gui.WidgetThemes;
 import com.cubefury.vendingmachine.items.VMItems;
 import com.cubefury.vendingmachine.network.PacketTypeRegistry;
 import com.cubefury.vendingmachine.network.SerializedPacket;
@@ -70,6 +71,9 @@ public class VendingMachine {
         // Register network handlers
         network.registerMessage(SerializedPacket.HandleClient.class, SerializedPacket.class, 0, Side.CLIENT);
         network.registerMessage(SerializedPacket.HandleServer.class, SerializedPacket.class, 0, Side.SERVER);
+
+        // ModularUI
+        WidgetThemes.register();
 
     }
 

@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.cleanroommc.modularui.screen.RichTooltip;
-import com.cubefury.vendingmachine.util.Translator;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -24,6 +22,7 @@ import com.cleanroommc.modularui.utils.item.IItemHandlerModifiable;
 import com.cleanroommc.modularui.utils.item.ItemStackHandler;
 import com.cleanroommc.modularui.value.sync.BooleanSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
+import com.cleanroommc.modularui.widget.ParentWidget;
 import com.cleanroommc.modularui.widget.SingleChildWidget;
 import com.cleanroommc.modularui.widgets.ListWidget;
 import com.cleanroommc.modularui.widgets.PageButton;
@@ -38,8 +37,10 @@ import com.cleanroommc.modularui.widgets.slot.ModularSlot;
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
 import com.cubefury.vendingmachine.gui.GuiTextures;
+import com.cubefury.vendingmachine.gui.WidgetThemes;
 import com.cubefury.vendingmachine.trade.TradeCategory;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
+import com.cubefury.vendingmachine.util.Translator;
 
 import gregtech.api.metatileentity.implementations.gui.MTEMultiBlockBaseGui;
 import gregtech.api.modularui2.GTGuiTextures;
@@ -95,13 +96,12 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         panel = panel.child(
             new Column().width(170)
                 .child(createTitleTextStyle(base.getLocalName()))
-                .child(createInputRow(syncManager))
                 .child(createTradeUI((TradeMainPanel) panel, this.tabController))
                 .child(createInventoryRow(panel, syncManager)));
         panel = panel.child(
             new Column().size(20)
-                .right(5)
-                .child(createOutputSlot()));
+                .right(5));
+        panel = panel.child(createIOColumn(syncManager));
         return panel;
     }
 
@@ -124,7 +124,10 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                             .center())
                     .tooltipBuilder(builder -> {
                         builder.clearText();
-                        builder.addLine(Translator.translate(this.tradeCategories.get(index).getUnlocalized_name()));
+                        builder.addLine(
+                            Translator.translate(
+                                this.tradeCategories.get(index)
+                                    .getUnlocalized_name()));
                     }));
         }
         return tabColumn;
@@ -199,36 +202,52 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         ejectItems = false;
     }
 
-    private IWidget createInputRow(PanelSyncManager syncManager) {
-        Row row = new Row();
-        row.child(
-            SlotGroupWidget.builder()
-                .matrix("IIIIIII")
-                .key('I', index -> {
-                    return new ItemSlot().slot(
-                        new ModularSlot(base.inputItems, index).slotGroup("inputSlotGroup")
-                            .changeListener((newItem, onlyAmountChanged, client, init) -> {
-                                if (guiData.isClient()) {
-                                    forceRefresh = true;
-                                }
-                            }));
-                })
-                .build());
-        row.child(
-            new ToggleButton().overlay(GTGuiTextures.OVERLAY_BUTTON_CYCLIC)
-                .tooltipBuilder(t -> t.addLine(IKey.lang("vendingmachine.gui.item_eject")))
-                .left(144)
-                .syncHandler("ejectItems"));
-        return row.height(18)
-            .width(162)
-            .top(0)
-            .left(4);
+    private IWidget createIOColumn(PanelSyncManager syncManager) {
+        return new ParentWidget<>().excludeAreaInNEI()
+            .width(50)
+            .height(160)
+            .right(-48)
+            .top(40)
+            .widgetTheme(WidgetThemes.BACKGROUND_SIDEPANEL)
+            .child(
+                new Column().child(
+                    new Row().child(createInputRow(syncManager).center())
+                        .top(20)
+                        .height(18 * 3))
+                    .child(
+                        new Row().child(
+                            new ToggleButton().overlay(GTGuiTextures.OVERLAY_BUTTON_CYCLIC)
+                                .tooltipBuilder(t -> t.addLine(IKey.lang("vendingmachine.gui.item_eject")))
+                                .syncHandler("ejectItems")
+                                .center())
+                            .top(80)
+                            .height(18))
+                    .child(
+                        new Row().child(createOutputSlots().center())
+                            .bottom(6)
+                            .height(18 * 2))
+                    .right(1));
     }
 
-    private IWidget createOutputSlot() {
+    private SlotGroupWidget createInputRow(PanelSyncManager syncManager) {
+        return SlotGroupWidget.builder()
+            .matrix("II", "II", "II")
+            .key('I', index -> {
+                return new ItemSlot().slot(
+                    new ModularSlot(base.inputItems, index).slotGroup("inputSlotGroup")
+                        .changeListener((newItem, onlyAmountChanged, client, init) -> {
+                            if (guiData.isClient()) {
+                                forceRefresh = true;
+                            }
+                        }));
+            })
+            .build();
+    }
+
+    private SlotGroupWidget createOutputSlots() {
         // we use slot group widget in case we want to increase the number of output slots in the future
         return SlotGroupWidget.builder()
-            .matrix("I")
+            .matrix("II", "II")
             .key('I', index -> {
                 ModularSlot ms = new ModularSlot(base.outputItems, index).accessibility(false, true)
                     .slotGroup("outputSlotGroup");

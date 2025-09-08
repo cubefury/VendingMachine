@@ -51,8 +51,8 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     public static final int CUSTOM_UI_HEIGHT = 300;
 
-    public static final int INPUT_SLOTS = 7;
-    public static final int OUTPUT_SLOTS = 1;
+    public static final int INPUT_SLOTS = 6;
+    public static final int OUTPUT_SLOTS = 4;
 
     public static final int MAX_TRADES = 300;
 
