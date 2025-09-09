@@ -43,18 +43,16 @@ public final class GuiTextures {
         .build();
 
     public static final UITexture TRADE_BUTTON_UNPRESSED = UITexture.builder()
-        .location(VendingMachine.MODID, "gui/background/trade_button_unpressed")
+        .location(VendingMachine.MODID, "gui/background/trade_button_unpressed_color_corrected")
         .imageSize(195, 136)
         .adaptable(4)
-        .canApplyTheme()
         .name("trade_button_unpressed")
         .build();
 
     public static final UITexture TRADE_BUTTON_PRESSED = UITexture.builder()
-        .location(VendingMachine.MODID, "gui/background/trade_button_pressed")
+        .location(VendingMachine.MODID, "gui/background/trade_button_pressed_color_corrected")
         .imageSize(195, 136)
         .adaptable(4)
-        .canApplyTheme()
         .name("trade_button_pressed")
         .build();
 }

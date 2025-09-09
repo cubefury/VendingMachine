@@ -61,7 +61,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     private SearchBar searchBar;
 
     public static final int ITEMS_PER_ROW = 3;
-    public static final int ITEM_HEIGHT = 54;
+    public static final int ITEM_HEIGHT = 25;
+    public static final int ITEM_WIDTH = 47;
     private static final int ROW_SEPARATOR_HEIGHT = 5;
 
     public MTEVendingMachineGui(MTEVendingMachine base, int height) {
@@ -97,7 +98,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         this.guiData = guiData;
 
         registerSyncValues(syncManager);
-        ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, guiData, syncManager).size(198, height)
+        ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, guiData, syncManager).size(178, height)
             .padding(4);
         panel.child(createCategoryTabs(this.tabController));
         panel.child(
@@ -159,7 +160,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     }
 
     private SearchBar createSearchBar() {
-        return new SearchBar(this).width(163)
+        return new SearchBar(this).width(162)
             .left(3)
             .top(5)
             .height(10);
@@ -277,7 +278,13 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     // spotless:off
     private IWidget createTradeUI(TradeMainPanel rootPanel, PagedWidget.Controller tabController) {
-        PagedWidget<?> paged = new PagedWidget<>().expanded().debugName("paged").controller(tabController).heightRel(0.5f);
+        PagedWidget<?> paged = new PagedWidget<>()
+            .width(162)
+            .debugName("paged")
+            .controller(tabController)
+            .background(GuiTextures.TEXT_FIELD_BACKGROUND)
+            .padding(4)
+            .heightRel(0.5f);
         for (TradeCategory category : this.tradeCategories) {
             ListWidget<IWidget, ?> tradeList = new ListWidget<>().debugName("items").heightRel(1.0f)
                 .widthRel(1.0f).childSeparator(new Rectangle().setColor(0x0).asIcon().size(ROW_SEPARATOR_HEIGHT))
@@ -288,7 +295,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
                 int index = i;
                 displayedTrades.get(category).get(i).setRootPanel(rootPanel);
-                row.child(displayedTrades.get(category).get(i)
+                row.childPadding(5)
+                    .child(displayedTrades.get(category).get(i)
                     .tooltipDynamic(builder -> {
                         builder.clearText();
                         synchronized (displayedTrades) {
@@ -311,9 +319,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                             }
                         }
                     })
-                    .tooltipAutoUpdate(true)    // if it starts lagging, we'll need to index all
-                                                // the tradeslots and then call updateTooltip() every
-                                                // refresh
+                    .tooltipAutoUpdate(true)
                     .overlay(
                         new DynamicDrawable(() -> {
                             if (
@@ -345,8 +351,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         }
 
         return new Row().child(paged.top(0))
-            .left(4)
-            .top(38);
+            .left(3)
+            .top(24);
     }
     // spotless:on
 
