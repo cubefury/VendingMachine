@@ -99,17 +99,17 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, guiData, syncManager, this.tabController)
             .size(198, height)
             .padding(4);
-        panel = panel.child(createCategoryTabs(this.tabController));
-        panel = panel.child(
+        panel.child(createCategoryTabs(this.tabController));
+        panel.child(
             new Column().width(170)
                 .child(createTitleTextStyle(base.getLocalName()))
                 .child(this.searchBar)
                 .child(createTradeUI((TradeMainPanel) panel, this.tabController))
                 .child(createInventoryRow(panel, syncManager)));
-        panel = panel.child(
+        panel.child(
             new Column().size(20)
                 .right(5));
-        panel = panel.child(createIOColumn(syncManager));
+        panel.child(createIOColumn(syncManager));
         return panel;
     }
 
@@ -122,7 +122,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
         for (int i = 0; i < this.tradeCategories.size(); i++) {
             int index = i;
-            tabColumn = tabColumn.child(
+            tabColumn.child(
                 new PageButton(i, tabController).tab(com.cleanroommc.modularui.drawable.GuiTextures.TAB_LEFT, -1)
                     .overlay(
                         this.tradeCategories.get(i)
