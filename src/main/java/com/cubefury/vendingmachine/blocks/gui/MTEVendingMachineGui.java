@@ -18,8 +18,6 @@ import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
 import com.cleanroommc.modularui.utils.Alignment;
-import com.cleanroommc.modularui.utils.item.IItemHandlerModifiable;
-import com.cleanroommc.modularui.utils.item.ItemStackHandler;
 import com.cleanroommc.modularui.value.sync.BooleanSyncValue;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.widget.ParentWidget;
@@ -55,8 +53,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     public boolean forceRefresh = false;
 
     private boolean ejectItems = false;
-    private final Map<TradeCategory, IItemHandlerModifiable> tradeItemHandlers = new HashMap<>();
-    private final Map<TradeCategory, List<TradeItemDisplay>> displayedTrades = new HashMap<>();
+    private final Map<TradeCategory, List<TradeItemDisplayWidget>> displayedTrades = new HashMap<>();
     private final List<TradeCategory> tradeCategories = new ArrayList<>();
 
     private PosGuiData guiData;
@@ -64,7 +61,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     private SearchBar searchBar;
 
     public static final int ITEMS_PER_ROW = 3;
-    private static final int ITEM_HEIGHT = 18;
+    public static final int ITEM_HEIGHT = 54;
     private static final int ROW_SEPARATOR_HEIGHT = 5;
 
     public MTEVendingMachineGui(MTEVendingMachine base, int height) {
@@ -76,7 +73,11 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         this.tradeCategories.addAll(TradeDatabase.INSTANCE.getTradeCategories());
 
         for (TradeCategory c : this.tradeCategories) {
-            tradeItemHandlers.put(c, new ItemStackHandler(MTEVendingMachine.MAX_TRADES));
+            displayedTrades.put(c, new ArrayList<>(MTEVendingMachine.MAX_TRADES));
+            for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
+                displayedTrades.get(c)
+                    .add(new TradeItemDisplayWidget(null));
+            }
         }
 
         this.tabController = new PagedWidget.Controller();
@@ -96,8 +97,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         this.guiData = guiData;
 
         registerSyncValues(syncManager);
-        ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, guiData, syncManager, this.tabController)
-            .size(198, height)
+        ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, guiData, syncManager).size(198, height)
             .padding(4);
         panel.child(createCategoryTabs(this.tabController));
         panel.child(
@@ -116,8 +116,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     public IWidget createCategoryTabs(PagedWidget.Controller tabController) {
         Flow tabColumn = new Column().width(40)
             .height(100)
-            .left(-30)
-            .top(50)
+            .left(-29)
+            .top(40)
             .coverChildren();
 
         for (int i = 0; i < this.tradeCategories.size(); i++) {
@@ -287,17 +287,14 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
             for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
                 int index = i;
-                int x = i % ITEMS_PER_ROW;
-                int y = i / ITEMS_PER_ROW;
-                row.child(new TradeSlot(category, i, rootPanel)
-                    .slot(new ModularSlot(tradeItemHandlers.get(category), i))
+                displayedTrades.get(category).get(i).setRootPanel(rootPanel);
+                row.child(displayedTrades.get(category).get(i)
                     .tooltipDynamic(builder -> {
-                        // builder.clearText();
+                        builder.clearText();
                         synchronized (displayedTrades) {
                             if (index < displayedTrades.get(category).size()) {
-                                TradeItemDisplay cur = displayedTrades.get(category).get(index);
-                                if (cur != null && cur.display != null) {
-                                    builder.clearText();
+                                TradeItemDisplay cur = displayedTrades.get(category).get(index).getDisplay();
+                                if (cur != null) {
                                     for (BigItemStack toItem : cur.toItems) {
                                         builder.addLine(IKey.str(toItem.stackSize + " " + toItem.getBaseStack().getDisplayName()).style(IKey.AQUA));
                                         // builder.add(new ItemDrawable(toItem.getBaseStack()));
@@ -317,30 +314,24 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                     .tooltipAutoUpdate(true)    // if it starts lagging, we'll need to index all
                                                 // the tradeslots and then call updateTooltip() every
                                                 // refresh
-                    .background(new DynamicDrawable(() -> {
-                        if (index < displayedTrades.get(category).size() && displayedTrades.get(category).get(index).tradeableNow) {
-                            return GuiTextures.TRADE_AVAILABLE_BACKGROUND;
-                        }
-                        return GTGuiTextures.SLOT_ITEM_STANDARD;
-                    }))
                     .overlay(
                         new DynamicDrawable(() -> {
                             if (
                                 index < displayedTrades.get(category).size()
-                                    && (displayedTrades.get(category).get(index).hasCooldown || !displayedTrades.get(category).get(index).enabled)
+                                    && (displayedTrades.get(category).get(index).getDisplay().hasCooldown || !displayedTrades.get(category).get(index).getDisplay().enabled)
                             ) {
                                 return GuiTextures.OVERLAY_TRADE_DISABLED;
                             }
-                            if (index < displayedTrades.get(category).size() && displayedTrades.get(category).get(index).tradeableNow) {
+                            if (index < displayedTrades.get(category).size() && displayedTrades.get(category).get(index).getDisplay().tradeableNow) {
                                 return GuiTextures.OVERLAY_TRADE_AVAILABLE_HIGHLIGHT;
                             }
                             return null; }),
                         new DynamicDrawable(() -> {
-                            if (index < displayedTrades.get(category).size() && displayedTrades.get(category).get(index).hasCooldown) {
-                                return IKey.str(displayedTrades.get(category).get(index).cooldownText);
+                            if (index < displayedTrades.get(category).size() && displayedTrades.get(category).get(index).getDisplay().hasCooldown) {
+                                return IKey.str(displayedTrades.get(category).get(index).getDisplay().cooldownText);
                             }
                             return null; }))
-                    .setEnabledIf(slot -> tradeItemHandlers.get(category).getStackInSlot(index) != null));
+                    .setEnabledIf(slot -> ((TradeItemDisplayWidget) slot).getDisplay() != null));
                 if (i % ITEMS_PER_ROW == ITEMS_PER_ROW - 1) {
                     tradeList.child(row);
 
@@ -386,32 +377,13 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         syncManager.syncValue("ejectItems", ejectItemsSyncer);
     }
 
-    public void attemptPurchase(TradeCategory category, int index) {
-        TradeItemDisplay trade = null;
-        if (!base.getActive()) {
-            return;
-        }
-
-        synchronized (displayedTrades) {
-            if (
-                displayedTrades.get(category)
-                    .size() <= index
-            ) {
-                return;
-            }
-            trade = displayedTrades.get(category)
-                .get(index);
-            if (trade == null) {
-                return;
-            }
-            submitTradesToServer(
-                displayedTrades.get(category)
-                    .get(index));
-        }
+    public void attemptPurchase(TradeItemDisplay display) {
+        submitTradesToServer(display);
         this.forceRefresh = true;
     }
 
     private void submitTradesToServer(TradeItemDisplay trade) {
+        VendingMachine.LOG.info("attempted trade for {}", trade.display);
         if (!trade.tradeableNow || !trade.enabled) {
             return;
         }
@@ -424,24 +396,20 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     public void updateSlots(Map<TradeCategory, List<TradeItemDisplay>> trades) {
         synchronized (displayedTrades) {
-            displayedTrades.clear();
-            displayedTrades.putAll(trades);
-            for (Map.Entry<TradeCategory, List<TradeItemDisplay>> entry : displayedTrades.entrySet()) {
-                int displayedSize = displayedTrades.get(entry.getKey())
+            for (Map.Entry<TradeCategory, List<TradeItemDisplayWidget>> entry : displayedTrades.entrySet()) {
+                int displayedSize = trades.get(entry.getKey())
                     .size();
                 for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
                     if (i < displayedSize) {
-                        tradeItemHandlers.get(entry.getKey())
-                            .setStackInSlot(
-                                i,
-                                displayedTrades.get(entry.getKey())
-                                    .get(i) != null
-                                        ? displayedTrades.get(entry.getKey())
-                                            .get(i).display
-                                        : null);
+                        displayedTrades.get(entry.getKey())
+                            .get(i)
+                            .setDisplay(
+                                trades.get(entry.getKey())
+                                    .get(i));
                     } else {
-                        tradeItemHandlers.get(entry.getKey())
-                            .setStackInSlot(i, null);
+                        displayedTrades.get(entry.getKey())
+                            .get(i)
+                            .setDisplay(null);
                     }
                 }
             }

@@ -41,4 +41,20 @@ public final class GuiTextures {
         .canApplyTheme()
         .name("text_field_background")
         .build();
+
+    public static final UITexture TRADE_BUTTON_UNPRESSED = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/background/trade_button_unpressed")
+        .imageSize(195, 136)
+        .adaptable(4)
+        .canApplyTheme()
+        .name("trade_button_unpressed")
+        .build();
+
+    public static final UITexture TRADE_BUTTON_PRESSED = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/background/trade_button_pressed")
+        .imageSize(195, 136)
+        .adaptable(4)
+        .canApplyTheme()
+        .name("trade_button_pressed")
+        .build();
 }

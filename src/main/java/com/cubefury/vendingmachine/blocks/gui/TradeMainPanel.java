@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
-import com.cleanroommc.modularui.widgets.PagedWidget;
 import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
 import com.cubefury.vendingmachine.storage.NameCache;
@@ -39,17 +38,15 @@ public class TradeMainPanel extends ModularPanel {
     private final PosGuiData guiData;
     private EntityPlayer player = null;
     private int ticksOpen = 0;
-    private UUID playerID = null;
-    private PagedWidget.Controller tabController = null;
+    private final UUID playerID;
 
     public TradeMainPanel(@NotNull String name, MTEVendingMachineGui gui, PosGuiData guiData,
-        PanelSyncManager syncManager, PagedWidget.Controller tabController) {
+        PanelSyncManager syncManager) {
         super(name);
         this.gui = gui;
         this.guiData = guiData;
         this.syncManager = syncManager;
         this.playerID = NameCache.INSTANCE.getUUIDFromPlayer(guiData.getPlayer());
-        this.tabController = tabController;
     }
 
     @Override
@@ -245,7 +242,7 @@ public class TradeMainPanel extends ModularPanel {
         return t.hasCooldown ? 4 : 3;
     }
 
-    public void attemptPurchase(TradeCategory category, int index) {
-        gui.attemptPurchase(category, index);
+    public void attemptPurchase(TradeItemDisplay display) {
+        gui.attemptPurchase(display);
     }
 }
