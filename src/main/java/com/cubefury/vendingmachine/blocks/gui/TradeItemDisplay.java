@@ -27,11 +27,10 @@ public class TradeItemDisplay {
     public boolean hasCooldown;
     public boolean enabled;
     public boolean tradeableNow;
-    public UUID playerID; // used to identify player who claimed a trade on the server
 
     public TradeItemDisplay(List<BigItemStack> fromItems, List<BigItemStack> toItems, ItemStack display, UUID tgID,
         int tradeGroupOrder, String label, long cooldown, String cooldownText, boolean hasCooldown, boolean enabled,
-        boolean tradeableNow, UUID playerID) {
+        boolean tradeableNow) {
         this.fromItems = fromItems;
         this.toItems = toItems;
         this.display = display;
@@ -43,7 +42,6 @@ public class TradeItemDisplay {
         this.hasCooldown = hasCooldown;
         this.enabled = enabled;
         this.tradeableNow = tradeableNow;
-        this.playerID = playerID;
     }
 
     public static TradeItemDisplay readFromNBT(NBTTagCompound nbt) {
@@ -68,8 +66,7 @@ public class TradeItemDisplay {
             nbt.getString("cooldownText"),
             nbt.getBoolean("hasCooldown"),
             nbt.getBoolean("enabled"),
-            nbt.getBoolean("tradeableNow"),
-            NBTConverter.UuidValueType.PLAYER.readId(nbt));
+            nbt.getBoolean("tradeableNow"));
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
@@ -92,7 +89,6 @@ public class TradeItemDisplay {
         nbt.setBoolean("hasCooldown", this.hasCooldown);
         nbt.setBoolean("enabled", this.enabled);
         nbt.setBoolean("tradeableNow", this.tradeableNow);
-        NBTConverter.UuidValueType.PLAYER.writeId(this.playerID, nbt);
 
         return nbt;
     }
@@ -113,8 +109,7 @@ public class TradeItemDisplay {
             && this.cooldownText.equals(other.cooldownText)
             && this.hasCooldown == other.hasCooldown
             && this.enabled == other.enabled
-            && this.tradeableNow == other.tradeableNow
-            && this.playerID == other.playerID;
+            && this.tradeableNow == other.tradeableNow;
     }
 
     public boolean satisfiesSearch(ItemFilter filter, String searchStringNoCase) {

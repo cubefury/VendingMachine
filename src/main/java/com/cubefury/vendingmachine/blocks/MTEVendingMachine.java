@@ -23,7 +23,9 @@ import com.cubefury.vendingmachine.blocks.gui.TradeItemDisplay;
 import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeRequestSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
+import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
+import com.cubefury.vendingmachine.trade.TradeRequest;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.gtnewhorizon.structurelib.StructureLibAPI;
 import com.gtnewhorizon.structurelib.alignment.IAlignment;
@@ -82,7 +84,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     public ItemStackHandler outputItems = new ItemStackHandler(OUTPUT_SLOTS);
     public Queue<ItemStack> outputBuffer = new ConcurrentLinkedQueue<>();
 
-    public final Queue<TradeItemDisplay> pendingTrades = new LinkedBlockingQueue<>();
+    public final Queue<TradeRequest> pendingTrades = new LinkedBlockingQueue<>();
     private boolean newBufferedOutputs = false;
     private int ticksSinceOutput = 0;
 
@@ -103,7 +105,8 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             baseTile.getZCoord());
     }
 
-    public void addTradeRequest(TradeItemDisplay trade) {
+    public void addTradeRequest(TradeRequest trade) {
+        VendingMachine.LOG.info("received new trade request");
         this.pendingTrades.add(trade);
     }
 
@@ -174,11 +177,11 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         this.newBufferedOutputs = false;
     }
 
-    private boolean processTradeOnServer(TradeItemDisplay trade) {
+    private boolean processTradeOnServer(TradeRequest tradeRequest) {
         if (
-            trade == null || !TradeDatabase.INSTANCE.getTradeGroups()
-                .get(trade.tgID)
-                .canExecuteTrade(trade.playerID)
+            tradeRequest == null || !TradeDatabase.INSTANCE.getTradeGroups()
+                .get(tradeRequest.tradeGroup)
+                .canExecuteTrade(tradeRequest.player)
         ) {
             return false;
         }
@@ -188,6 +191,9 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             inputSlots[i] = curStack == null ? null : curStack.copy();
         }
 
+        Trade trade = TradeDatabase.INSTANCE.getTradeGroupFromId(tradeRequest.tradeGroup)
+            .getTrades()
+            .get(tradeRequest.tradeGroupOrder);
         for (BigItemStack stack : trade.fromItems) {
             ItemStack requiredStack = stack.getBaseStack();
             int requiredAmount = stack.stackSize;
@@ -226,8 +232,8 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             this.newBufferedOutputs = true;
         }
         TradeDatabase.INSTANCE.getTradeGroups()
-            .get(trade.tgID)
-            .executeTrade(trade.playerID);
+            .get(tradeRequest.tradeGroup)
+            .executeTrade(tradeRequest.player);
 
         return true;
     }
@@ -388,6 +394,10 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     @Override
     public boolean checkMachine(IGregTechTileEntity aBaseMetaTileEntity, ItemStack aStack) {
+        if (getBaseMetaTileEntity() == null) {
+            VendingMachine.LOG.warn("Check machine failed as Base MTE is null");
+            return false;
+        }
         return STRUCTURE_DEFINITION.check(
             this,
             "main",
@@ -407,7 +417,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         if ((aBaseMetaTileEntity.isClientSide()) && (aBaseMetaTileEntity.isActive())) {
             // spawn something maybe
         }
-        if (aBaseMetaTileEntity.isServerSide() && aBaseMetaTileEntity.isActive()) {
+        if (aBaseMetaTileEntity.isServerSide()) {
             dispenseItems();
             if (this.mUpdate++ % STRUCTURE_CHECK_TICKS == 0) {
                 this.mMachine = checkMachine(aBaseMetaTileEntity, null);

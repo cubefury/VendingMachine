@@ -13,8 +13,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
 
-import org.antlr.v4.misc.OrderedHashMap;
-
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.integration.betterquesting.BqAdapter;
 import com.cubefury.vendingmachine.integration.nei.NeiRecipeCache;
@@ -28,7 +26,7 @@ public class TradeDatabase {
 
     public static final TradeDatabase INSTANCE = new TradeDatabase();
     public int version = -1;
-    private final Map<UUID, TradeGroup> tradeGroups = new OrderedHashMap<>();
+    private final Map<UUID, TradeGroup> tradeGroups = new HashMap<>();
     private final Map<TradeCategory, Set<UUID>> tradeCategories = new HashMap<>();
 
     private TradeDatabase() {}

@@ -188,8 +188,6 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                 for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
                     ItemStack stack = base.inputItems.getStackInSlot(i);
                     if (stack != null) {
-                        // TODO: There's still a race condition here where the stack size changes between these
-                        // two null checks. Fix
                         ItemStack extracted = base.inputItems.extractItem(i, stack.stackSize, false);
                         if (extracted == null) { // if somehow it got pulled out already
                             continue;
@@ -389,7 +387,6 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     }
 
     private void submitTradesToServer(TradeItemDisplay trade) {
-        VendingMachine.LOG.info("attempted trade for {}", trade.display);
         if (!trade.tradeableNow || !trade.enabled) {
             return;
         }

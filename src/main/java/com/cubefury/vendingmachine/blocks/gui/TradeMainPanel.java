@@ -18,7 +18,6 @@ import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
-import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.trade.TradeCategory;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
@@ -38,7 +37,6 @@ public class TradeMainPanel extends ModularPanel {
     private final PosGuiData guiData;
     private EntityPlayer player = null;
     private int ticksOpen = 0;
-    private final UUID playerID;
 
     public TradeMainPanel(@NotNull String name, MTEVendingMachineGui gui, PosGuiData guiData,
         PanelSyncManager syncManager) {
@@ -46,7 +44,6 @@ public class TradeMainPanel extends ModularPanel {
         this.gui = gui;
         this.guiData = guiData;
         this.syncManager = syncManager;
-        this.playerID = NameCache.INSTANCE.getUUIDFromPlayer(guiData.getPlayer());
     }
 
     @Override
@@ -177,8 +174,7 @@ public class TradeMainPanel extends ModularPanel {
                     convertCooldownText(tgw.cooldown()),
                     tgw.cooldown() > 0,
                     tgw.enabled(),
-                    checkItemsSatisfied(trade.fromItems, availableItems),
-                    playerID);
+                    checkItemsSatisfied(trade.fromItems, availableItems));
 
                 trades.get(category)
                     .add(tid);

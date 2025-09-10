@@ -13,6 +13,9 @@ import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
 import com.cubefury.vendingmachine.blocks.gui.TradeItemDisplay;
 import com.cubefury.vendingmachine.network.PacketSender;
 import com.cubefury.vendingmachine.network.PacketTypeRegistry;
+import com.cubefury.vendingmachine.storage.NameCache;
+import com.cubefury.vendingmachine.trade.TradeRequest;
+import com.cubefury.vendingmachine.util.NBTConverter;
 
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 
@@ -26,7 +29,8 @@ public class NetTradeRequestSync {
 
     public static void sendTradeRequest(TradeItemDisplay trade, World world, int x, int y, int z) {
         NBTTagCompound payload = new NBTTagCompound();
-        payload.setTag("trade", trade.writeToNBT(new NBTTagCompound()));
+        NBTConverter.UuidValueType.TRADEGROUP.writeId(trade.tgID, payload);
+        payload.setInteger("tradeGroupOrder", trade.tradeGroupOrder);
         payload.setInteger("dim", world.provider.dimensionId);
         payload.setInteger("x", x);
         payload.setInteger("y", y);
@@ -50,9 +54,12 @@ public class NetTradeRequestSync {
                 && ((IGregTechTileEntity) te).getMetaTileEntity() instanceof MTEVendingMachine
         ) {
             ((MTEVendingMachine) ((IGregTechTileEntity) te).getMetaTileEntity()).addTradeRequest(
-                TradeItemDisplay.readFromNBT(
+                new TradeRequest(
+                    NameCache.INSTANCE.getUUIDFromPlayer(message.second()),
+                    NBTConverter.UuidValueType.TRADEGROUP.readId(message.first()),
                     message.first()
-                        .getCompoundTag("trade")));
+                        .getInteger("tradeGroupOrder"),
+                    (MTEVendingMachine) ((IGregTechTileEntity) te).getMetaTileEntity()));
         }
     }
 }
