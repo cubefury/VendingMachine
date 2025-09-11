@@ -7,6 +7,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -272,7 +273,10 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     @Override
     protected @NotNull MTEVendingMachineGui getGui() {
-        if (VendingMachine.proxy.isClient()) {
+        if (
+            !Minecraft.getMinecraft()
+                .isIntegratedServerRunning()
+        ) {
             NetAvailableTradeSync.requestSync();
             NetTradeStateSync.requestSync();
         }

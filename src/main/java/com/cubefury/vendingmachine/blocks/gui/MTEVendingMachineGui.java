@@ -264,10 +264,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .key('I', index -> {
                 ModularSlot ms = new ModularSlot(base.outputItems, index).accessibility(false, true)
                     .slotGroup("outputSlotGroup");
-                ms.changeListener((newItem, onlyAmountChanged, client, init) -> {
-                    VendingMachine.LOG.info("Changed output slot");
-                    VendingMachine.LOG.info(base.outputItems.getStackInSlot(0));
-                });
+                ms.changeListener((newItem, onlyAmountChanged, client, init) -> {});
                 return new ItemSlot().slot(ms);
             })
             .build();
@@ -382,8 +379,9 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     public void updateSlots(Map<TradeCategory, List<TradeItemDisplay>> trades) {
         synchronized (displayedTrades) {
             for (Map.Entry<TradeCategory, List<TradeItemDisplayWidget>> entry : displayedTrades.entrySet()) {
-                int displayedSize = trades.get(entry.getKey())
-                    .size();
+                int displayedSize = trades.get(entry.getKey()) == null ? 0
+                    : trades.get(entry.getKey())
+                        .size();
                 for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
                     if (i < displayedSize) {
                         displayedTrades.get(entry.getKey())
