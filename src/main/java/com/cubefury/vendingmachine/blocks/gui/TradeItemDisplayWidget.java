@@ -65,11 +65,9 @@ public class TradeItemDisplayWidget extends ItemDisplayWidget implements Interac
             if (this.display.hasCooldown || !this.display.enabled) {
                 GuiDraw.drawRoundedRect(1, 1, 45, 23, 0xBB000000, 1, 1);
             }
-            if (display.hasCooldown) {
-                this.overlay(
-                    IKey.str(this.display.cooldownText)
-                        .style(IKey.WHITE));
-            }
+            this.overlay(
+                IKey.str(display.hasCooldown ? this.display.cooldownText : "")
+                    .style(IKey.WHITE));
         }
     }
 
