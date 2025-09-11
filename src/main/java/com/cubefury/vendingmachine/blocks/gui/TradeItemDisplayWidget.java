@@ -4,6 +4,7 @@ import net.minecraft.item.ItemStack;
 
 import org.jetbrains.annotations.NotNull;
 
+import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.api.value.IValue;
 import com.cleanroommc.modularui.api.widget.Interactable;
 import com.cleanroommc.modularui.drawable.DynamicDrawable;
@@ -56,9 +57,19 @@ public class TradeItemDisplayWidget extends ItemDisplayWidget implements Interac
     public void draw(ModularGuiContext context, WidgetTheme widgetTheme) {
         ItemStack item = value.getValue();
         if (!Platform.isStackEmpty(item)) {
-            GuiDraw.drawText(" " + this.display.display.stackSize, 4, 9, 1.0f, 0x0, false);
+            GuiDraw.drawText(" " + this.display.display.stackSize, 4, 10, 1.0f, 0x0, false);
             GuiDraw.drawItem(item, 26, 4, 16, 16, context.getCurrentDrawingZ());
-
+            if (this.display.tradeableNow) {
+                GuiDraw.drawOutline(1, 1, 45, 23, 0x883CFF00, 2);
+            }
+            if (this.display.hasCooldown || !this.display.enabled) {
+                GuiDraw.drawRoundedRect(1, 1, 45, 23, 0xBB000000, 1, 1);
+            }
+            if (display.hasCooldown) {
+                this.overlay(
+                    IKey.str(this.display.cooldownText)
+                        .style(IKey.WHITE));
+            }
         }
     }
 

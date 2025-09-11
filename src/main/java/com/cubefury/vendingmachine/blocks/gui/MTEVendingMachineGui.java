@@ -12,7 +12,6 @@ import net.minecraft.world.World;
 
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.api.widget.IWidget;
-import com.cleanroommc.modularui.drawable.DynamicDrawable;
 import com.cleanroommc.modularui.drawable.Rectangle;
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
@@ -318,23 +317,6 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                         }
                     })
                     .tooltipAutoUpdate(true)
-                    .overlay(
-                        new DynamicDrawable(() -> {
-                            if (
-                                index < displayedTrades.get(category).size()
-                                    && (displayedTrades.get(category).get(index).getDisplay().hasCooldown || !displayedTrades.get(category).get(index).getDisplay().enabled)
-                            ) {
-                                return GuiTextures.OVERLAY_TRADE_DISABLED;
-                            }
-                            if (index < displayedTrades.get(category).size() && displayedTrades.get(category).get(index).getDisplay().tradeableNow) {
-                                return GuiTextures.OVERLAY_TRADE_AVAILABLE_HIGHLIGHT;
-                            }
-                            return null; }),
-                        new DynamicDrawable(() -> {
-                            if (index < displayedTrades.get(category).size() && displayedTrades.get(category).get(index).getDisplay().hasCooldown) {
-                                return IKey.str(displayedTrades.get(category).get(index).getDisplay().cooldownText);
-                            }
-                            return null; }))
                     .setEnabledIf(slot -> ((TradeItemDisplayWidget) slot).getDisplay() != null));
                 if (i % ITEMS_PER_ROW == ITEMS_PER_ROW - 1) {
                     tradeList.child(row);

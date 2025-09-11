@@ -55,6 +55,7 @@ public class NetTradeRequestSync {
         ) {
             ((MTEVendingMachine) ((IGregTechTileEntity) te).getMetaTileEntity()).addTradeRequest(
                 new TradeRequest(
+                    message.second(),
                     NameCache.INSTANCE.getUUIDFromPlayer(message.second()),
                     NBTConverter.UuidValueType.TRADEGROUP.readId(message.first()),
                     message.first()

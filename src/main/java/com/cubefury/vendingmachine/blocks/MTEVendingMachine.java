@@ -181,7 +181,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         if (
             tradeRequest == null || !TradeDatabase.INSTANCE.getTradeGroups()
                 .get(tradeRequest.tradeGroup)
-                .canExecuteTrade(tradeRequest.player)
+                .canExecuteTrade(tradeRequest.playerID)
         ) {
             return false;
         }
@@ -233,8 +233,8 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         }
         TradeDatabase.INSTANCE.getTradeGroups()
             .get(tradeRequest.tradeGroup)
-            .executeTrade(tradeRequest.player);
-
+            .executeTrade(tradeRequest.playerID);
+        NetTradeStateSync.sendTradeState(tradeRequest.player, false);
         return true;
     }
 

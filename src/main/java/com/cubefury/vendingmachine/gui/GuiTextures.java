@@ -7,14 +7,15 @@ public final class GuiTextures {
 
     public static final UITexture OVERLAY_TRADE_AVAILABLE_HIGHLIGHT = UITexture.builder()
         .location(VendingMachine.MODID, "gui/overlay/trade_available")
-        .imageSize(18, 18)
-        .canApplyTheme()
+        .imageSize(47, 25)
+        .adaptable(6)
         .name("trade_available_highlight")
         .build();
 
     public static final UITexture OVERLAY_TRADE_DISABLED = UITexture.builder()
         .location(VendingMachine.MODID, "gui/overlay/trade_disabled")
-        .imageSize(18, 18)
+        .imageSize(47, 25)
+        .adaptable(4)
         .canApplyTheme()
         .name("trade_disabled")
         .build();
