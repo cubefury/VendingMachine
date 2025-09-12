@@ -43,9 +43,13 @@ import betterquesting.questing.QuestDatabase;
 import codechicken.lib.gui.GuiDraw;
 import codechicken.nei.NEIServerUtils;
 import codechicken.nei.PositionedStack;
+import codechicken.nei.api.API;
+import codechicken.nei.recipe.GuiCraftingRecipe;
 import codechicken.nei.recipe.GuiRecipe;
 import codechicken.nei.recipe.TemplateRecipeHandler;
+import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Optional;
+import cpw.mods.fml.common.event.FMLInterModComms;
 
 public class NeiRecipeHandler extends TemplateRecipeHandler {
 
@@ -62,6 +66,19 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
     private int lastHoveredRecipeIndex = -1;
     private Rectangle lastHoveredTextArea = null;
     private UUID lastHoveredQuestId = null;
+
+    public NeiRecipeHandler() {}
+
+    public void addHandler() {
+        FMLInterModComms.sendRuntimeMessage(
+            FMLCommonHandler.instance()
+                .findContainerFor(VendingMachine.MODID),
+            "NEIPlugins",
+            "register-crafting-handler",
+            "vendingmachine@" + this.getRecipeName() + "@" + this.getOverlayIdentifier());
+        GuiCraftingRecipe.craftinghandlers.add(this);
+        API.registerUsageHandler(this);
+    }
 
     private UUID getCurrentPlayerUUID() {
         if (currentPlayerId == null) {
@@ -287,6 +304,19 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
                 y += LINE_SPACE;
             }
         }
+
+        // some test code to replace the header of the NEI display
+        /*
+         * GL11.glPushMatrix();
+         * RenderHelper.enableGUIStandardItemLighting();
+         * Minecraft mc = Minecraft.getMinecraft();
+         * RenderItem renderItem = new RenderItem();
+         * renderItem.renderItemAndEffectIntoGUI(mc.fontRenderer, mc.getTextureManager(), VMItems.vendingMachine, 3, 3);
+         * renderItem.renderItemOverlayIntoGUI(mc.fontRenderer, mc.getTextureManager(), VMItems.vendingMachine, 3, 3);
+         * RenderHelper.disableStandardItemLighting();
+         * GL11.glPopMatrix();
+         */
+
     }
 
     public class CachedTradeRecipe extends CachedRecipe {
@@ -344,4 +374,8 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
         }
     }
 
+    @Override
+    public void loadTransferRects() {
+        transferRects.add(new RecipeTransferRect(new Rectangle(75, 0, 16, 24), getOverlayIdentifier()));
+    }
 }

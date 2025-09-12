@@ -1,11 +1,8 @@
 package com.cubefury.vendingmachine;
 
-import net.minecraft.block.Block;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cubefury.vendingmachine.blocks.BlockVendingMachine;
 import com.cubefury.vendingmachine.gui.WidgetThemes;
 import com.cubefury.vendingmachine.items.VMItems;
 import com.cubefury.vendingmachine.network.PacketTypeRegistry;
@@ -43,8 +40,6 @@ public class VendingMachine {
     @Mod.Instance(MODID)
     public static VendingMachine instance;
 
-    public static Block vendingMachine = new BlockVendingMachine();
-
     public static boolean isBqLoaded = false;
     public static boolean isGtLoaded = false;
     public static boolean isAeLoaded = false;
@@ -79,7 +74,6 @@ public class VendingMachine {
     @Mod.EventHandler
     // load "Do your mod setup. Build whatever data structures you care about. Register recipes." (Remove if not needed)
     public void init(FMLInitializationEvent event) {
-        proxy.init(event);
 
         isBqLoaded = Loader.isModLoaded("betterquesting");
         isGtLoaded = Loader.isModLoaded("gregtech");
@@ -95,6 +89,7 @@ public class VendingMachine {
             VMItems.registerMultis();
         }
 
+        proxy.init(event);
     }
 
     @Mod.EventHandler
