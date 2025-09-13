@@ -33,6 +33,7 @@ public class NEIConfig implements IConfigureNEI {
     public void registerHandlerInfo(NEIRegisterHandlerInfosEvent event) {
         event.registerHandlerInfo(
             new HandlerInfo.Builder("vendingmachine", VendingMachine.NAME, VendingMachine.MODID).setMaxRecipesPerPage(3)
+                .setDisplayStack(VMItems.vendingMachine)
                 .build());
     }
 }

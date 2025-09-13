@@ -304,19 +304,6 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
                 y += LINE_SPACE;
             }
         }
-
-        // some test code to replace the header of the NEI display
-        /*
-         * GL11.glPushMatrix();
-         * RenderHelper.enableGUIStandardItemLighting();
-         * Minecraft mc = Minecraft.getMinecraft();
-         * RenderItem renderItem = new RenderItem();
-         * renderItem.renderItemAndEffectIntoGUI(mc.fontRenderer, mc.getTextureManager(), VMItems.vendingMachine, 3, 3);
-         * renderItem.renderItemOverlayIntoGUI(mc.fontRenderer, mc.getTextureManager(), VMItems.vendingMachine, 3, 3);
-         * RenderHelper.disableStandardItemLighting();
-         * GL11.glPopMatrix();
-         */
-
     }
 
     public class CachedTradeRecipe extends CachedRecipe {
