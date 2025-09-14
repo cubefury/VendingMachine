@@ -12,7 +12,6 @@ import net.minecraft.world.World;
 
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.api.widget.IWidget;
-import com.cleanroommc.modularui.drawable.Rectangle;
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
@@ -289,20 +288,20 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .debugName("paged")
             .controller(tabController)
             .background(GuiTextures.TEXT_FIELD_BACKGROUND)
-            .padding(4)
             .heightRel(0.5f);
         for (TradeCategory category : this.tradeCategories) {
             ListWidget<IWidget, ?> tradeList = new ListWidget<>().debugName("items").heightRel(1.0f)
-                .widthRel(1.0f).childSeparator(new Rectangle().setColor(0x0).asIcon().size(ROW_SEPARATOR_HEIGHT))
+                .width(156)
+                .margin(1)
                 .collapseDisabledChild(true);
 
-            Flow row = new TradeRow().height(ITEM_HEIGHT);
+            // Higher first row top margin
+            Flow row = new TradeRow().height(ITEM_HEIGHT).margin(1).marginTop(4);
 
             for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
                 int index = i;
                 displayedTrades.get(category).get(i).setRootPanel(rootPanel);
-                row.childPadding(5)
-                    .child(displayedTrades.get(category).get(i)
+                row.child(displayedTrades.get(category).get(i)
                     .tooltipDynamic(builder -> {
                         builder.clearText();
                         synchronized (displayedTrades) {
@@ -326,16 +325,18 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                         }
                     })
                     .tooltipAutoUpdate(true)
-                    .setEnabledIf(slot -> ((TradeItemDisplayWidget) slot).getDisplay() != null));
+                    .setEnabledIf(slot -> ((TradeItemDisplayWidget) slot).getDisplay() != null)
+                    .margin(2));
                 if (i % ITEMS_PER_ROW == ITEMS_PER_ROW - 1) {
                     tradeList.child(row);
 
-                    row = new TradeRow().height(ITEM_HEIGHT);
+                    row = new TradeRow().height(ITEM_HEIGHT).margin(1);
                 }
             }
             if (row.hasChildren()) {
                 tradeList.child(row);
             }
+            tradeList.child(new Row().height(2)); // bottom padding for last row
             paged.addPage(tradeList);
         }
 
