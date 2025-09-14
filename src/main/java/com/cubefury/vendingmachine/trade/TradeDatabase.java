@@ -54,7 +54,7 @@ public class TradeDatabase {
 
     public List<TradeCategory> getTradeCategories() {
         List<TradeCategory> tradeCategoryList = new ArrayList<>(tradeCategories.keySet());
-        tradeCategoryList.sort(Comparator.comparing(TradeCategory::getKey));
+        tradeCategoryList.sort(Comparator.comparing(TradeCategory::ordinal));
         return tradeCategoryList;
     }
 
