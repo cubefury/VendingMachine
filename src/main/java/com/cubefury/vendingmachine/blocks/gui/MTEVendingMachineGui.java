@@ -123,7 +123,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         for (int i = 0; i < this.tradeCategories.size(); i++) {
             int index = i;
             tabColumn.child(
-                new PageButton(i, tabController).tab(com.cleanroommc.modularui.drawable.GuiTextures.TAB_LEFT, -1)
+                new PageButton(i, tabController).tab(GuiTextures.TAB_LEFT, -1)
                     .overlay(
                         this.tradeCategories.get(i)
                             .getTexture()

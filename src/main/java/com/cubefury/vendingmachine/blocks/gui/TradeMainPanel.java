@@ -18,11 +18,13 @@ import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
+import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.trade.TradeCategory;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
 import com.cubefury.vendingmachine.trade.TradeGroup;
 import com.cubefury.vendingmachine.trade.TradeGroupWrapper;
+import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.Translator;
 
@@ -65,20 +67,20 @@ public class TradeMainPanel extends ModularPanel {
     }
 
     public void updateGui() {
-
-        List<TradeGroupWrapper> testTGW = new ArrayList<>();
-        for (Map.Entry<UUID, TradeGroup> entry : TradeDatabase.INSTANCE.getTradeGroups()
-            .entrySet()) {
-            testTGW.add(new TradeGroupWrapper(entry.getValue(), -1, true));
+        boolean test = false;
+        if (test) {
+            List<TradeGroupWrapper> testTGW = new ArrayList<>();
+            for (Map.Entry<UUID, TradeGroup> entry : TradeDatabase.INSTANCE.getTradeGroups()
+                .entrySet()) {
+                testTGW.add(new TradeGroupWrapper(entry.getValue(), -1, true));
+            }
+            Map<TradeCategory, List<TradeItemDisplay>> trades = formatTrades(testTGW);
+            gui.updateSlots(trades);
+        } else {
+            Map<TradeCategory, List<TradeItemDisplay>> trades = formatTrades(
+                TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer())));
+            gui.updateSlots(trades);
         }
-        Map<TradeCategory, List<TradeItemDisplay>> trades = formatTrades(testTGW);
-
-        // TODO: SWAP BACK
-        /*
-         * Map<TradeCategory, List<TradeItemDisplay>> trades = formatTrades(
-         * TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer())));
-         */
-        gui.updateSlots(trades);
     }
 
     @Override
