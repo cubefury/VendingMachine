@@ -67,7 +67,7 @@ public class TradeMainPanel extends ModularPanel {
     }
 
     public void updateGui() {
-        boolean test = false;
+        boolean test = true;
         if (test) {
             List<TradeGroupWrapper> testTGW = new ArrayList<>();
             for (Map.Entry<UUID, TradeGroup> entry : TradeDatabase.INSTANCE.getTradeGroups()

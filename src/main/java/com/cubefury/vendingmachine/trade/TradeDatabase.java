@@ -98,8 +98,9 @@ public class TradeDatabase {
             VendingMachine.LOG.info("Appended metadata to {} new trades", newMetadataCount);
             DirtyDbMarker.markDirty();
         }
-
-        refreshNeiCache();
+        if (VendingMachine.proxy.isClient()) {
+            refreshNeiCache();
+        }
 
         TradeManager.INSTANCE.recomputeAvailableTrades(null);
         VendingMachine.LOG

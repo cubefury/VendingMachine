@@ -79,8 +79,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             }
         }
 
-        this.tabController = new PagedWidget.Controller();
-        this.searchBar = createSearchBar();
+        this.tabController = VendingMachine.proxy.isClient() ? new PagedWidget.Controller() : null;
+        this.searchBar = VendingMachine.proxy.isClient() ? createSearchBar() : null;
     }
 
     public MTEVendingMachine getBase() {
@@ -99,12 +99,14 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, guiData, syncManager).size(178, height)
             .padding(4);
         panel.child(createCategoryTabs(this.tabController));
-        panel.child(
-            new Column().width(170)
-                .child(createTitleTextStyle(base.getLocalName()))
+        Flow mainColumn = new Column().width(170);
+        if (VendingMachine.proxy.isClient()) { // client side filtering
+            mainColumn.child(createTitleTextStyle(base.getLocalName()))
                 .child(this.searchBar)
-                .child(createTradeUI((TradeMainPanel) panel, this.tabController))
-                .child(createInventoryRow(panel, syncManager)));
+                .child(createTradeUI((TradeMainPanel) panel, this.tabController));
+        }
+        mainColumn.child(createInventoryRow(panel, syncManager));
+        panel.child(mainColumn);
         panel.child(
             new Column().size(20)
                 .right(5));

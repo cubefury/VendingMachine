@@ -276,8 +276,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     @Override
     protected @NotNull MTEVendingMachineGui getGui() {
         if (
-            !Minecraft.getMinecraft()
-                .isIntegratedServerRunning()
+            VendingMachine.proxy.isClient()
         ) {
             NetAvailableTradeSync.requestSync();
             NetTradeStateSync.requestSync();
