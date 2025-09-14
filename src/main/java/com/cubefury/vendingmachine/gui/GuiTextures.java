@@ -1,6 +1,5 @@
 package com.cubefury.vendingmachine.gui;
 
-import com.cleanroommc.modularui.ModularUI;
 import com.cleanroommc.modularui.api.GuiAxis;
 import com.cleanroommc.modularui.drawable.TabTexture;
 import com.cleanroommc.modularui.drawable.UITexture;
@@ -72,5 +71,6 @@ public final class GuiTextures {
         .name("background_output")
         .build();
 
-    public static final TabTexture TAB_LEFT = TabTexture.of(UITexture.fullImage(VendingMachine.MODID, "gui/tabs_left", true), GuiAxis.X, false, 32, 28, 4);
+    public static final TabTexture TAB_LEFT = TabTexture
+        .of(UITexture.fullImage(VendingMachine.MODID, "gui/tabs_left", true), GuiAxis.X, false, 32, 28, 4);
 }
