@@ -1,6 +1,7 @@
 package com.cubefury.vendingmachine.trade;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +15,7 @@ import net.minecraftforge.common.util.Constants;
 
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.api.trade.ICondition;
+import com.cubefury.vendingmachine.handlers.SaveLoadHandler;
 import com.cubefury.vendingmachine.integration.betterquesting.BqAdapter;
 import com.cubefury.vendingmachine.integration.betterquesting.BqCondition;
 import com.cubefury.vendingmachine.util.NBTConverter;
@@ -26,6 +28,9 @@ public class TradeGroup {
     private final List<Trade> trades = new ArrayList<>();
     public int cooldown = -1;
     public int maxTrades = -1;
+    public String label = "";
+    private TradeCategory category = TradeCategory.UNKNOWN;
+    private String original_category_str = "";
     private final Set<ICondition> requirementSet = new HashSet<>();
 
     // List of completed conditions for each player
@@ -80,6 +85,10 @@ public class TradeGroup {
         return trades;
     }
 
+    public TradeCategory getCategory() {
+        return category;
+    }
+
     public List<ICondition> getRequirements() {
         return new ArrayList<>(requirementSet);
     }
@@ -123,38 +132,52 @@ public class TradeGroup {
     public void setTradeState(UUID player, TradeHistory history) {
         synchronized (tradeState) {
             tradeState.put(player, history);
+
         }
     }
 
-    public boolean attemptExecuteTrade(UUID player) {
+    public boolean canExecuteTrade(UUID player) {
         List<TradeGroupWrapper> availableTrades = TradeManager.INSTANCE.getTrades(player);
         for (TradeGroupWrapper trade : availableTrades) {
             if (trade == null) { // shouldn't happen
                 continue;
             }
-            if (trade.trade().id == this.id && trade.enabled() && cooldown < 0) {
-                TradeHistory newTradeHistory = getTradeState(player);
-                newTradeHistory.executeTrade();
-                setTradeState(player, newTradeHistory);
+            if (trade.trade().id.equals(this.id) && trade.enabled() && trade.cooldown() < 0) {
                 return true;
             }
         }
         return false;
     }
 
+    public void executeTrade(UUID player) {
+        TradeHistory newTradeHistory = getTradeState(player);
+        newTradeHistory.executeTrade();
+        setTradeState(player, newTradeHistory);
+        SaveLoadHandler.INSTANCE.writeTradeState(Collections.singleton(player));
+    }
+
     public boolean readFromNBT(NBTTagCompound nbt) {
         this.trades.clear();
         this.requirementSet.clear();
 
-        boolean generatedRandomUUID = false;
+        boolean generatedMetadata = false;
         if (nbt.hasKey("id")) {
             this.id = NBTConverter.UuidValueType.TRADEGROUP.readId(nbt.getCompoundTag("id"));
         } else {
             this.id = UUID.randomUUID();
-            generatedRandomUUID = true;
+            generatedMetadata = true;
+        }
+        if (nbt.hasKey("category")) {
+            this.original_category_str = nbt.getString("category");
+            this.category = TradeCategory.ofString(original_category_str);
+        } else {
+            this.original_category_str = TradeCategory.UNKNOWN.getUnlocalized_name();
+            this.category = TradeCategory.UNKNOWN;
+            generatedMetadata = true;
         }
         this.cooldown = nbt.getInteger("cooldown");
         this.maxTrades = nbt.getInteger("maxTrades");
+        this.label = nbt.getString("label");
         NBTTagList tradeList = nbt.getTagList("trades", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < tradeList.tagCount(); i++) {
             NBTTagCompound trade = tradeList.getCompoundTagAt(i);
@@ -171,13 +194,15 @@ public class TradeGroup {
                 BqAdapter.INSTANCE.addQuestTrigger(bqc.getQuestId(), this);
             }
         }
-        return generatedRandomUUID;
+        return generatedMetadata;
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
         nbt.setTag("id", NBTConverter.UuidValueType.TRADEGROUP.writeId(this.id));
         nbt.setInteger("cooldown", this.cooldown);
         nbt.setInteger("maxTrades", this.maxTrades);
+        nbt.setString("label", this.label);
+        nbt.setString("category", this.category.getKey());
         NBTTagList tList = new NBTTagList();
         for (Trade t : trades) {
             tList.appendTag(t.writeToNBT(new NBTTagCompound()));
@@ -189,6 +214,10 @@ public class TradeGroup {
         }
         nbt.setTag("requirements", cList);
         return nbt;
+    }
+
+    public String getLabel() {
+        return this.label;
     }
 
     @Optional.Method(modid = "betterquesting")

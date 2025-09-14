@@ -1,13 +1,10 @@
 package com.cubefury.vendingmachine;
 
-import net.minecraft.block.Block;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.cubefury.vendingmachine.blocks.BlockVendingMachine;
-import com.cubefury.vendingmachine.blocks.ItemBlockVendingMachine;
-import com.cubefury.vendingmachine.blocks.TileVendingMachine;
+import com.cubefury.vendingmachine.gui.WidgetThemes;
+import com.cubefury.vendingmachine.items.VMItems;
 import com.cubefury.vendingmachine.network.PacketTypeRegistry;
 import com.cubefury.vendingmachine.network.SerializedPacket;
 import com.cubefury.vendingmachine.util.ItemPlaceholder;
@@ -43,10 +40,12 @@ public class VendingMachine {
     @Mod.Instance(MODID)
     public static VendingMachine instance;
 
-    public static Block vendingMachine = new BlockVendingMachine();
-
-    public static boolean isNeiLoaded = false;
     public static boolean isBqLoaded = false;
+    public static boolean isGtLoaded = false;
+    public static boolean isAeLoaded = false;
+
+    public static int CONTROLLER_MTE_ID = 2741;
+    // public static int ME_UPLINK_MTE_ID = 2742;
 
     @SidedProxy(
         clientSide = "com.cubefury.vendingmachine.ClientProxy",
@@ -67,28 +66,35 @@ public class VendingMachine {
         network.registerMessage(SerializedPacket.HandleClient.class, SerializedPacket.class, 0, Side.CLIENT);
         network.registerMessage(SerializedPacket.HandleServer.class, SerializedPacket.class, 0, Side.SERVER);
 
+        // ModularUI
+        WidgetThemes.register();
+
     }
 
     @Mod.EventHandler
     // load "Do your mod setup. Build whatever data structures you care about. Register recipes." (Remove if not needed)
     public void init(FMLInitializationEvent event) {
-        proxy.init(event);
 
-        GameRegistry.registerBlock(vendingMachine, ItemBlockVendingMachine.class, "vending_machine");
-        GameRegistry.registerTileEntity(TileVendingMachine.class, "vending_machine");
+        isBqLoaded = Loader.isModLoaded("betterquesting");
+        isGtLoaded = Loader.isModLoaded("gregtech");
+        isAeLoaded = Loader.isModLoaded("appliedenergistics2");
+
+        LOG.info("Better Questing Integration enabled: {}", isBqLoaded);
+        LOG.info("Gregtech Integration enabled: {}", isGtLoaded);
+        LOG.info("AE2 Integration enabled {}", isAeLoaded);
 
         GameRegistry.registerItem(ItemPlaceholder.placeholder, "placeholder");
 
+        if (isGtLoaded) {
+            VMItems.registerMultis();
+        }
+
+        proxy.init(event);
     }
 
     @Mod.EventHandler
     // postInit "Handle interaction with other mods, complete your setup based on this." (Remove if not needed)
     public void postInit(FMLPostInitializationEvent event) {
-        isNeiLoaded = Loader.isModLoaded("NotEnoughItems");
-        isBqLoaded = Loader.isModLoaded("betterquesting");
-
-        LOG.info("NEI Integration enabled: {}", isNeiLoaded);
-        LOG.info("Better Questing Integration enabled: {}", isBqLoaded);
 
         proxy.postInit(event);
     }

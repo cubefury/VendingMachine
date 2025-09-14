@@ -1,5 +1,3 @@
-tile.vendingmachine.vending_machine.name=Vending Machine
-
 item.vendingmachine.placeholder.name=Placeholder Item
 
 tooltip.vendingmachine=Who's even restocking this...
@@ -11,3 +9,23 @@ vendingmachine.gui.requirement.betterquesting.missing=Missing Quest
 vendingmachine.gui.neiColor.conditionDefault=000000
 vendingmachine.gui.neiColor.conditionSatisfied=55D441
 vendingmachine.gui.neiColor.conditionUnsatisfied=A87A5E
+vendingmachine.gui.item_eject=Eject Items
+vendingmachine.gui.search=Search
+vendingmachine.gui.required_inputs=Requires:
+
+vendingmachine.gui.cooldown_display.second=s
+vendingmachine.gui.cooldown_display.minute=m
+vendingmachine.gui.cooldown_display.hour=h
+vendingmachine.gui.cooldown_display.day=d
+
+gt.blockmachines.multimachine.vendingmachine.name=Vending Machine
+
+vendingmachine.category.unknown=Unknown Category
+vendingmachine.category.all=All Items
+vendingmachine.category.components=Components
+vendingmachine.category.raw=Raw Materials
+vendingmachine.category.farming=Farming
+vendingmachine.category.chemistry=Chemistry
+vendingmachine.category.magic=Magic
+vendingmachine.category.bees=Bees
+vendingmachine.category.misc=Miscellaneous

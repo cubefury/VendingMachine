@@ -7,9 +7,7 @@ import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.common.util.Constants;
 
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.api.network.UnserializedPacket;
@@ -17,11 +15,7 @@ import com.cubefury.vendingmachine.api.util.Tuple2;
 import com.cubefury.vendingmachine.network.PacketSender;
 import com.cubefury.vendingmachine.network.PacketTypeRegistry;
 import com.cubefury.vendingmachine.storage.NameCache;
-import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
-import com.cubefury.vendingmachine.trade.TradeGroup;
-import com.cubefury.vendingmachine.util.BigItemStack;
-import com.cubefury.vendingmachine.util.JsonHelper;
 import com.cubefury.vendingmachine.util.NBTConverter;
 
 import cpw.mods.fml.relauncher.Side;
@@ -58,24 +52,9 @@ public class NetTradeStateSync {
     }
 
     @SideOnly(Side.CLIENT)
-    public static void getTrades() {
+    public static void requestSync() {
         NBTTagCompound payload = new NBTTagCompound();
         payload.setString("requestType", "getTrades");
-
-        PacketSender.INSTANCE.sendToServer(new UnserializedPacket(ID_NAME, payload));
-    }
-
-    @SideOnly(Side.CLIENT)
-    public static void claimTrade(UUID tradeGroup, Trade trade) {
-        NBTTagCompound payload = new NBTTagCompound();
-        payload.setString("requestType", "claimTrade");
-        NBTConverter.UuidValueType.TRADEGROUP.writeId(tradeGroup, payload);
-
-        NBTTagList pendingOutput = new NBTTagList();
-        for (BigItemStack stack : trade.toItems) {
-            pendingOutput.appendTag(JsonHelper.ItemStackToJson(stack, new NBTTagCompound()));
-        }
-        payload.setTag("pendingOutput", pendingOutput);
 
         PacketSender.INSTANCE.sendToServer(new UnserializedPacket(ID_NAME, payload));
     }
@@ -84,25 +63,10 @@ public class NetTradeStateSync {
         TradeDatabase db = TradeDatabase.INSTANCE;
         String requestType = message.first()
             .getString("requestType");
-        switch (requestType) {
-            case "claimTrade":
-                UUID playerId = NameCache.INSTANCE.getUUIDFromPlayer(message.second());
-                NBTTagList pendingOutput = message.first()
-                    .getTagList("pendingOutput", Constants.NBT.TAG_COMPOUND);
-                TradeGroup tg = db.getTradeGroupFromId(NBTConverter.UuidValueType.TRADEGROUP.readId(message.first()));
-                if (tg.attemptExecuteTrade(playerId)) {
-                    NetTradeOutputSync.sendReward(message.second(), pendingOutput);
-                    sendTradeState(message.second(), false);
-                } else {
-                    VendingMachine.LOG
-                        .warn("Player {} made invalid reward claim attempt for trade group {}", playerId, tg.getId());
-                }
-                break; // technically we can let this continue cuz we sendTradeState in both cases...
-            case "getTrades":
-                sendTradeState(message.second(), false);
-                break;
-            default:
-                VendingMachine.LOG.warn("Unknown trade state sync request type received: {}", requestType);
+        if (requestType.equals("getTrades")) {
+            sendTradeState(message.second(), false);
+        } else {
+            VendingMachine.LOG.warn("Unknown trade state sync request type received: {}", requestType);
         }
     }
 

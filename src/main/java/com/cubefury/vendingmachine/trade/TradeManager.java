@@ -111,7 +111,7 @@ public class TradeManager {
                 if (
                     tg.cooldown != -1 && lastTradeTime != -1 && (currentTimestamp - lastTradeTime) / 1000 < tg.cooldown
                 ) {
-                    cooldownRemaining = (currentTimestamp - lastTradeTime) / 1000;
+                    cooldownRemaining = tg.cooldown - (currentTimestamp - lastTradeTime) / 1000;
                 } else {
                     cooldownRemaining = -1;
                 }

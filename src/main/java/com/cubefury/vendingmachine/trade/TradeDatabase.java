@@ -1,7 +1,12 @@
 package com.cubefury.vendingmachine.trade;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import net.minecraft.nbt.NBTTagCompound;
@@ -22,11 +27,13 @@ public class TradeDatabase {
     public static final TradeDatabase INSTANCE = new TradeDatabase();
     public int version = -1;
     private final Map<UUID, TradeGroup> tradeGroups = new HashMap<>();
+    private final Map<TradeCategory, Set<UUID>> tradeCategories = new HashMap<>();
 
     private TradeDatabase() {}
 
     public void clear() {
         tradeGroups.clear();
+        tradeCategories.clear();
     }
 
     public void clearTradeState(UUID player) {
@@ -45,6 +52,16 @@ public class TradeDatabase {
         return tradeGroups;
     }
 
+    public List<TradeCategory> getTradeCategories() {
+        List<TradeCategory> tradeCategoryList = new ArrayList<>(tradeCategories.keySet());
+        tradeCategoryList.sort(Comparator.comparing(TradeCategory::ordinal));
+        return tradeCategoryList;
+    }
+
+    public Set<UUID> getTradeGroupsFromCategory(TradeCategory category) {
+        return tradeCategories.get(category);
+    }
+
     public int getTradeCount() {
         return tradeGroups.values()
             .stream()
@@ -61,27 +78,33 @@ public class TradeDatabase {
                 BqAdapter.INSTANCE.resetQuestTriggers(null);
             }
         }
-        int newIdCount = 0;
+        int newMetadataCount = 0;
         this.version = nbt.getInteger("version");
         NBTTagList trades = nbt.getTagList("tradeGroups", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < trades.tagCount(); i++) {
             TradeGroup tg = new TradeGroup();
-            newIdCount += tg.readFromNBT(trades.getCompoundTagAt(i)) ? 1 : 0;
+            newMetadataCount += tg.readFromNBT(trades.getCompoundTagAt(i)) ? 1 : 0;
             if (tradeGroups.containsKey(tg.getId())) {
                 VendingMachine.LOG.warn("Multiple trade groups with id {} exist in the file!", tg);
                 continue;
             }
+            tradeCategories.computeIfAbsent(tg.getCategory(), k -> new HashSet<>());
+            tradeCategories.get(tg.getCategory())
+                .add(tg.getId());
+
             tradeGroups.put(tg.getId(), tg);
         }
-        if (newIdCount > 0) {
-            VendingMachine.LOG.info("Updating {} new trades with UUIDs", newIdCount);
+        if (newMetadataCount > 0) {
+            VendingMachine.LOG.info("Appended metadata to {} new trades", newMetadataCount);
             DirtyDbMarker.markDirty();
         }
-        if (VendingMachine.proxy.isClient() && VendingMachine.isNeiLoaded) {
+        if (VendingMachine.proxy.isClient()) {
             refreshNeiCache();
         }
+
         TradeManager.INSTANCE.recomputeAvailableTrades(null);
-        VendingMachine.LOG.info("Loaded {} trade groups containing {} trades.", getTradeGroupCount(), getTradeCount());
+        VendingMachine.LOG
+            .info("Loaded {} trade groups containing {} trade groups.", getTradeGroupCount(), getTradeCount());
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
@@ -129,6 +152,7 @@ public class TradeDatabase {
     }
 
     @SideOnly(Side.CLIENT)
+    @Optional.Method(modid = "NotEnoughItems")
     public void refreshNeiCache() {
         NeiRecipeCache.refreshCache();
     }
