@@ -128,7 +128,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                         this.tradeCategories.get(i)
                             .getTexture()
                             .asIcon()
-                            .margin(4)
+                            .margin(6)
                             .center())
                     .tooltipBuilder(builder -> {
                         builder.clearText();
@@ -224,9 +224,15 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .widgetTheme(WidgetThemes.BACKGROUND_SIDEPANEL)
             .child(
                 new Column().child(
-                    new Row().child(createInputRow(syncManager).center())
-                        .top(20)
-                        .height(18 * 3))
+                    GuiTextures.INPUT_SPRITE.asWidget()
+                        .leftRel(0.5f)
+                        .top(8)
+                        .width(30)
+                        .height(20))
+                    .child(
+                        new Row().child(createInputRow(syncManager).center())
+                            .top(20)
+                            .height(18 * 3))
                     .child(
                         new Row().child(
                             new ToggleButton().overlay(GTGuiTextures.OVERLAY_BUTTON_CYCLIC)
@@ -235,6 +241,12 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                                 .center())
                             .top(80)
                             .height(18))
+                    .child(
+                        GuiTextures.OUTPUT_SPRITE.asWidget()
+                            .leftRel(0.5f)
+                            .bottom(34)
+                            .width(30)
+                            .height(20))
                     .child(
                         new Row().child(createOutputSlots().center())
                             .bottom(6)

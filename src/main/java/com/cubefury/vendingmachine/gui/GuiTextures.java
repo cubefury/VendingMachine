@@ -56,4 +56,16 @@ public final class GuiTextures {
         .adaptable(4)
         .name("trade_button_pressed")
         .build();
+
+    public static final UITexture INPUT_SPRITE = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/background/input")
+        .imageSize(30, 20)
+        .name("background_input")
+        .build();
+
+    public static final UITexture OUTPUT_SPRITE = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/background/output")
+        .imageSize(30, 20)
+        .name("background_output")
+        .build();
 }
