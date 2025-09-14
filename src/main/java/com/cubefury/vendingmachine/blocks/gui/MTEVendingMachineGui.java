@@ -48,7 +48,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     private final MTEVendingMachine base;
     private final int height;
 
-    public boolean forceRefresh = false;
+    public static boolean forceRefresh = false;
 
     private boolean ejectItems = false;
     private final Map<TradeCategory, List<TradeItemDisplayWidget>> displayedTrades = new HashMap<>();
@@ -87,8 +87,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         return base;
     }
 
-    public void setForceRefresh() {
-        this.forceRefresh = true;
+    public static void setForceRefresh() {
+        forceRefresh = true;
     }
 
     @Override
@@ -375,7 +375,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     public void attemptPurchase(TradeItemDisplay display) {
         submitTradesToServer(display);
-        this.forceRefresh = true;
+        forceRefresh = true;
     }
 
     private void submitTradesToServer(TradeItemDisplay trade) {
@@ -385,8 +385,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         base.sendTradeRequest(trade);
     }
 
-    public void resetForceRefresh() {
-        this.forceRefresh = false;
+    public static void resetForceRefresh() {
+        forceRefresh = false;
     }
 
     public void updateSlots(Map<TradeCategory, List<TradeItemDisplay>> trades) {

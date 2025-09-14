@@ -7,9 +7,11 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 
+import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.api.network.UnserializedPacket;
 import com.cubefury.vendingmachine.api.util.Tuple2;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
+import com.cubefury.vendingmachine.blocks.gui.MTEVendingMachineGui;
 import com.cubefury.vendingmachine.blocks.gui.TradeItemDisplay;
 import com.cubefury.vendingmachine.network.PacketSender;
 import com.cubefury.vendingmachine.network.PacketTypeRegistry;
@@ -17,6 +19,8 @@ import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.TradeRequest;
 import com.cubefury.vendingmachine.util.NBTConverter;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 
 public class NetTradeRequestSync {
@@ -25,6 +29,10 @@ public class NetTradeRequestSync {
 
     public static void registerHandler() {
         PacketTypeRegistry.INSTANCE.registerServerHandler(ID_NAME, NetTradeRequestSync::onServer);
+
+        if (VendingMachine.proxy.isClient()) {
+            PacketTypeRegistry.INSTANCE.registerClientHandler(ID_NAME, NetTradeRequestSync::onClient);
+        }
     }
 
     public static void sendTradeRequest(TradeItemDisplay trade, World world, int x, int y, int z) {
@@ -36,6 +44,10 @@ public class NetTradeRequestSync {
         payload.setInteger("y", y);
         payload.setInteger("z", z);
         PacketSender.INSTANCE.sendToServer(new UnserializedPacket(ID_NAME, payload));
+    }
+
+    public static void sendAck(EntityPlayerMP player) {
+        PacketSender.INSTANCE.sendToPlayers(new UnserializedPacket(ID_NAME, new NBTTagCompound()), player);
     }
 
     public static void onServer(Tuple2<NBTTagCompound, EntityPlayerMP> message) {
@@ -62,5 +74,10 @@ public class NetTradeRequestSync {
                         .getInteger("tradeGroupOrder"),
                     (MTEVendingMachine) ((IGregTechTileEntity) te).getMetaTileEntity()));
         }
+    }
+
+    @SideOnly(Side.CLIENT)
+    public static void onClient(NBTTagCompound message) {
+        MTEVendingMachineGui.setForceRefresh();
     }
 }

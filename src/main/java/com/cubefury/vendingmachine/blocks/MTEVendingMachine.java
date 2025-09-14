@@ -113,10 +113,12 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     public void dispenseItems() {
         if (!this.pendingTrades.isEmpty()) {
-            if (!processTradeOnServer(this.pendingTrades.poll())) {
+            TradeRequest tradeRequest = this.pendingTrades.poll();
+            if (!processTradeOnServer(tradeRequest)) {
                 VendingMachine.LOG.warn(
                     "Unable to complete trade. Either input items changed after trade submission, or a double click was sent.");
             }
+            NetTradeRequestSync.sendAck(tradeRequest.player);
         }
         if (
             this.newBufferedOutputs
