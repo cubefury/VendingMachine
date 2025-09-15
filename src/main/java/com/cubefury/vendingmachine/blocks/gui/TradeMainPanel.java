@@ -17,7 +17,9 @@ import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cubefury.vendingmachine.Config;
+import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
+import com.cubefury.vendingmachine.network.handlers.NetResetVMUser;
 import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.trade.TradeCategory;
@@ -93,9 +95,12 @@ public class TradeMainPanel extends ModularPanel {
         if (this.player == null && this.syncManager.isInitialised()) {
             this.player = syncManager.getPlayer();
         }
-        if (gui.forceRefresh || (this.ticksOpen % Config.gui_refresh_interval == 0 && player != null && !shiftHeld)) {
+        if (
+            MTEVendingMachineGui.forceRefresh
+                || (this.ticksOpen % Config.gui_refresh_interval == 0 && player != null && !shiftHeld)
+        ) {
             updateGui();
-            gui.resetForceRefresh();
+            MTEVendingMachineGui.resetForceRefresh();
         }
         this.ticksOpen += 1;
     }
@@ -244,5 +249,14 @@ public class TradeMainPanel extends ModularPanel {
 
     public void attemptPurchase(TradeItemDisplay display) {
         gui.attemptPurchase(display);
+    }
+
+    @Override
+    public void dispose() {
+        this.gui.getBase()
+            .resetUse();
+        // We have to sync reset use manually since onClose() is only run client-side
+        NetResetVMUser.sendReset(this.gui.getBase());
+        super.dispose();
     }
 }

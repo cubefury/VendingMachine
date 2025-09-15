@@ -7,9 +7,11 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.ChatComponentTranslation;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -18,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import com.cleanroommc.modularui.utils.item.ItemStackHandler;
 import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.VendingMachine;
+import com.cubefury.vendingmachine.blocks.gui.InterceptingStackHandler;
 import com.cubefury.vendingmachine.blocks.gui.MTEVendingMachineGui;
 import com.cubefury.vendingmachine.blocks.gui.TradeItemDisplay;
 import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
@@ -45,6 +48,7 @@ import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
 import gregtech.api.render.TextureFactory;
+import gregtech.api.util.GTUtil;
 import gregtech.api.util.GTUtility;
 import gregtech.api.util.MultiblockTooltipBuilder;
 
@@ -80,13 +84,15 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     public int mUpdate = 0;
     public boolean mMachine = false;
 
-    public ItemStackHandler inputItems = new ItemStackHandler(INPUT_SLOTS);
+    public ItemStackHandler inputItems = new InterceptingStackHandler(INPUT_SLOTS, this);
     public ItemStackHandler outputItems = new ItemStackHandler(OUTPUT_SLOTS);
     public Queue<ItemStack> outputBuffer = new ConcurrentLinkedQueue<>();
 
     public final Queue<TradeRequest> pendingTrades = new LinkedBlockingQueue<>();
     private boolean newBufferedOutputs = false;
     private int ticksSinceOutput = 0;
+
+    private EntityPlayer currentUser = null;
 
     public MTEVendingMachine(final int aID, final String aName, final String aNameRegional) {
         super(aID, aName, aNameRegional);
@@ -475,5 +481,39 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             1,
             0,
             hintsOnly);
+    }
+
+    @Override
+    public boolean onRightclick(IGregTechTileEntity aBaseMetaTileEntity, EntityPlayer aPlayer) {
+        if (GTUtil.hasMultiblockInputConfiguration(aPlayer.getHeldItem())) {
+            if (aBaseMetaTileEntity.isServerSide()) {
+                if (GTUtil.loadMultiblockInputConfiguration(this, aPlayer)) {
+                    aPlayer.addChatComponentMessage(new ChatComponentTranslation("GT5U.MULTI_MACHINE_CONFIG.LOAD"));
+                } else {
+                    aPlayer
+                        .addChatComponentMessage(new ChatComponentTranslation("GT5U.MULTI_MACHINE_CONFIG.LOAD.FAIL"));
+                }
+            }
+            return true;
+        }
+        if (canUse(aPlayer)) {
+            this.currentUser = aPlayer;
+            openGui(aPlayer);
+        } else {
+            aPlayer.addChatComponentMessage(new ChatComponentTranslation("vendingmachine.gui.error.player_using"));
+        }
+        return true;
+    }
+
+    private boolean canUse(EntityPlayer aPlayer) {
+        return this.currentUser == null || this.currentUser == aPlayer;
+    }
+
+    public EntityPlayer getCurrentUser() {
+        return this.currentUser;
+    }
+
+    public void resetUse() {
+        this.currentUser = null;
     }
 }
