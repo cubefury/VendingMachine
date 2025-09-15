@@ -93,9 +93,12 @@ public class TradeMainPanel extends ModularPanel {
         if (this.player == null && this.syncManager.isInitialised()) {
             this.player = syncManager.getPlayer();
         }
-        if (gui.forceRefresh || (this.ticksOpen % Config.gui_refresh_interval == 0 && player != null && !shiftHeld)) {
+        if (
+            MTEVendingMachineGui.forceRefresh
+                || (this.ticksOpen % Config.gui_refresh_interval == 0 && player != null && !shiftHeld)
+        ) {
             updateGui();
-            gui.resetForceRefresh();
+            MTEVendingMachineGui.resetForceRefresh();
         }
         this.ticksOpen += 1;
     }
