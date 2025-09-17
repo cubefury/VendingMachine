@@ -13,11 +13,11 @@ public class InterceptingSlot extends ModularSlot {
         super(inputItems, index);
     }
 
+    // intercept item on both ends, but only do the post-intercept actions on server side
     public boolean intercept(ItemStack newItem, boolean client, EntityPlayer player) {
         if (
             newItem != null && newItem.getDisplayName()
-                .equals("Dirt") && !client
-        ) {
+                .equals("Dirt")) {
             VendingMachine.LOG.info("intercept {} {}", newItem, player);
             this.putStack(null);
             return true;
