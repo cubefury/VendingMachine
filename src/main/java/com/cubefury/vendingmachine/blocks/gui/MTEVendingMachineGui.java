@@ -259,9 +259,19 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         return SlotGroupWidget.builder()
             .matrix("II", "II", "II")
             .key('I', index -> {
+                InterceptingSlot slot = new InterceptingSlot(base.inputItems, index);
                 return new ItemSlot().slot(
-                    new ModularSlot(base.inputItems, index).slotGroup("inputSlotGroup")
+                    slot.slotGroup("inputSlotGroup")
                         .changeListener((newItem, onlyAmountChanged, client, init) -> {
+                            if (
+                                slot.intercept(
+                                    newItem,
+                                    client,
+                                    this.getBase()
+                                        .getCurrentUser())
+                            ) {
+                                return;
+                            }
                             if (guiData.isClient()) {
                                 forceRefresh = true;
                             }

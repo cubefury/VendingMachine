@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import com.cleanroommc.modularui.utils.item.ItemStackHandler;
 import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.VendingMachine;
-import com.cubefury.vendingmachine.blocks.gui.InterceptingStackHandler;
 import com.cubefury.vendingmachine.blocks.gui.MTEVendingMachineGui;
 import com.cubefury.vendingmachine.blocks.gui.TradeItemDisplay;
 import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
@@ -84,7 +83,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     public int mUpdate = 0;
     public boolean mMachine = false;
 
-    public ItemStackHandler inputItems = new InterceptingStackHandler(INPUT_SLOTS, this);
+    public ItemStackHandler inputItems = new ItemStackHandler(INPUT_SLOTS);
     public ItemStackHandler outputItems = new ItemStackHandler(OUTPUT_SLOTS);
     public Queue<ItemStack> outputBuffer = new ConcurrentLinkedQueue<>();
 
