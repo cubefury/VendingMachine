@@ -85,7 +85,7 @@ public class TradeDatabase {
             TradeGroup tg = new TradeGroup();
             newMetadataCount += tg.readFromNBT(trades.getCompoundTagAt(i)) ? 1 : 0;
             if (tradeGroups.containsKey(tg.getId())) {
-                VendingMachine.LOG.warn("Multiple trade groups with id {} exist in the file!", tg);
+                VendingMachine.LOG.error("Multiple trade groups with id {} exist in the file!", tg);
                 continue;
             }
             tradeCategories.computeIfAbsent(tg.getCategory(), k -> new HashSet<>());
@@ -129,13 +129,11 @@ public class TradeDatabase {
             TradeHistory th = new TradeHistory(state.getLong("lastTrade"), state.getInteger("tradeCount"));
             tg.setTradeState(player, th);
         }
+        TradeManager.INSTANCE.populateCurrencyFromNBT(nbt, player, merge);
     }
 
     public NBTTagCompound writeTradeStateToNBT(NBTTagCompound nbt, UUID player) {
         NBTTagList tradeStateList = new NBTTagList();
-        // This is not very efficient and can take a while to run if there are many trade groups.
-        // An alternative is to maintain two copies of this data, one indexing by tradegroup and
-        // another indexing by player uuid. Let's do that if it proves to be too slow.
         for (Map.Entry<UUID, TradeGroup> entry : tradeGroups.entrySet()) {
             TradeHistory history = entry.getValue()
                 .getTradeState(player);
@@ -148,11 +146,11 @@ public class TradeDatabase {
             }
         }
         nbt.setTag("tradeState", tradeStateList);
+        nbt.setTag("playerCurrency", TradeManager.INSTANCE.writeCurrencyToNBT(player));
         return nbt;
     }
 
     @SideOnly(Side.CLIENT)
-    @Optional.Method(modid = "NotEnoughItems")
     public void refreshNeiCache() {
         NeiRecipeCache.refreshCache();
     }

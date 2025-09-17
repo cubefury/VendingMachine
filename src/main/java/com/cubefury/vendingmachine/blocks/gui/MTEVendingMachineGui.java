@@ -270,6 +270,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                                     this.getBase()
                                         .getCurrentUser())
                             ) {
+                                // if we intercept, the server will send a refresh separately
                                 return;
                             }
                             if (guiData.isClient()) {

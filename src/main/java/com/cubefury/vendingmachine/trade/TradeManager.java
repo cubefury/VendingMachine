@@ -10,7 +10,11 @@ import java.util.UUID;
 
 import javax.annotation.Nonnull;
 
-import com.cubefury.vendingmachine.util.BigItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraftforge.common.util.Constants;
+
+import com.cubefury.vendingmachine.VendingMachine;
 
 // This is a cache of available trades, maintained server-side
 // so we don't have to recompute what trades are available every time we send it
@@ -20,11 +24,14 @@ public class TradeManager {
 
     private final Map<UUID, Set<UUID>> availableTrades = new HashMap<>();
 
-    private final Map<UUID, List<BigItemStack>> pendingOutputs = new HashMap<>();
+    private final Map<UUID, Map<CurrencyItem.CurrencyType, Integer>> playerCurrency = new HashMap<>();
+
+    // For writeback to file in original format, to prevent data loss
+    private final Map<UUID, List<NBTTagCompound>> invalidCurrency = new HashMap<>();
+
+    public boolean hasCurrencyUpdate = false;
 
     private TradeManager() {}
-
-    public void init() {}
 
     public void addTradeGroup(UUID player, UUID tg) {
         synchronized (availableTrades) {
@@ -87,14 +94,6 @@ public class TradeManager {
         }
     }
 
-    public void addPending(UUID player, List<BigItemStack> pending) {
-        if (!pendingOutputs.containsKey(player) || pendingOutputs.get(player) == null) {
-            pendingOutputs.put(player, new ArrayList<>());
-        }
-        pendingOutputs.get(player)
-            .addAll(pending);
-    }
-
     public List<TradeGroupWrapper> getTrades(UUID player) {
         long currentTimestamp = System.currentTimeMillis();
         synchronized (availableTrades) {
@@ -121,5 +120,71 @@ public class TradeManager {
             }
             return tradeList;
         }
+    }
+
+    public void populateCurrencyFromNBT(NBTTagCompound nbt, UUID player, boolean merge) {
+        NBTTagList tagList = nbt.getTagList("playerCurrency", Constants.NBT.TAG_COMPOUND);
+        if (!merge) {
+            this.playerCurrency.clear();
+            this.invalidCurrency.clear();
+        }
+        this.playerCurrency.computeIfAbsent(player, k -> new HashMap<>());
+        for (int i = 0; i < tagList.tagCount(); i++) {
+            NBTTagCompound currencyEntry = tagList.getCompoundTagAt(i);
+            CurrencyItem.CurrencyType type = CurrencyItem.CurrencyType
+                .getTypeFromId(currencyEntry.getString("currency"));
+            if (type == null) {
+                VendingMachine.LOG.warn("Unknown currency type found: {}", currencyEntry.getString("currency"));
+                this.invalidCurrency.computeIfAbsent(player, k -> new ArrayList<>());
+                this.invalidCurrency.get(player)
+                    .add(currencyEntry);
+                continue;
+            }
+            int amount = currencyEntry.getInteger("amount");
+            this.playerCurrency.get(player)
+                .computeIfAbsent(type, k -> 0);
+            this.playerCurrency.get(player)
+                .put(
+                    type,
+                    amount + (merge ? this.playerCurrency.get(player)
+                        .get(type) : 0));
+        }
+        this.hasCurrencyUpdate = true;
+    }
+
+    public NBTTagList writeCurrencyToNBT(UUID player) {
+        NBTTagList nbt = new NBTTagList();
+        if (this.playerCurrency.get(player) == null) {
+            return nbt;
+        }
+        for (Map.Entry<CurrencyItem.CurrencyType, Integer> entry : this.playerCurrency.get(player)
+            .entrySet()) {
+            NBTTagCompound currencyEntry = new NBTTagCompound();
+            currencyEntry.setString("currency", entry.getKey().id);
+            currencyEntry.setInteger("amount", entry.getValue());
+            nbt.appendTag(currencyEntry);
+        }
+
+        if (this.invalidCurrency.get(player) != null) {
+            for (NBTTagCompound tag : this.invalidCurrency.get(player)) {
+                nbt.appendTag(tag);
+            }
+        }
+        return nbt;
+    }
+
+    public void addCurrency(UUID playerId, CurrencyItem mapped) {
+        this.playerCurrency.computeIfAbsent(playerId, k -> new HashMap<>());
+        this.playerCurrency.get(playerId)
+            .computeIfAbsent(mapped.type, k -> 0);
+        this.playerCurrency.get(playerId)
+            .put(
+                mapped.type,
+                this.playerCurrency.get(playerId)
+                    .get(mapped.type) + mapped.value);
+        this.hasCurrencyUpdate = true;
+        VendingMachine.LOG.info("currency received: {} {}", mapped.type.id, mapped.value);
+
+        // TODO: Implement scheduled write
     }
 }

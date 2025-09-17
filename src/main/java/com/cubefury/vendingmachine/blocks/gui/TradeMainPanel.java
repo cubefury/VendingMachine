@@ -94,6 +94,9 @@ public class TradeMainPanel extends ModularPanel {
         if (this.player == null && this.syncManager.isInitialised()) {
             this.player = syncManager.getPlayer();
         }
+        if (TradeManager.INSTANCE.hasCurrencyUpdate) {
+            MTEVendingMachineGui.setForceRefresh();
+        }
         if (
             MTEVendingMachineGui.forceRefresh
                 || (this.ticksOpen % Config.gui_refresh_interval == 0 && player != null && !shiftHeld)
