@@ -46,7 +46,7 @@ public class FileIO {
                 return GSON.fromJson(br, JsonObject.class);
             } catch (Exception e) {
                 VendingMachine.LOG.error("Error reading JSON from file: ", e);
-                File backup = new File(file.getParent(), "malformed_" + file.getName() + ".json");
+                File backup = new File(file.getParent(), "malformed_" + file.getName());
 
                 VendingMachine.LOG.error("Creating backup at: {}", backup.getAbsolutePath());
                 CopyPaste(file, backup);

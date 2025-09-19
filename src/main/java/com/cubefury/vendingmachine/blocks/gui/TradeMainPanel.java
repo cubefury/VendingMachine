@@ -20,6 +20,7 @@ import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
 import com.cubefury.vendingmachine.network.handlers.NetResetVMUser;
 import com.cubefury.vendingmachine.storage.NameCache;
+import com.cubefury.vendingmachine.trade.CurrencyItem;
 import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.trade.TradeCategory;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
@@ -68,7 +69,7 @@ public class TradeMainPanel extends ModularPanel {
     }
 
     public void updateGui() {
-        boolean test = true;
+        boolean test = false;
         if (test) {
             List<TradeGroupWrapper> testTGW = new ArrayList<>();
             for (Map.Entry<UUID, TradeGroup> entry : TradeDatabase.INSTANCE.getTradeGroups()
@@ -127,6 +128,18 @@ public class TradeMainPanel extends ModularPanel {
         return display;
     }
 
+    public boolean checkCurrencySatisfied(List<CurrencyItem> currencyItems,
+        Map<CurrencyItem.CurrencyType, Integer> availableItems) {
+        if (currencyItems == null) {
+            return true;
+        }
+        if (availableItems == null) {
+            return false;
+        }
+        return currencyItems.stream()
+            .allMatch(ci -> availableItems.containsKey(ci.type) && availableItems.get(ci.type) >= ci.value);
+    }
+
     public boolean checkItemsSatisfied(List<BigItemStack> trade, Map<BigItemStack, Integer> availableItems) {
         for (BigItemStack bis : trade) {
             BigItemStack base = bis.copy();
@@ -173,6 +186,7 @@ public class TradeMainPanel extends ModularPanel {
                     .get(i);
                 BigItemStack displayItem = trade.toItems.get(0);
                 TradeItemDisplay tid = new TradeItemDisplay(
+                    trade.fromCurrency,
                     trade.fromItems,
                     trade.toItems,
                     convertToItemStack(displayItem == null ? trade.displayItem : displayItem),
@@ -185,7 +199,9 @@ public class TradeMainPanel extends ModularPanel {
                     convertCooldownText(tgw.cooldown()),
                     tgw.cooldown() > 0,
                     tgw.enabled(),
-                    checkItemsSatisfied(trade.fromItems, availableItems));
+                    checkItemsSatisfied(trade.fromItems, availableItems) && checkCurrencySatisfied(
+                        trade.fromCurrency,
+                        TradeManager.INSTANCE.playerCurrency.get(NameCache.INSTANCE.getUUIDFromPlayer(this.player))));
 
                 trades.get(category)
                     .add(tid);

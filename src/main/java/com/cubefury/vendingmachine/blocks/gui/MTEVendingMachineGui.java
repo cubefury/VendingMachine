@@ -335,6 +335,9 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                                     }
                                     builder.emptyLine();
                                     builder.addLine(IKey.str(Translator.translate("vendingmachine.gui.required_inputs")).style(IKey.DARK_GREEN, IKey.ITALIC));
+                                    for (CurrencyItem currencyItem: cur.fromCurrency) {
+                                        builder.addLine(IKey.str(currencyItem.value + " " + currencyItem.type.getLocalizedName()).style(IKey.DARK_GREEN));
+                                    }
                                     for (BigItemStack fromItem : cur.fromItems) {
                                         builder.addLine(IKey.str(fromItem.stackSize + " " + fromItem.getBaseStack().getDisplayName()).style(IKey.DARK_GREEN));
                                     }
@@ -385,7 +388,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .left(3);
         Flow coinColumn = new Column().width(COIN_COLUMN_WIDTH);
         int coinCount = 0;
-        Map<CurrencyItem.CurrencyType, Integer> currentAmount = TradeManager.INSTANCE.playerCurrency
+        Map<CurrencyItem.CurrencyType, Integer> currentAmounts = TradeManager.INSTANCE.playerCurrency
             .getOrDefault(NameCache.INSTANCE.getUUIDFromPlayer(getBase().getCurrentUser()), new HashMap<>());
         for (CurrencyItem.CurrencyType type : CurrencyItem.CurrencyType.values()) {
             coinColumn.child(
@@ -393,11 +396,15 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                     type.texture.asWidget()
                         .size(12)
                         .left(0)
-                        .addTooltipLine(type.getLocalizedName()))
+                        .tooltipDynamic((builder) -> {
+                            builder.clearText();
+                            builder.addLine(currentAmounts.getOrDefault(type, 0) + " " + type.getLocalizedName());
+                            builder.setAutoUpdate(true);
+                        }))
                     .child(
                         IKey.dynamic(
                             () -> getReadableStringFromCoinAmount(
-                                currentAmount.get(type) == null ? 0 : currentAmount.get(type)))
+                                currentAmounts.get(type) == null ? 0 : currentAmounts.get(type)))
                             .scale(0.8f)
                             .asWidget()
                             .top(3)

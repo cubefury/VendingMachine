@@ -20,30 +20,51 @@ import cpw.mods.fml.relauncher.SideOnly;
 
 public class Trade {
 
+    public final List<CurrencyItem> fromCurrency = new ArrayList<>();
     public final List<BigItemStack> fromItems = new ArrayList<>();
     public final List<BigItemStack> toItems = new ArrayList<>();
     public BigItemStack displayItem = new BigItemStack(ItemPlaceholder.placeholder);
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
         nbt.setTag("displayItem", displayItem.writeToNBT(new NBTTagCompound()));
-        NBTTagList fromItemsArray = new NBTTagList();
-        for (BigItemStack stack : this.fromItems) {
-            fromItemsArray.appendTag(JsonHelper.ItemStackToJson(stack, new NBTTagCompound()));
-        }
-        nbt.setTag("fromItems", fromItemsArray);
 
-        NBTTagList toItemsArray = new NBTTagList();
-        for (BigItemStack stack : this.toItems) {
-            toItemsArray.appendTag(JsonHelper.ItemStackToJson(stack, new NBTTagCompound()));
+        if (!this.fromCurrency.isEmpty()) {
+            NBTTagList fromCurrencyArray = new NBTTagList();
+            for (CurrencyItem ci : this.fromCurrency) {
+                fromCurrencyArray.appendTag(ci.writeToNBT(new NBTTagCompound()));
+            }
+            nbt.setTag("fromCurrency", fromCurrencyArray);
         }
-        nbt.setTag("toItems", toItemsArray);
+
+        if (!this.fromItems.isEmpty()) {
+            NBTTagList fromItemsArray = new NBTTagList();
+            for (BigItemStack stack : this.fromItems) {
+                fromItemsArray.appendTag(JsonHelper.ItemStackToJson(stack, new NBTTagCompound()));
+            }
+            nbt.setTag("fromItems", fromItemsArray);
+        }
+
+        if (!this.toItems.isEmpty()) {
+            NBTTagList toItemsArray = new NBTTagList();
+            for (BigItemStack stack : this.toItems) {
+                toItemsArray.appendTag(JsonHelper.ItemStackToJson(stack, new NBTTagCompound()));
+            }
+            nbt.setTag("toItems", toItemsArray);
+        }
 
         return nbt;
     }
 
     public void readFromNBT(NBTTagCompound nbt) {
+        fromCurrency.clear();
         fromItems.clear();
         toItems.clear();
+
+        NBTTagList currencyList = nbt.getTagList("fromCurrency", Constants.NBT.TAG_COMPOUND);
+        for (int i = 0; i < currencyList.tagCount(); i++) {
+            fromCurrency.add(CurrencyItem.fromNBT(currencyList.getCompoundTagAt(i)));
+        }
+
         NBTTagList fromList = nbt.getTagList("fromItems", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < fromList.tagCount(); i++) {
             fromItems.add(JsonHelper.JsonToItemStack(fromList.getCompoundTagAt(i)));

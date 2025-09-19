@@ -3,6 +3,8 @@ package com.cubefury.vendingmachine.blocks;
 import static com.gtnewhorizon.structurelib.structure.StructureUtility.lazy;
 import static com.gtnewhorizon.structurelib.structure.StructureUtility.ofBlock;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -25,8 +27,11 @@ import com.cubefury.vendingmachine.blocks.gui.TradeItemDisplay;
 import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeRequestSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
+import com.cubefury.vendingmachine.storage.NameCache;
+import com.cubefury.vendingmachine.trade.CurrencyItem;
 import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
+import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.trade.TradeRequest;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.gtnewhorizon.structurelib.StructureLibAPI;
@@ -198,6 +203,21 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         Trade trade = TradeDatabase.INSTANCE.getTradeGroupFromId(tradeRequest.tradeGroup)
             .getTrades()
             .get(tradeRequest.tradeGroupOrder);
+        Map<CurrencyItem.CurrencyType, Integer> coinInventory = TradeManager.INSTANCE.playerCurrency
+            .get(NameCache.INSTANCE.getUUIDFromPlayer(this.getCurrentUser()));
+        Map<CurrencyItem.CurrencyType, Integer> newCoinInventory = new HashMap<>();
+        if (coinInventory == null) {
+            return false;
+        }
+        for (CurrencyItem ci : trade.fromCurrency) {
+            int oldValue = coinInventory.get(ci.type);
+            if (!coinInventory.containsKey(ci.type) || oldValue < ci.value) {
+                return false;
+            } else {
+                newCoinInventory.put(ci.type, oldValue - ci.value);
+            }
+        }
+
         for (BigItemStack stack : trade.fromItems) {
             ItemStack requiredStack = stack.getBaseStack();
             int requiredAmount = stack.stackSize;
@@ -223,6 +243,14 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             }
             if (requiredAmount > 0) {
                 return false;
+            }
+        }
+
+        for (Map.Entry<CurrencyItem.CurrencyType, Integer> entry : newCoinInventory.entrySet()) {
+            if (entry.getValue() == 0) {
+                coinInventory.remove(entry.getKey());
+            } else {
+                coinInventory.replace(entry.getKey(), entry.getValue());
             }
         }
 

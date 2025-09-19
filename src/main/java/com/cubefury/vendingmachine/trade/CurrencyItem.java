@@ -28,9 +28,10 @@ public class CurrencyItem {
         return new CurrencyItem(type, nbt.getInteger("value"));
     }
 
-    public void writeToNBT(NBTTagCompound payload) {
+    public NBTTagCompound writeToNBT(NBTTagCompound payload) {
         payload.setString("type", this.type.id);
         payload.setInteger("value", this.value);
+        return payload;
     }
 
     public enum CurrencyType {

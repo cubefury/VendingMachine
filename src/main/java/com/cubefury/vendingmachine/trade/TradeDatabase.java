@@ -103,8 +103,7 @@ public class TradeDatabase {
         }
 
         TradeManager.INSTANCE.recomputeAvailableTrades(null);
-        VendingMachine.LOG
-            .info("Loaded {} trade groups containing {} trade groups.", getTradeGroupCount(), getTradeCount());
+        VendingMachine.LOG.info("Loaded {} trade groups containing {} trades.", getTradeGroupCount(), getTradeCount());
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
