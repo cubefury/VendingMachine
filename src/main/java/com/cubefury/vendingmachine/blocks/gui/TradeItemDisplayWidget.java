@@ -63,7 +63,14 @@ public class TradeItemDisplayWidget extends ItemDisplayWidget implements Interac
                 GuiDraw.drawOutline(1, 1, 45, 23, 0x883CFF00, 2);
             }
             if (this.display.hasCooldown || !this.display.enabled) {
-                GuiDraw.drawRoundedRect(1, 1, 45, 23, 0xBB000000, 1, 1);
+                GuiDraw.drawRoundedRect(
+                    1,
+                    1,
+                    MTEVendingMachineGui.ITEM_WIDTH - 2,
+                    MTEVendingMachineGui.ITEM_HEIGHT - 2,
+                    0xBB000000,
+                    1,
+                    1);
             }
             this.overlay(
                 IKey.str(display.hasCooldown ? this.display.cooldownText : "")

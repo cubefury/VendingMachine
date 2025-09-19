@@ -257,7 +257,7 @@ public class TradeMainPanel extends ModularPanel {
     public void dispose() {
         this.gui.getBase()
             .resetUse();
-        // We have to sync reset use manually since onClose() is only run client-side
+        // We have to sync reset use manually since dispose() is only run client-side
         NetResetVMUser.sendReset(this.gui.getBase());
         super.dispose();
     }

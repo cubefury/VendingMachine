@@ -24,7 +24,7 @@ public class TradeManager {
 
     private final Map<UUID, Set<UUID>> availableTrades = new HashMap<>();
 
-    private final Map<UUID, Map<CurrencyItem.CurrencyType, Integer>> playerCurrency = new HashMap<>();
+    public final Map<UUID, Map<CurrencyItem.CurrencyType, Integer>> playerCurrency = new HashMap<>();
 
     // For writeback to file in original format, to prevent data loss
     private final Map<UUID, List<NBTTagCompound>> invalidCurrency = new HashMap<>();
@@ -184,7 +184,5 @@ public class TradeManager {
                     .get(mapped.type) + mapped.value);
         this.hasCurrencyUpdate = true;
         VendingMachine.LOG.info("currency received: {} {}", mapped.type.id, mapped.value);
-
-        // TODO: Implement scheduled write
     }
 }

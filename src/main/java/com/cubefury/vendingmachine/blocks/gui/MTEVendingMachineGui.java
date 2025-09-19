@@ -34,8 +34,11 @@ import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
 import com.cubefury.vendingmachine.gui.GuiTextures;
 import com.cubefury.vendingmachine.gui.WidgetThemes;
+import com.cubefury.vendingmachine.storage.NameCache;
+import com.cubefury.vendingmachine.trade.CurrencyItem;
 import com.cubefury.vendingmachine.trade.TradeCategory;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
+import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.Translator;
 
@@ -46,7 +49,6 @@ import gregtech.api.modularui2.GTWidgetThemes;
 public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     private final MTEVendingMachine base;
-    private final int height;
 
     public static boolean forceRefresh = false;
 
@@ -58,15 +60,17 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     private PagedWidget.Controller tabController;
     private SearchBar searchBar;
 
+    public static final int CUSTOM_UI_HEIGHT = 320;
+
     public static final int ITEMS_PER_ROW = 3;
     public static final int ITEM_HEIGHT = 25;
     public static final int ITEM_WIDTH = 47;
-    private static final int ROW_SEPARATOR_HEIGHT = 5;
+    private static final int COIN_COLUMN_WIDTH = 40;
+    private static final int COIN_COLUMN_ROW_COUNT = 4;
 
-    public MTEVendingMachineGui(MTEVendingMachine base, int height) {
+    public MTEVendingMachineGui(MTEVendingMachine base) {
         super(base);
         this.base = base;
-        this.height = height;
 
         this.tradeCategories.add(TradeCategory.ALL);
         this.tradeCategories.addAll(TradeDatabase.INSTANCE.getTradeCategories());
@@ -96,7 +100,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         this.guiData = guiData;
 
         registerSyncValues(syncManager);
-        ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, guiData, syncManager).size(178, height)
+        ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, guiData, syncManager)
+            .size(178, CUSTOM_UI_HEIGHT)
             .padding(4);
         panel.child(createCategoryTabs(this.tabController));
         Flow mainColumn = new Column().width(170);
@@ -104,6 +109,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             mainColumn.child(createTitleTextStyle(base.getLocalName()))
                 .child(this.searchBar)
                 .child(createTradeUI((TradeMainPanel) panel, this.tabController));
+            mainColumn.child(createCoinInventoryRow());
         }
         mainColumn.child(createInventoryRow(panel, syncManager));
         panel.child(mainColumn);
@@ -301,15 +307,17 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .debugName("paged")
             .controller(tabController)
             .background(GuiTextures.TEXT_FIELD_BACKGROUND)
-            .heightRel(0.5f);
+            .height(146);
         for (TradeCategory category : this.tradeCategories) {
-            ListWidget<IWidget, ?> tradeList = new ListWidget<>().debugName("items").heightRel(1.0f)
+            ListWidget<IWidget, ?> tradeList = new ListWidget<>().debugName("items")
                 .width(156)
-                .margin(1)
+                .top(1)
+                .height(144)
                 .collapseDisabledChild(true);
 
+            tradeList.child(new Row().height(2));
             // Higher first row top margin
-            Flow row = new TradeRow().height(ITEM_HEIGHT).margin(1).marginTop(4);
+            Flow row = new TradeRow().height(ITEM_HEIGHT+2).left(2);
 
             for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
                 int index = i;
@@ -343,7 +351,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                 if (i % ITEMS_PER_ROW == ITEMS_PER_ROW - 1) {
                     tradeList.child(row);
 
-                    row = new TradeRow().height(ITEM_HEIGHT).margin(1);
+                    row = new TradeRow().height(ITEM_HEIGHT+2).left(2);
                 }
             }
             if (row.hasChildren()) {
@@ -358,6 +366,54 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .top(24);
     }
     // spotless:on
+
+    private static String getReadableStringFromCoinAmount(int amount) {
+        if (amount < 10000) {
+            return "" + amount;
+        } else if (amount < 1000000) {
+            return amount / 1000 + "K";
+        } else {
+            return amount / 1000000 + "M";
+        }
+    }
+
+    private IWidget createCoinInventoryRow() {
+        Flow parent = new Row() // .background(GuiTextures.TEXT_FIELD_BACKGROUND)
+            .width(162)
+            .height(36)
+            .top(172)
+            .left(3);
+        Flow coinColumn = new Column().width(COIN_COLUMN_WIDTH);
+        int coinCount = 0;
+        Map<CurrencyItem.CurrencyType, Integer> currentAmount = TradeManager.INSTANCE.playerCurrency
+            .getOrDefault(NameCache.INSTANCE.getUUIDFromPlayer(getBase().getCurrentUser()), new HashMap<>());
+        for (CurrencyItem.CurrencyType type : CurrencyItem.CurrencyType.values()) {
+            coinColumn.child(
+                new Row().child(
+                    type.texture.asWidget()
+                        .size(12)
+                        .left(0)
+                        .addTooltipLine(type.getLocalizedName()))
+                    .child(
+                        IKey.dynamic(
+                            () -> getReadableStringFromCoinAmount(
+                                currentAmount.get(type) == null ? 0 : currentAmount.get(type)))
+                            .scale(0.8f)
+                            .asWidget()
+                            .top(3)
+                            .left(14)
+                            .width(21))
+                    .height(14));
+            if (++coinCount % COIN_COLUMN_ROW_COUNT == 0) {
+                parent.child(coinColumn.left(3 + COIN_COLUMN_WIDTH * (coinCount / COIN_COLUMN_ROW_COUNT - 1)));
+                coinColumn = new Column().width(COIN_COLUMN_WIDTH);
+            }
+        }
+        if (coinColumn.hasChildren()) {
+            parent.child(coinColumn.left(3 + COIN_COLUMN_WIDTH * (coinCount / COIN_COLUMN_ROW_COUNT)));
+        }
+        return parent;
+    }
 
     // why is the original method private lmao
     private IWidget createInventoryRow(ModularPanel panel, PanelSyncManager syncManager) {

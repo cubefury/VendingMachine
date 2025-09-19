@@ -6,7 +6,6 @@ import net.minecraft.item.ItemStack;
 
 import com.cleanroommc.modularui.utils.item.ItemStackHandler;
 import com.cleanroommc.modularui.widgets.slot.ModularSlot;
-import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
 import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.CurrencyItem;
@@ -22,9 +21,8 @@ public class InterceptingSlot extends ModularSlot {
     public boolean intercept(ItemStack newItem, boolean client, EntityPlayer player) {
         CurrencyItem mapped = mapToCurrency(newItem);
         if (mapped != null) {
-            VendingMachine.LOG.info("intercept {} {}", newItem, player);
-            TradeManager.INSTANCE.addCurrency(NameCache.INSTANCE.getUUIDFromPlayer(player), mapped);
             if (!client) {
+                TradeManager.INSTANCE.addCurrency(NameCache.INSTANCE.getUUIDFromPlayer(player), mapped);
                 NetTradeStateSync.sendPlayerCurrency((EntityPlayerMP) player, mapped);
             } else {
                 MTEVendingMachineGui.setForceRefresh();

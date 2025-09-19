@@ -54,8 +54,6 @@ import gregtech.api.util.MultiblockTooltipBuilder;
 public class MTEVendingMachine extends MTEMultiBlockBase
     implements ISurvivalConstructable, ISecondaryDescribable, IAlignment {
 
-    public static final int CUSTOM_UI_HEIGHT = 300;
-
     public static final int INPUT_SLOTS = 6;
     public static final int OUTPUT_SLOTS = 4;
 
@@ -111,7 +109,6 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     }
 
     public void addTradeRequest(TradeRequest trade) {
-        VendingMachine.LOG.info("received new trade request");
         this.pendingTrades.add(trade);
     }
 
@@ -283,12 +280,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             NetAvailableTradeSync.requestSync();
             NetTradeStateSync.requestSync();
         }
-        return new MTEVendingMachineGui(this, CUSTOM_UI_HEIGHT);
-    }
-
-    @Override
-    public int getGUIHeight() {
-        return CUSTOM_UI_HEIGHT;
+        return new MTEVendingMachineGui(this);
     }
 
     @Override
