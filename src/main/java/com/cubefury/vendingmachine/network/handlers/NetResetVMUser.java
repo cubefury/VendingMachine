@@ -57,7 +57,7 @@ public class NetResetVMUser {
             te instanceof IGregTechTileEntity
                 && ((IGregTechTileEntity) te).getMetaTileEntity() instanceof MTEVendingMachine
         ) {
-            ((MTEVendingMachine) ((IGregTechTileEntity) te).getMetaTileEntity()).resetUse();
+            ((MTEVendingMachine) ((IGregTechTileEntity) te).getMetaTileEntity()).resetCurrentUser(message.second());
         }
         SaveLoadHandler.INSTANCE
             .writeTradeState(Collections.singleton(NameCache.INSTANCE.getUUIDFromPlayer(message.second())));

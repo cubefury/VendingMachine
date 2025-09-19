@@ -1,17 +1,26 @@
 package com.cubefury.vendingmachine.handlers;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 
+import javax.annotation.Nonnull;
+
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.integrated.IntegratedServer;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 
 import org.apache.commons.lang3.Validate;
 
+import com.cleanroommc.modularui.factory.PosGuiData;
+import com.cleanroommc.modularui.screen.ModularContainer;
 import com.cubefury.vendingmachine.VendingMachine;
+import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
 import com.cubefury.vendingmachine.events.MarkDirtyDbEvent;
 import com.cubefury.vendingmachine.events.MarkDirtyNamesEvent;
 import com.cubefury.vendingmachine.network.handlers.NetBulkSync;
@@ -24,6 +33,7 @@ import com.google.common.util.concurrent.ListenableFutureTask;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
+import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 
 public class EventHandler {
 
@@ -70,6 +80,18 @@ public class EventHandler {
         NetBulkSync.sendReset(mpPlayer, true, true);
 
         UUID playerId = NameCache.INSTANCE.getUUIDFromPlayer(mpPlayer);
+    }
+
+    @SubscribeEvent
+    public void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        terminateVendingSession(event.player);
+    }
+
+    @SubscribeEvent
+    public void onPlayerDeath(LivingDeathEvent event) {
+        if (event.entityLiving instanceof EntityPlayer) {
+            terminateVendingSession((EntityPlayer) event.entityLiving);
+        }
     }
 
     @SuppressWarnings("UnstableApiUsage")
@@ -120,6 +142,30 @@ public class EventHandler {
             if (playerMP != null) {
                 NameCache.INSTANCE.updateName(playerMP);
             }
+        }
+    }
+
+    private void terminateVendingSession(@Nonnull EntityPlayer player) {
+        VendingMachine.LOG.info("terminating session for {}", player);
+        if (VendingMachine.proxy.isClient()) {
+            return;
+        }
+        if (
+            !(player.openContainer instanceof ModularContainer
+                && ((ModularContainer) player.openContainer).getGuiData() instanceof PosGuiData)
+        ) {
+            return;
+        }
+        TileEntity te = ((PosGuiData) ((ModularContainer) player.openContainer).getGuiData()).getTileEntity();
+
+        if (
+            te instanceof IGregTechTileEntity
+                && ((IGregTechTileEntity) te).getMetaTileEntity() instanceof MTEVendingMachine
+        ) {
+            VendingMachine.LOG.info("found VM MTE terminating session for {}", player);
+            ((MTEVendingMachine) ((IGregTechTileEntity) te).getMetaTileEntity()).resetCurrentUser(player);
+            SaveLoadHandler.INSTANCE
+                .writeTradeState(Collections.singleton(NameCache.INSTANCE.getUUIDFromPlayer(player)));
         }
     }
 

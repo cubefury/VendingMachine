@@ -504,7 +504,9 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         return this.currentUser;
     }
 
-    public void resetUse() {
-        this.currentUser = null;
+    public void resetCurrentUser(EntityPlayer aPlayer) {
+        if (this.currentUser == aPlayer) {
+            this.currentUser = null;
+        }
     }
 }

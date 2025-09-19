@@ -256,7 +256,7 @@ public class TradeMainPanel extends ModularPanel {
     @Override
     public void dispose() {
         this.gui.getBase()
-            .resetUse();
+            .resetCurrentUser(this.player);
         // We have to sync reset use manually since dispose() is only run client-side
         NetResetVMUser.sendReset(this.gui.getBase());
         super.dispose();
