@@ -26,13 +26,13 @@ public class ItemPlaceholder extends Item {
         NBTTagCompound nbt) {
         if (item == null) {
             BigItemStack stack = new BigItemStack(ItemPlaceholder.placeholder, count, damage);
-            stack.SetTagCompound(new NBTTagCompound());
-            stack.GetTagCompound()
+            stack.setTagCompound(new NBTTagCompound());
+            stack.getTagCompound()
                 .setString("orig_id", name);
-            stack.GetTagCompound()
+            stack.getTagCompound()
                 .setInteger("orig_meta", damage);
             if (nbt != null) {
-                stack.GetTagCompound()
+                stack.getTagCompound()
                     .setTag("orig_tag", nbt);
             }
             return stack;
@@ -53,7 +53,7 @@ public class ItemPlaceholder extends Item {
                         count,
                         nbt.hasKey("orig_meta") ? nbt.getInteger("orig_meta") : damage).setOreDict(oreDict);
                     if (nbt.hasKey("orig_tag")) {
-                        stack.SetTagCompound(nbt.getCompoundTag("orig_tag"));
+                        stack.setTagCompound(nbt.getCompoundTag("orig_tag"));
                     }
 
                     return stack;
@@ -65,7 +65,7 @@ public class ItemPlaceholder extends Item {
         }
         BigItemStack stack = new BigItemStack(item, count, damage).setOreDict(oreDict);
         if (nbt != null) {
-            stack.SetTagCompound(nbt);
+            stack.setTagCompound(nbt);
         }
 
         return stack;

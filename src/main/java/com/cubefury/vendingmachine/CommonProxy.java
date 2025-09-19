@@ -2,7 +2,6 @@ package com.cubefury.vendingmachine;
 
 import net.minecraft.command.ICommandManager;
 import net.minecraft.command.ServerCommandManager;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
 
@@ -48,9 +47,5 @@ public class CommonProxy {
         FMLCommonHandler.instance()
             .bus()
             .register(EventHandler.INSTANCE);
-    }
-
-    public EntityPlayer getThePlayer() {
-        return null;
     }
 }

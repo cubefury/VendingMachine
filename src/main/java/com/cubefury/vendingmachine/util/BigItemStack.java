@@ -94,14 +94,14 @@ public class BigItemStack {
     /**
      * Shortcut method to the NBTTagCompound in the base ItemStack
      */
-    public NBTTagCompound GetTagCompound() {
+    public NBTTagCompound getTagCompound() {
         return baseStack.getTagCompound();
     }
 
     /**
      * Shortcut method to the NBTTagCompound in the base ItemStack
      */
-    public void SetTagCompound(NBTTagCompound tags) {
+    public void setTagCompound(NBTTagCompound tags) {
         baseStack.setTagCompound(tags);
     }
 
@@ -109,7 +109,7 @@ public class BigItemStack {
      * Shortcut method to the NBTTagCompound in the base ItemStack
      */
     @SuppressWarnings("WeakerAccess")
-    public boolean HasTagCompound() {
+    public boolean hasTagCompound() {
         return baseStack.hasTagCompound();
     }
 
@@ -186,14 +186,24 @@ public class BigItemStack {
         BigItemStack bigStack = new BigItemStack(miniStack);
         bigStack.stackSize = nbt.getInteger("Count");
         bigStack.setOreDict(nbt.getString("OreDict"));
-        if (nbt.getShort("Damage") < 0) bigStack.baseStack.setItemDamage(OreDictionary.WILDCARD_VALUE);
+        if (nbt.getInteger("Damage") < 0) bigStack.baseStack.setItemDamage(OreDictionary.WILDCARD_VALUE);
         return bigStack;
     }
 
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
-        baseStack.writeToNBT(nbt);
-        String iRes = Item.itemRegistry.getNameForObject(baseStack.getItem());
-        nbt.setString("id", iRes == null ? "vendingmachine.placeholder" : iRes);
+        String itemName = Item.itemRegistry.getNameForObject(this.baseStack.getItem());
+        NBTTagCompound backupData = this.getTagCompound();
+        if (itemName.equals("vendingmachine:placeholder") && backupData != null) {
+            nbt.setString("id", backupData.getString("orig_id"));
+            nbt.setInteger("Damage", backupData.getInteger("orig_meta"));
+            if (backupData.hasKey("orig_tag")) {
+                nbt.setTag("tag", backupData.getCompoundTag("orig_tag"));
+            }
+        } else {
+            baseStack.writeToNBT(nbt);
+            String iRes = Item.itemRegistry.getNameForObject(baseStack.getItem());
+            nbt.setString("id", iRes == null ? "vendingmachine:placeholder" : iRes);
+        }
         nbt.setInteger("Count", this.stackSize);
         nbt.setString("OreDict", this.getOreDict());
         return nbt;
