@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
 import com.cleanroommc.modularui.api.drawable.IKey;
@@ -34,6 +35,7 @@ import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
 import com.cubefury.vendingmachine.gui.GuiTextures;
 import com.cubefury.vendingmachine.gui.WidgetThemes;
+import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
 import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.CurrencyItem;
 import com.cubefury.vendingmachine.trade.TradeCategory;
@@ -53,6 +55,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     public static boolean forceRefresh = false;
 
     private boolean ejectItems = false;
+    private boolean ejectCoins = false;
     private final Map<TradeCategory, List<TradeItemDisplayWidget>> displayedTrades = new HashMap<>();
     private final List<TradeCategory> tradeCategories = new ArrayList<>();
 
@@ -172,54 +175,40 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .height(10);
     }
 
-    private void ejectItems() {
-        if (!this.guiData.isClient()) {
-            if (base.getBaseMetaTileEntity() == null) {
-                VendingMachine.LOG.info("Unable to eject items as the base MTE for the Vending Machine was null.");
-            } else {
-                World world = base.getBaseMetaTileEntity()
-                    .getWorld();
-                int posX = base.getBaseMetaTileEntity()
-                    .getXCoord();
-                int posY = base.getBaseMetaTileEntity()
-                    .getYCoord();
-                int posZ = base.getBaseMetaTileEntity()
-                    .getZCoord();
-                int offsetX = base.getExtendedFacing()
-                    .getDirection().offsetX;
-                int offsetY = base.getExtendedFacing()
-                    .getDirection().offsetY;
-                int offsetZ = base.getExtendedFacing()
-                    .getDirection().offsetZ;
-                for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
-                    ItemStack stack = base.inputItems.getStackInSlot(i);
-                    if (stack != null) {
-                        ItemStack extracted = base.inputItems.extractItem(i, stack.stackSize, false);
-                        if (extracted == null) { // if somehow it got pulled out already
-                            continue;
-                        }
-                        final EntityItem itemEntity = new EntityItem(
-                            world,
-                            posX + offsetX * 0.5,
-                            posY + offsetY * 0.5,
-                            posZ + offsetZ * 0.5,
-                            new ItemStack(extracted.getItem(), extracted.stackSize, extracted.getItemDamage()));
-                        if (extracted.hasTagCompound()) {
-                            itemEntity.getEntityItem()
-                                .setTagCompound(
-                                    (NBTTagCompound) extracted.getTagCompound()
-                                        .copy());
-                        }
-                        itemEntity.delayBeforeCanPickup = 0;
-                        itemEntity.motionX = 0.05f * offsetX;
-                        itemEntity.motionY = 0.05f * offsetY;
-                        itemEntity.motionZ = 0.05f * offsetZ;
-                        world.spawnEntityInWorld(itemEntity);
-                    }
+    private void ejectItems(String type) {
+        if (this.guiData.isClient()) {
+            return;
+        }
+        if (type.equals("input")) {
+            for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
+                ItemStack stack = base.inputItems.getStackInSlot(i);
+                if (stack != null) {
+                    base.inputItems.setStackInSlot(i, null);
+                    base.spawnItem(stack.copy());
                 }
             }
+            ejectItems = false;
+        } else if (type.equals("coins")) {
+            UUID currentUser = NameCache.INSTANCE.getUUIDFromPlayer(base.getCurrentUser());
+            if (!TradeManager.INSTANCE.playerCurrency.containsKey(currentUser)) {
+                ejectCoins = false;
+                return;
+            }
+
+            Map<CurrencyItem.CurrencyType, Integer> coins = TradeManager.INSTANCE.playerCurrency
+                .getOrDefault(currentUser, new HashMap<>());
+            for (Map.Entry<CurrencyItem.CurrencyType, Integer> entry : coins.entrySet()) {
+                for (ItemStack ejectable : new CurrencyItem(entry.getKey(), entry.getValue()).itemize()) {
+                    base.spawnItem(ejectable);
+                }
+            }
+            TradeManager.INSTANCE.playerCurrency.get(currentUser)
+                .clear();
+            NetTradeStateSync.resetPlayerCurrency((EntityPlayerMP) base.getCurrentUser());
+            ejectCoins = false;
+        } else {
+            VendingMachine.LOG.warn("Eject items called with unknown item type: {}", type);
         }
-        ejectItems = false;
     }
 
     private IWidget createIOColumn(PanelSyncManager syncManager) {
@@ -245,7 +234,14 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                             new ToggleButton().overlay(GTGuiTextures.OVERLAY_BUTTON_CYCLIC)
                                 .tooltipBuilder(t -> t.addLine(IKey.lang("vendingmachine.gui.item_eject")))
                                 .syncHandler("ejectItems")
-                                .center())
+                                .right(6))
+                            .child(
+                                new ToggleButton().overlay(
+                                    GuiTextures.EJECT_COINS.asIcon()
+                                        .size(14))
+                                    .tooltipBuilder(t -> t.addLine(IKey.lang("vendingmachine.gui.coin_eject")))
+                                    .syncHandler("ejectCoins")
+                                    .left(6))
                             .top(80)
                             .height(18))
                     .child(
@@ -443,10 +439,17 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         BooleanSyncValue ejectItemsSyncer = new BooleanSyncValue(() -> this.ejectItems, val -> {
             this.ejectItems = val;
             if (this.ejectItems) {
-                ejectItems();
+                ejectItems("input");
+            }
+        });
+        BooleanSyncValue ejectCoinsSyncer = new BooleanSyncValue(() -> this.ejectCoins, val -> {
+            this.ejectCoins = val;
+            if (this.ejectCoins) {
+                ejectItems("coins");
             }
         });
         syncManager.syncValue("ejectItems", ejectItemsSyncer);
+        syncManager.syncValue("ejectCoins", ejectCoinsSyncer);
     }
 
     public void attemptPurchase(TradeItemDisplay display) {

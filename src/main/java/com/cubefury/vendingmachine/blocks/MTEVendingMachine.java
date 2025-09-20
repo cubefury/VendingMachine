@@ -9,11 +9,13 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ChatComponentTranslation;
+import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -536,5 +538,36 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         if (this.currentUser == aPlayer) {
             this.currentUser = null;
         }
+    }
+
+    public void spawnItem(ItemStack stack) {
+        if (stack == null || this.getBaseMetaTileEntity() == null) {
+            return;
+        }
+        World world = this.getBaseMetaTileEntity()
+            .getWorld();
+        int posX = this.getBaseMetaTileEntity()
+            .getXCoord();
+        int posY = this.getBaseMetaTileEntity()
+            .getYCoord();
+        int posZ = this.getBaseMetaTileEntity()
+            .getZCoord();
+        int offsetX = this.getExtendedFacing()
+            .getDirection().offsetX;
+        int offsetY = this.getExtendedFacing()
+            .getDirection().offsetY;
+        int offsetZ = this.getExtendedFacing()
+            .getDirection().offsetZ;
+        final EntityItem itemEntity = new EntityItem(
+            world,
+            posX + offsetX * 0.5,
+            posY + offsetY * 0.5,
+            posZ + offsetZ * 0.5,
+            stack);
+        itemEntity.delayBeforeCanPickup = 0;
+        itemEntity.motionX = 0.05f * offsetX;
+        itemEntity.motionY = 0.05f * offsetY;
+        itemEntity.motionZ = 0.05f * offsetZ;
+        world.spawnEntityInWorld(itemEntity);
     }
 }

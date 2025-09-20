@@ -10,6 +10,7 @@ vendingmachine.gui.neiColor.conditionDefault=000000
 vendingmachine.gui.neiColor.conditionSatisfied=55D441
 vendingmachine.gui.neiColor.conditionUnsatisfied=A87A5E
 vendingmachine.gui.item_eject=Eject Items
+vendingmachine.gui.coin_eject=Eject Coins
 vendingmachine.gui.search=Search
 vendingmachine.gui.required_inputs=Requires:
 

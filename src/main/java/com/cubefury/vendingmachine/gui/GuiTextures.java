@@ -71,6 +71,12 @@ public final class GuiTextures {
         .name("background_output")
         .build();
 
+    public static final UITexture EJECT_COINS = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/overlay/coinEject")
+        .imageSize(16, 16)
+        .name("coin_eject")
+        .build();
+
     public static final TabTexture TAB_LEFT = TabTexture
         .of(UITexture.fullImage(VendingMachine.MODID, "gui/tabs_left", true), GuiAxis.X, false, 32, 28, 4);
 }

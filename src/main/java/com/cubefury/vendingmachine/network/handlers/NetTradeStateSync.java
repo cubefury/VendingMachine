@@ -61,6 +61,13 @@ public class NetTradeStateSync {
         PacketSender.INSTANCE.sendToPlayers(new UnserializedPacket(ID_NAME, payload), player);
     }
 
+    public static void resetPlayerCurrency(@Nonnull EntityPlayerMP player) {
+        NBTTagCompound payload = new NBTTagCompound();
+        payload.setString("dataType", "currency");
+        payload.setBoolean("merge", false);
+        PacketSender.INSTANCE.sendToPlayers(new UnserializedPacket(ID_NAME, payload), player);
+    }
+
     @SideOnly(Side.CLIENT)
     public static void requestSync() {
         NBTTagCompound payload = new NBTTagCompound();
@@ -94,15 +101,10 @@ public class NetTradeStateSync {
         UUID player = NBTConverter.UuidValueType.PLAYER.readId(message);
         boolean merge = message.getBoolean("merge");
         if (dataType.equals("tradeState")) {
-            TradeDatabase db = TradeDatabase.INSTANCE;
-            db.populateTradeStateFromNBT(message, player, merge);
+            TradeDatabase.INSTANCE.populateTradeStateFromNBT(message, player, merge);
         } else if (dataType.equals("currency")) {
             CurrencyItem currencyItem = CurrencyItem.fromNBT(message.getCompoundTag("currencyItem"));
-            if (currencyItem == null) {
-                VendingMachine.LOG.warn("Received invalid currency item from server");
-                return;
-            }
-            TradeManager.INSTANCE.addCurrency(player, currencyItem);
+            TradeManager.INSTANCE.addCurrency(player, currencyItem, merge);
         } else {
             VendingMachine.LOG.warn("Unknown trade state sync data received: {}", dataType);
         }

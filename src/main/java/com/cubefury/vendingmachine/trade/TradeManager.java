@@ -173,16 +173,21 @@ public class TradeManager {
         return nbt;
     }
 
-    public void addCurrency(UUID playerId, CurrencyItem mapped) {
-        this.playerCurrency.computeIfAbsent(playerId, k -> new HashMap<>());
-        this.playerCurrency.get(playerId)
-            .computeIfAbsent(mapped.type, k -> 0);
-        this.playerCurrency.get(playerId)
-            .put(
-                mapped.type,
-                this.playerCurrency.get(playerId)
-                    .get(mapped.type) + mapped.value);
+    public void addCurrency(UUID playerId, CurrencyItem mapped, boolean merge) {
+        if (!merge) {
+            this.playerCurrency.get(playerId)
+                .clear();
+        }
+        if (mapped != null) {
+            this.playerCurrency.computeIfAbsent(playerId, k -> new HashMap<>());
+            this.playerCurrency.get(playerId)
+                .computeIfAbsent(mapped.type, k -> 0);
+            this.playerCurrency.get(playerId)
+                .put(
+                    mapped.type,
+                    this.playerCurrency.get(playerId)
+                        .get(mapped.type) + mapped.value);
+        }
         this.hasCurrencyUpdate = true;
-        VendingMachine.LOG.info("currency received: {} {}", mapped.type.id, mapped.value);
     }
 }

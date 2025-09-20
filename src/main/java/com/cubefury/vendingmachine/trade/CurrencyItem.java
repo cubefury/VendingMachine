@@ -1,6 +1,8 @@
 package com.cubefury.vendingmachine.trade;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import net.minecraft.item.Item;
@@ -19,6 +21,8 @@ public class CurrencyItem {
     public CurrencyType type;
     public int value;
     private static final Map<String, CurrencyType> typeMap = new HashMap<>();
+    private static final String[] coinSuffixes = new String[] { "IV", "III", "II", "I", "" };
+    private static final int[] coinValues = new int[] { 10000, 1000, 100, 10, 1 };
 
     public static CurrencyItem fromNBT(NBTTagCompound nbt) {
         CurrencyType type = CurrencyType.getTypeFromId(nbt.getString("type"));
@@ -32,6 +36,22 @@ public class CurrencyItem {
         payload.setString("type", this.type.id);
         payload.setInteger("value", this.value);
         return payload;
+    }
+
+    public List<ItemStack> itemize() {
+        List<ItemStack> outputs = new ArrayList<>();
+        if (this.type == null || this.value <= 0) {
+            return outputs;
+        }
+        for (int i = 0; i < coinValues.length; i++) {
+            while (this.value > coinValues[i]) {
+                Item outputItem = (Item) Item.itemRegistry.getObject(this.type.itemPrefix + coinSuffixes[i]);
+                int stackSize = Math.min(this.value / coinValues[i], outputItem.getItemStackLimit());
+                outputs.add(new ItemStack(outputItem, stackSize));
+                this.value -= stackSize * coinValues[i];
+            }
+        }
+        return outputs;
     }
 
     public enum CurrencyType {
@@ -99,13 +119,11 @@ public class CurrencyItem {
     }
 
     private static int mapSuffixToValue(String suffix) {
-        return switch (suffix) {
-            case "" -> 1;
-            case "I" -> 10;
-            case "II" -> 100;
-            case "III" -> 1000;
-            case "IV" -> 10000;
-            default -> -1;
-        };
+        for (int i = 0; i < coinSuffixes.length; i++) {
+            if (suffix.equals(coinSuffixes[i])) {
+                return coinValues[i];
+            }
+        }
+        return -1;
     }
 }
