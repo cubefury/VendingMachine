@@ -173,11 +173,19 @@ public class TradeManager {
         return nbt;
     }
 
-    public void addCurrency(UUID playerId, CurrencyItem mapped, boolean merge) {
-        if (!merge) {
+    public void resetCurrency(UUID playerId, CurrencyItem.CurrencyType type) {
+        this.playerCurrency.computeIfAbsent(playerId, k -> new HashMap<>());
+        if (type == null) {
             this.playerCurrency.get(playerId)
                 .clear();
+        } else {
+            this.playerCurrency.get(playerId)
+                .put(type, 0);
         }
+        this.hasCurrencyUpdate = true;
+    }
+
+    public void addCurrency(UUID playerId, CurrencyItem mapped) {
         if (mapped != null) {
             this.playerCurrency.computeIfAbsent(playerId, k -> new HashMap<>());
             this.playerCurrency.get(playerId)

@@ -22,10 +22,8 @@ public class InterceptingSlot extends ModularSlot {
         CurrencyItem mapped = mapToCurrency(newItem);
         if (mapped != null) {
             if (!client) {
-                TradeManager.INSTANCE.addCurrency(NameCache.INSTANCE.getUUIDFromPlayer(player), mapped, true);
+                TradeManager.INSTANCE.addCurrency(NameCache.INSTANCE.getUUIDFromPlayer(player), mapped);
                 NetTradeStateSync.sendPlayerCurrency((EntityPlayerMP) player, mapped);
-            } else {
-                MTEVendingMachineGui.setForceRefresh();
             }
             this.putStack(null);
             return true;

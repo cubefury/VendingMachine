@@ -3,6 +3,7 @@ package com.cubefury.vendingmachine.network.handlers;
 import java.util.UUID;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -54,17 +55,18 @@ public class NetTradeStateSync {
 
     public static void sendPlayerCurrency(@Nonnull EntityPlayerMP player, CurrencyItem currencyItem) {
         NBTTagCompound payload = new NBTTagCompound();
-        payload.setString("dataType", "currency");
-        payload.setBoolean("merge", true);
+        payload.setString("dataType", "currency_add");
         currencyItem.writeToNBT(payload);
 
         PacketSender.INSTANCE.sendToPlayers(new UnserializedPacket(ID_NAME, payload), player);
     }
 
-    public static void resetPlayerCurrency(@Nonnull EntityPlayerMP player) {
+    public static void resetPlayerCurrency(@Nonnull EntityPlayerMP player, @Nullable CurrencyItem.CurrencyType type) {
         NBTTagCompound payload = new NBTTagCompound();
-        payload.setString("dataType", "currency");
-        payload.setBoolean("merge", false);
+        payload.setString("dataType", "currency_reset");
+        if (type != null) {
+            payload.setString("type", type.id);
+        }
         PacketSender.INSTANCE.sendToPlayers(new UnserializedPacket(ID_NAME, payload), player);
     }
 
@@ -99,14 +101,20 @@ public class NetTradeStateSync {
         }
         String dataType = message.getString("dataType");
         UUID player = NBTConverter.UuidValueType.PLAYER.readId(message);
-        boolean merge = message.getBoolean("merge");
-        if (dataType.equals("tradeState")) {
-            TradeDatabase.INSTANCE.populateTradeStateFromNBT(message, player, merge);
-        } else if (dataType.equals("currency")) {
-            CurrencyItem currencyItem = CurrencyItem.fromNBT(message.getCompoundTag("currencyItem"));
-            TradeManager.INSTANCE.addCurrency(player, currencyItem, merge);
-        } else {
-            VendingMachine.LOG.warn("Unknown trade state sync data received: {}", dataType);
+        switch (dataType) {
+            case "tradeState" -> {
+                boolean merge = message.getBoolean("merge");
+                TradeDatabase.INSTANCE.populateTradeStateFromNBT(message, player, merge);
+            }
+            case "currency_add" -> {
+                CurrencyItem currencyItem = CurrencyItem.fromNBT(message.getCompoundTag("currencyItem"));
+
+                TradeManager.INSTANCE.addCurrency(player, currencyItem);
+            }
+            case "currency_reset" -> TradeManager.INSTANCE.resetCurrency(
+                player,
+                message.hasKey("type") ? CurrencyItem.CurrencyType.getTypeFromId(message.getString("type")) : null);
+            default -> VendingMachine.LOG.warn("Unknown trade state sync data received: {}", dataType);
         }
     }
 }

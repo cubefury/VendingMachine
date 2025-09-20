@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
+import com.cleanroommc.modularui.screen.ModularScreen;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
@@ -276,5 +277,11 @@ public class TradeMainPanel extends ModularPanel {
         // We have to sync reset use manually since dispose() is only run client-side
         NetResetVMUser.sendReset(this.gui.getBase());
         super.dispose();
+    }
+
+    @Override
+    public void onOpen(ModularScreen screen) {
+        super.onOpen(screen);
+        gui.restorePreviousSettings();
     }
 }
