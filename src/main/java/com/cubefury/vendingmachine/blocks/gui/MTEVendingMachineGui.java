@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -57,7 +59,6 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     private final Map<TradeCategory, List<TradeItemDisplayWidget>> displayedTrades = new HashMap<>();
     private final List<TradeCategory> tradeCategories = new ArrayList<>();
     private final List<InterceptingSlot> inputSlots = new ArrayList<>();
-    private boolean hasInputsChanged = false;
 
     private PosGuiData guiData;
     private final PagedWidget.Controller tabController;
@@ -525,7 +526,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         forceRefresh = false;
     }
 
-    public void updateSlots(Map<TradeCategory, List<TradeItemDisplay>> trades) {
+    public void updateTradeDisplay(Map<TradeCategory, List<TradeItemDisplay>> trades) {
         synchronized (displayedTrades) {
             for (Map.Entry<TradeCategory, List<TradeItemDisplayWidget>> entry : displayedTrades.entrySet()) {
                 int displayedSize = trades.get(entry.getKey()) == null ? 0
@@ -533,19 +534,34 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                         .size();
                 for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
                     if (i < displayedSize) {
-                        displayedTrades.get(entry.getKey())
+                        entry.getValue()
                             .get(i)
                             .setDisplay(
                                 trades.get(entry.getKey())
                                     .get(i));
                     } else {
-                        displayedTrades.get(entry.getKey())
+                        entry.getValue()
                             .get(i)
                             .setDisplay(null);
                     }
                 }
             }
         }
+    }
+
+    public Map<TradeCategory, List<TradeItemDisplay>> getTradeDisplayData() {
+        Map<TradeCategory, List<TradeItemDisplay>> currentData = new HashMap<>();
+        synchronized (displayedTrades) {
+            this.displayedTrades.forEach((k, v) -> {
+                currentData.put(
+                    k,
+                    v.stream()
+                        .map(TradeItemDisplayWidget::getDisplay)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList()));
+            });
+        }
+        return currentData;
     }
 
     public String getSearchBarText() {

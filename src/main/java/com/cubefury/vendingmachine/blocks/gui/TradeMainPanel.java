@@ -78,12 +78,49 @@ public class TradeMainPanel extends ModularPanel {
                 testTGW.add(new TradeGroupWrapper(entry.getValue(), -1, true));
             }
             Map<TradeCategory, List<TradeItemDisplay>> trades = formatTrades(testTGW);
-            gui.updateSlots(trades);
+            gui.updateTradeDisplay(trades);
+        } else if (shiftHeld) {
+            this.updateTradeInformation(gui.getTradeDisplayData());
         } else {
             Map<TradeCategory, List<TradeItemDisplay>> trades = formatTrades(
                 TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer())));
-            gui.updateSlots(trades);
+            gui.updateTradeDisplay(trades);
         }
+    }
+
+    private void updateTradeInformation(Map<TradeCategory, List<TradeItemDisplay>> currentData) {
+        Map<BigItemStack, Integer> availableItems = this.guiData.isClient() && this.gui.getBase() != null
+            ? getAvailableItems()
+            : new HashMap<>();
+
+        Map<UUID, TradeGroupWrapper> tradeGroups = new HashMap<>();
+        TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer()))
+            .forEach(
+                (tg) -> {
+                    tradeGroups.put(
+                        tg.trade()
+                            .getId(),
+                        tg);
+                });
+        currentData.forEach((k, v) -> {
+            for (TradeItemDisplay tid : v) {
+                TradeGroupWrapper cur = tradeGroups.get(tid.tgID);
+                tid.enabled = cur != null && cur.enabled();
+                tid.hasCooldown = cur.cooldown() > 0;
+                tid.cooldown = cur.cooldown();
+                tid.cooldownText = convertCooldownText(cur.cooldown());
+                tid.tradeableNow = checkItemsSatisfied(
+                    cur.trade()
+                        .getTrades()
+                        .get(tid.tradeGroupOrder).fromItems,
+                    availableItems)
+                    && checkCurrencySatisfied(
+                        cur.trade()
+                            .getTrades()
+                            .get(tid.tradeGroupOrder).fromCurrency,
+                        TradeManager.INSTANCE.playerCurrency.get(NameCache.INSTANCE.getUUIDFromPlayer(this.player)));
+            }
+        });
     }
 
     @Override
@@ -167,7 +204,6 @@ public class TradeMainPanel extends ModularPanel {
     }
 
     public Map<TradeCategory, List<TradeItemDisplay>> formatTrades(List<TradeGroupWrapper> tradeGroups) {
-
         Map<BigItemStack, Integer> availableItems = this.guiData.isClient() && this.gui.getBase() != null
             ? getAvailableItems()
             : new HashMap<>();
