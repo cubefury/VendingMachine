@@ -56,6 +56,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     private final Map<CurrencyItem.CurrencyType, Boolean> ejectSingleCoin = new HashMap<>();
     private final Map<TradeCategory, List<TradeItemDisplayWidget>> displayedTrades = new HashMap<>();
     private final List<TradeCategory> tradeCategories = new ArrayList<>();
+    private final List<InterceptingSlot> inputSlots = new ArrayList<>();
+    private boolean hasInputsChanged = false;
 
     private PosGuiData guiData;
     private final PagedWidget.Controller tabController;
@@ -300,16 +302,22 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .matrix("II", "II", "II")
             .key('I', index -> {
                 InterceptingSlot slot = new InterceptingSlot(base.inputItems, index);
+                this.inputSlots.add(slot);
                 return new ItemSlot().slot(
                     slot.slotGroup("inputSlotGroup")
                         .changeListener((newItem, onlyAmountChanged, client, init) -> {
-                            slot.intercept(
+                            boolean hasCoin = slot.intercept(
                                 newItem,
                                 client,
                                 this.getBase()
                                     .getCurrentUser());
-                            if (guiData.isClient()) {
+                            if (client) {
                                 forceRefresh = true;
+                                return;
+                            }
+                            // server side force refresh
+                            if (hasCoin) {
+                                this.refreshInputSlots();
                             }
                         }));
             })
@@ -317,7 +325,6 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     }
 
     private SlotGroupWidget createOutputSlots() {
-        // we use slot group widget in case we want to increase the number of output slots in the future
         return SlotGroupWidget.builder()
             .matrix("II", "II")
             .key('I', index -> {
@@ -543,6 +550,15 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     public String getSearchBarText() {
         return this.searchBar.getText();
+    }
+
+    // server-side sync for all input slots
+    // during next tick after any input
+    private void refreshInputSlots() {
+        for (InterceptingSlot slot : this.inputSlots) {
+            slot.getSyncHandler()
+                .forceSyncItem();
+        }
     }
 
 }

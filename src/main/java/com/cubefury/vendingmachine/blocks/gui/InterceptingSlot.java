@@ -21,11 +21,11 @@ public class InterceptingSlot extends ModularSlot {
     public boolean intercept(ItemStack newItem, boolean client, EntityPlayer player) {
         CurrencyItem mapped = mapToCurrency(newItem);
         if (mapped != null) {
+            this.putStack(null);
             if (!client) {
                 TradeManager.INSTANCE.addCurrency(NameCache.INSTANCE.getUUIDFromPlayer(player), mapped);
                 NetTradeStateSync.sendPlayerCurrency((EntityPlayerMP) player, mapped);
             }
-            this.putStack(null);
             return true;
         }
         return false;
