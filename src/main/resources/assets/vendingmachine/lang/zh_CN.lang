@@ -1,13 +1,31 @@
-tile.vendingmachine.vending_machine.name=自动售货机
-
-item.vendingmachine.placeholder.name=占位物品
+item.vendingmachine.placeholder.name=占位符物品
 
 tooltip.vendingmachine=到底是谁在补货啊...
 
 vendingmachine.gui.requirementHeader=需求条件：
-vendingmachine.gui.requirement.unknown=未知要求
+vendingmachine.gui.requirement.unknown=未知需求
 vendingmachine.gui.requirement.betterquesting=任务
-vendingmachine.gui.requirement.betterquesting.missing=未完成任务
+vendingmachine.gui.requirement.betterquesting.missing=未接取任务
 vendingmachine.gui.neiColor.conditionDefault=000000
 vendingmachine.gui.neiColor.conditionSatisfied=55D441
 vendingmachine.gui.neiColor.conditionUnsatisfied=A87A5E
+vendingmachine.gui.item_eject=取出物品
+vendingmachine.gui.search=搜索
+vendingmachine.gui.required_inputs=需要：
+
+vendingmachine.gui.cooldown_display.second=秒
+vendingmachine.gui.cooldown_display.minute=分
+vendingmachine.gui.cooldown_display.hour=时
+vendingmachine.gui.cooldown_display.day=天
+
+gt.blockmachines.multimachine.vendingmachine.name=自动售货机
+
+vendingmachine.category.unknown=未知分类
+vendingmachine.category.all=全部物品
+vendingmachine.category.components=零部件
+vendingmachine.category.raw=原材料
+vendingmachine.category.farming=农业
+vendingmachine.category.chemistry=化工
+vendingmachine.category.magic=魔法
+vendingmachine.category.bees=蜜蜂
+vendingmachine.category.misc=杂项
