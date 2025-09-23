@@ -94,6 +94,7 @@ public class SearchBar extends BaseTextFieldWidget<SearchBar> {
         super.onUpdate();
         String curText = getText();
         if (!curText.equals(previousText)) {
+            MTEVendingMachineGui.lastSearch = curText;
             gui.setForceRefresh();
         }
         previousText = curText;

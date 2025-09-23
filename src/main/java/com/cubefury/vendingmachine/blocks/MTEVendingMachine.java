@@ -3,13 +3,19 @@ package com.cubefury.vendingmachine.blocks;
 import static com.gtnewhorizon.structurelib.structure.StructureUtility.lazy;
 import static com.gtnewhorizon.structurelib.structure.StructureUtility.ofBlock;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.ChatComponentTranslation;
+import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -23,8 +29,11 @@ import com.cubefury.vendingmachine.blocks.gui.TradeItemDisplay;
 import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeRequestSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
+import com.cubefury.vendingmachine.storage.NameCache;
+import com.cubefury.vendingmachine.trade.CurrencyItem;
 import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
+import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.trade.TradeRequest;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.gtnewhorizon.structurelib.StructureLibAPI;
@@ -45,13 +54,12 @@ import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
 import gregtech.api.render.TextureFactory;
+import gregtech.api.util.GTUtil;
 import gregtech.api.util.GTUtility;
 import gregtech.api.util.MultiblockTooltipBuilder;
 
 public class MTEVendingMachine extends MTEMultiBlockBase
     implements ISurvivalConstructable, ISecondaryDescribable, IAlignment {
-
-    public static final int CUSTOM_UI_HEIGHT = 300;
 
     public static final int INPUT_SLOTS = 6;
     public static final int OUTPUT_SLOTS = 4;
@@ -88,6 +96,8 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     private boolean newBufferedOutputs = false;
     private int ticksSinceOutput = 0;
 
+    private EntityPlayer currentUser = null;
+
     public MTEVendingMachine(final int aID, final String aName, final String aNameRegional) {
         super(aID, aName, aNameRegional);
     }
@@ -106,7 +116,6 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     }
 
     public void addTradeRequest(TradeRequest trade) {
-        VendingMachine.LOG.info("received new trade request");
         this.pendingTrades.add(trade);
     }
 
@@ -196,6 +205,21 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         Trade trade = TradeDatabase.INSTANCE.getTradeGroupFromId(tradeRequest.tradeGroup)
             .getTrades()
             .get(tradeRequest.tradeGroupOrder);
+        Map<CurrencyItem.CurrencyType, Integer> coinInventory = TradeManager.INSTANCE.playerCurrency
+            .get(NameCache.INSTANCE.getUUIDFromPlayer(this.getCurrentUser()));
+        Map<CurrencyItem.CurrencyType, Integer> newCoinInventory = new HashMap<>();
+        if (coinInventory == null) {
+            return false;
+        }
+        for (CurrencyItem ci : trade.fromCurrency) {
+            int oldValue = coinInventory.get(ci.type);
+            if (!coinInventory.containsKey(ci.type) || oldValue < ci.value) {
+                return false;
+            } else {
+                newCoinInventory.put(ci.type, oldValue - ci.value);
+            }
+        }
+
         for (BigItemStack stack : trade.fromItems) {
             ItemStack requiredStack = stack.getBaseStack();
             int requiredAmount = stack.stackSize;
@@ -221,6 +245,14 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             }
             if (requiredAmount > 0) {
                 return false;
+            }
+        }
+
+        for (Map.Entry<CurrencyItem.CurrencyType, Integer> entry : newCoinInventory.entrySet()) {
+            if (entry.getValue() == 0) {
+                coinInventory.remove(entry.getKey());
+            } else {
+                coinInventory.replace(entry.getKey(), entry.getValue());
             }
         }
 
@@ -278,12 +310,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             NetAvailableTradeSync.requestSync();
             NetTradeStateSync.requestSync();
         }
-        return new MTEVendingMachineGui(this, CUSTOM_UI_HEIGHT);
-    }
-
-    @Override
-    public int getGUIHeight() {
-        return CUSTOM_UI_HEIGHT;
+        return new MTEVendingMachineGui(this);
     }
 
     @Override
@@ -475,5 +502,72 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             1,
             0,
             hintsOnly);
+    }
+
+    @Override
+    public boolean onRightclick(IGregTechTileEntity aBaseMetaTileEntity, EntityPlayer aPlayer) {
+        if (GTUtil.hasMultiblockInputConfiguration(aPlayer.getHeldItem())) {
+            if (aBaseMetaTileEntity.isServerSide()) {
+                if (GTUtil.loadMultiblockInputConfiguration(this, aPlayer)) {
+                    aPlayer.addChatComponentMessage(new ChatComponentTranslation("GT5U.MULTI_MACHINE_CONFIG.LOAD"));
+                } else {
+                    aPlayer
+                        .addChatComponentMessage(new ChatComponentTranslation("GT5U.MULTI_MACHINE_CONFIG.LOAD.FAIL"));
+                }
+            }
+            return true;
+        }
+        if (canUse(aPlayer)) {
+            this.currentUser = aPlayer;
+            openGui(aPlayer);
+        } else {
+            aPlayer.addChatComponentMessage(new ChatComponentTranslation("vendingmachine.gui.error.player_using"));
+        }
+        return true;
+    }
+
+    private boolean canUse(EntityPlayer aPlayer) {
+        return this.currentUser == null || this.currentUser == aPlayer;
+    }
+
+    public EntityPlayer getCurrentUser() {
+        return this.currentUser;
+    }
+
+    public void resetCurrentUser(EntityPlayer aPlayer) {
+        if (this.currentUser == aPlayer) {
+            this.currentUser = null;
+        }
+    }
+
+    public void spawnItem(ItemStack stack) {
+        if (stack == null || this.getBaseMetaTileEntity() == null) {
+            return;
+        }
+        World world = this.getBaseMetaTileEntity()
+            .getWorld();
+        int posX = this.getBaseMetaTileEntity()
+            .getXCoord();
+        int posY = this.getBaseMetaTileEntity()
+            .getYCoord();
+        int posZ = this.getBaseMetaTileEntity()
+            .getZCoord();
+        int offsetX = this.getExtendedFacing()
+            .getDirection().offsetX;
+        int offsetY = this.getExtendedFacing()
+            .getDirection().offsetY;
+        int offsetZ = this.getExtendedFacing()
+            .getDirection().offsetZ;
+        final EntityItem itemEntity = new EntityItem(
+            world,
+            posX + offsetX * 0.5,
+            posY + offsetY * 0.5,
+            posZ + offsetZ * 0.5,
+            stack);
+        itemEntity.delayBeforeCanPickup = 0;
+        itemEntity.motionX = 0.05f * offsetX;
+        itemEntity.motionY = 0.05f * offsetY;
+        itemEntity.motionZ = 0.05f * offsetZ;
+        world.spawnEntityInWorld(itemEntity);
     }
 }

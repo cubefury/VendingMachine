@@ -15,10 +15,13 @@ import org.jetbrains.annotations.NotNull;
 
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
+import com.cleanroommc.modularui.screen.ModularScreen;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
+import com.cubefury.vendingmachine.network.handlers.NetResetVMUser;
 import com.cubefury.vendingmachine.storage.NameCache;
+import com.cubefury.vendingmachine.trade.CurrencyItem;
 import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.trade.TradeCategory;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
@@ -67,7 +70,7 @@ public class TradeMainPanel extends ModularPanel {
     }
 
     public void updateGui() {
-        boolean test = true;
+        boolean test = false;
         if (test) {
             List<TradeGroupWrapper> testTGW = new ArrayList<>();
             for (Map.Entry<UUID, TradeGroup> entry : TradeDatabase.INSTANCE.getTradeGroups()
@@ -75,12 +78,49 @@ public class TradeMainPanel extends ModularPanel {
                 testTGW.add(new TradeGroupWrapper(entry.getValue(), -1, true));
             }
             Map<TradeCategory, List<TradeItemDisplay>> trades = formatTrades(testTGW);
-            gui.updateSlots(trades);
+            gui.updateTradeDisplay(trades);
+        } else if (shiftHeld) {
+            this.updateTradeInformation(gui.getTradeDisplayData());
         } else {
             Map<TradeCategory, List<TradeItemDisplay>> trades = formatTrades(
                 TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer())));
-            gui.updateSlots(trades);
+            gui.updateTradeDisplay(trades);
         }
+    }
+
+    private void updateTradeInformation(Map<TradeCategory, List<TradeItemDisplay>> currentData) {
+        Map<BigItemStack, Integer> availableItems = this.guiData.isClient() && this.gui.getBase() != null
+            ? getAvailableItems()
+            : new HashMap<>();
+
+        Map<UUID, TradeGroupWrapper> tradeGroups = new HashMap<>();
+        TradeManager.INSTANCE.getTrades(NameCache.INSTANCE.getUUIDFromPlayer(syncManager.getPlayer()))
+            .forEach(
+                (tg) -> {
+                    tradeGroups.put(
+                        tg.trade()
+                            .getId(),
+                        tg);
+                });
+        currentData.forEach((k, v) -> {
+            for (TradeItemDisplay tid : v) {
+                TradeGroupWrapper cur = tradeGroups.get(tid.tgID);
+                tid.enabled = cur != null && cur.enabled();
+                tid.hasCooldown = cur.cooldown() > 0;
+                tid.cooldown = cur.cooldown();
+                tid.cooldownText = convertCooldownText(cur.cooldown());
+                tid.tradeableNow = checkItemsSatisfied(
+                    cur.trade()
+                        .getTrades()
+                        .get(tid.tradeGroupOrder).fromItems,
+                    availableItems)
+                    && checkCurrencySatisfied(
+                        cur.trade()
+                            .getTrades()
+                            .get(tid.tradeGroupOrder).fromCurrency,
+                        TradeManager.INSTANCE.playerCurrency.get(NameCache.INSTANCE.getUUIDFromPlayer(this.player)));
+            }
+        });
     }
 
     @Override
@@ -93,9 +133,15 @@ public class TradeMainPanel extends ModularPanel {
         if (this.player == null && this.syncManager.isInitialised()) {
             this.player = syncManager.getPlayer();
         }
-        if (gui.forceRefresh || (this.ticksOpen % Config.gui_refresh_interval == 0 && player != null && !shiftHeld)) {
+        if (TradeManager.INSTANCE.hasCurrencyUpdate) {
+            MTEVendingMachineGui.setForceRefresh();
+        }
+        if (
+            MTEVendingMachineGui.forceRefresh
+                || (this.ticksOpen % Config.gui_refresh_interval == 0 && player != null && !shiftHeld)
+        ) {
             updateGui();
-            gui.resetForceRefresh();
+            MTEVendingMachineGui.resetForceRefresh();
         }
         this.ticksOpen += 1;
     }
@@ -118,6 +164,18 @@ public class TradeMainPanel extends ModularPanel {
             .get(0);
         display.stackSize = stack.stackSize;
         return display;
+    }
+
+    public boolean checkCurrencySatisfied(List<CurrencyItem> currencyItems,
+        Map<CurrencyItem.CurrencyType, Integer> availableItems) {
+        if (currencyItems == null) {
+            return true;
+        }
+        if (availableItems == null) {
+            return false;
+        }
+        return currencyItems.stream()
+            .allMatch(ci -> availableItems.containsKey(ci.type) && availableItems.get(ci.type) >= ci.value);
     }
 
     public boolean checkItemsSatisfied(List<BigItemStack> trade, Map<BigItemStack, Integer> availableItems) {
@@ -146,7 +204,6 @@ public class TradeMainPanel extends ModularPanel {
     }
 
     public Map<TradeCategory, List<TradeItemDisplay>> formatTrades(List<TradeGroupWrapper> tradeGroups) {
-
         Map<BigItemStack, Integer> availableItems = this.guiData.isClient() && this.gui.getBase() != null
             ? getAvailableItems()
             : new HashMap<>();
@@ -166,6 +223,7 @@ public class TradeMainPanel extends ModularPanel {
                     .get(i);
                 BigItemStack displayItem = trade.toItems.get(0);
                 TradeItemDisplay tid = new TradeItemDisplay(
+                    trade.fromCurrency,
                     trade.fromItems,
                     trade.toItems,
                     convertToItemStack(displayItem == null ? trade.displayItem : displayItem),
@@ -178,7 +236,9 @@ public class TradeMainPanel extends ModularPanel {
                     convertCooldownText(tgw.cooldown()),
                     tgw.cooldown() > 0,
                     tgw.enabled(),
-                    checkItemsSatisfied(trade.fromItems, availableItems));
+                    checkItemsSatisfied(trade.fromItems, availableItems) && checkCurrencySatisfied(
+                        trade.fromCurrency,
+                        TradeManager.INSTANCE.playerCurrency.get(NameCache.INSTANCE.getUUIDFromPlayer(this.player))));
 
                 trades.get(category)
                     .add(tid);
@@ -244,5 +304,20 @@ public class TradeMainPanel extends ModularPanel {
 
     public void attemptPurchase(TradeItemDisplay display) {
         gui.attemptPurchase(display);
+    }
+
+    @Override
+    public void dispose() {
+        this.gui.getBase()
+            .resetCurrentUser(this.player);
+        // We have to sync reset use manually since dispose() is only run client-side
+        NetResetVMUser.sendReset(this.gui.getBase());
+        super.dispose();
+    }
+
+    @Override
+    public void onOpen(ModularScreen screen) {
+        super.onOpen(screen);
+        gui.restorePreviousSettings();
     }
 }

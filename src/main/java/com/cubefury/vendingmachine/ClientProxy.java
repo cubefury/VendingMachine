@@ -1,11 +1,9 @@
 package com.cubefury.vendingmachine;
 
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.common.MinecraftForge;
 
 import com.cubefury.vendingmachine.integration.nei.NEIConfig;
 
-import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 
@@ -26,12 +24,6 @@ public class ClientProxy extends CommonProxy {
 
     public boolean isClient() {
         return true;
-    }
-
-    @Override
-    public EntityPlayer getThePlayer() {
-        return FMLClientHandler.instance()
-            .getClientPlayerEntity();
     }
 
     @Override

@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
-import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.world.World;
 
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.api.widget.IWidget;
@@ -21,7 +22,6 @@ import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.widget.ParentWidget;
 import com.cleanroommc.modularui.widget.SingleChildWidget;
 import com.cleanroommc.modularui.widgets.ListWidget;
-import com.cleanroommc.modularui.widgets.PageButton;
 import com.cleanroommc.modularui.widgets.PagedWidget;
 import com.cleanroommc.modularui.widgets.SlotGroupWidget;
 import com.cleanroommc.modularui.widgets.ToggleButton;
@@ -34,8 +34,12 @@ import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
 import com.cubefury.vendingmachine.gui.GuiTextures;
 import com.cubefury.vendingmachine.gui.WidgetThemes;
+import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
+import com.cubefury.vendingmachine.storage.NameCache;
+import com.cubefury.vendingmachine.trade.CurrencyItem;
 import com.cubefury.vendingmachine.trade.TradeCategory;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
+import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.Translator;
 
@@ -46,27 +50,38 @@ import gregtech.api.modularui2.GTWidgetThemes;
 public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     private final MTEVendingMachine base;
-    private final int height;
 
     public static boolean forceRefresh = false;
 
     private boolean ejectItems = false;
+    private boolean ejectCoins = false;
+    private final Map<CurrencyItem.CurrencyType, Boolean> ejectSingleCoin = new HashMap<>();
     private final Map<TradeCategory, List<TradeItemDisplayWidget>> displayedTrades = new HashMap<>();
     private final List<TradeCategory> tradeCategories = new ArrayList<>();
+    private final List<InterceptingSlot> inputSlots = new ArrayList<>();
 
     private PosGuiData guiData;
-    private PagedWidget.Controller tabController;
-    private SearchBar searchBar;
+    private final PagedWidget.Controller tabController;
+    private final SearchBar searchBar;
+
+    public static String lastSearch = "";
+    public static int lastPage = 0;
+
+    public static final int CUSTOM_UI_HEIGHT = 320;
 
     public static final int ITEMS_PER_ROW = 3;
     public static final int ITEM_HEIGHT = 25;
     public static final int ITEM_WIDTH = 47;
-    private static final int ROW_SEPARATOR_HEIGHT = 5;
+    private static final int COIN_COLUMN_WIDTH = 40;
+    private static final int COIN_COLUMN_ROW_COUNT = 4;
 
-    public MTEVendingMachineGui(MTEVendingMachine base, int height) {
+    public MTEVendingMachineGui(MTEVendingMachine base) {
         super(base);
         this.base = base;
-        this.height = height;
+
+        for (CurrencyItem.CurrencyType type : CurrencyItem.CurrencyType.values()) {
+            ejectSingleCoin.put(type, false);
+        }
 
         this.tradeCategories.add(TradeCategory.ALL);
         this.tradeCategories.addAll(TradeDatabase.INSTANCE.getTradeCategories());
@@ -96,7 +111,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         this.guiData = guiData;
 
         registerSyncValues(syncManager);
-        ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, guiData, syncManager).size(178, height)
+        ModularPanel panel = new TradeMainPanel("MTEMultiBlockBase", this, guiData, syncManager)
+            .size(178, CUSTOM_UI_HEIGHT)
             .padding(4);
         panel.child(createCategoryTabs(this.tabController));
         Flow mainColumn = new Column().width(170);
@@ -104,6 +120,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             mainColumn.child(createTitleTextStyle(base.getLocalName()))
                 .child(this.searchBar)
                 .child(createTradeUI((TradeMainPanel) panel, this.tabController));
+            mainColumn.child(createCoinInventoryRow((TradeMainPanel) panel));
         }
         mainColumn.child(createInventoryRow(panel, syncManager));
         panel.child(mainColumn);
@@ -112,6 +129,13 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                 .right(5));
         panel.child(createIOColumn(syncManager));
         return panel;
+    }
+
+    public void restorePreviousSettings() {
+        if (this.tabController.isInitialised()) {
+            this.tabController.setPage(lastPage);
+        }
+        this.searchBar.setText(lastSearch);
     }
 
     public IWidget createCategoryTabs(PagedWidget.Controller tabController) {
@@ -124,7 +148,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         for (int i = 0; i < this.tradeCategories.size(); i++) {
             int index = i;
             tabColumn.child(
-                new PageButton(i, tabController).tab(GuiTextures.TAB_LEFT, -1)
+                new VendingPageButton(i, tabController).tab(GuiTextures.TAB_LEFT, -1)
                     .overlay(
                         this.tradeCategories.get(i)
                             .getTexture()
@@ -166,51 +190,63 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .height(10);
     }
 
-    private void ejectItems() {
-        if (!this.guiData.isClient()) {
-            if (base.getBaseMetaTileEntity() == null) {
-                VendingMachine.LOG.info("Unable to eject items as the base MTE for the Vending Machine was null.");
-            } else {
-                World world = base.getBaseMetaTileEntity()
-                    .getWorld();
-                int posX = base.getBaseMetaTileEntity()
-                    .getXCoord();
-                int posY = base.getBaseMetaTileEntity()
-                    .getYCoord();
-                int posZ = base.getBaseMetaTileEntity()
-                    .getZCoord();
-                int offsetX = base.getExtendedFacing()
-                    .getDirection().offsetX;
-                int offsetY = base.getExtendedFacing()
-                    .getDirection().offsetY;
-                int offsetZ = base.getExtendedFacing()
-                    .getDirection().offsetZ;
-                for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
-                    ItemStack stack = base.inputItems.getStackInSlot(i);
-                    if (stack != null) {
-                        ItemStack extracted = base.inputItems.extractItem(i, stack.stackSize, false);
-                        if (extracted == null) { // if somehow it got pulled out already
-                            continue;
-                        }
-                        final EntityItem itemEntity = new EntityItem(
-                            world,
-                            posX + offsetX * 0.5,
-                            posY + offsetY * 0.5,
-                            posZ + offsetZ * 0.5,
-                            new ItemStack(extracted.getItem(), extracted.stackSize, extracted.getItemDamage()));
-                        if (extracted.hasTagCompound()) {
-                            itemEntity.getEntityItem()
-                                .setTagCompound(
-                                    (NBTTagCompound) extracted.getTagCompound()
-                                        .copy());
-                        }
-                        itemEntity.delayBeforeCanPickup = 0;
-                        itemEntity.motionX = 0.05f * offsetX;
-                        itemEntity.motionY = 0.05f * offsetY;
-                        itemEntity.motionZ = 0.05f * offsetZ;
-                        world.spawnEntityInWorld(itemEntity);
-                    }
-                }
+    // Eject code is in GUI instead of MTE since the syncers are per-gui instance
+    private void doEjectCoin(CurrencyItem.CurrencyType type) {
+        if (this.guiData.isClient()) {
+            return;
+        }
+        UUID currentUser = NameCache.INSTANCE.getUUIDFromPlayer(base.getCurrentUser());
+        if (
+            !TradeManager.INSTANCE.playerCurrency.containsKey(currentUser)
+                || !TradeManager.INSTANCE.playerCurrency.get(currentUser)
+                    .containsKey(type)
+        ) {
+            this.ejectSingleCoin.put(type, false);
+            return;
+        }
+        for (ItemStack ejectable : new CurrencyItem(
+            type,
+            TradeManager.INSTANCE.playerCurrency.get(currentUser)
+                .get(type)).itemize()) {
+            base.spawnItem(ejectable);
+        }
+        TradeManager.INSTANCE.resetCurrency(currentUser, type);
+        NetTradeStateSync.resetPlayerCurrency((EntityPlayerMP) base.getCurrentUser(), type);
+        this.ejectSingleCoin.put(type, false);
+    }
+
+    private void doEjectCoins() {
+        if (this.guiData.isClient()) {
+            return;
+        }
+
+        UUID currentUser = NameCache.INSTANCE.getUUIDFromPlayer(base.getCurrentUser());
+        if (!TradeManager.INSTANCE.playerCurrency.containsKey(currentUser)) {
+            ejectCoins = false;
+            return;
+        }
+
+        Map<CurrencyItem.CurrencyType, Integer> coins = TradeManager.INSTANCE.playerCurrency
+            .getOrDefault(currentUser, new HashMap<>());
+        for (Map.Entry<CurrencyItem.CurrencyType, Integer> entry : coins.entrySet()) {
+            for (ItemStack ejectable : new CurrencyItem(entry.getKey(), entry.getValue()).itemize()) {
+                base.spawnItem(ejectable);
+            }
+        }
+        TradeManager.INSTANCE.resetCurrency(currentUser, null);
+        NetTradeStateSync.resetPlayerCurrency((EntityPlayerMP) base.getCurrentUser(), null);
+        ejectCoins = false;
+    }
+
+    private void doEjectItems() {
+        if (this.guiData.isClient()) {
+            return;
+        }
+        for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
+            ItemStack stack = base.inputItems.getStackInSlot(i);
+            if (stack != null) {
+                base.inputItems.setStackInSlot(i, null);
+                base.spawnItem(stack.copy());
             }
         }
         ejectItems = false;
@@ -239,7 +275,14 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                             new ToggleButton().overlay(GTGuiTextures.OVERLAY_BUTTON_CYCLIC)
                                 .tooltipBuilder(t -> t.addLine(IKey.lang("vendingmachine.gui.item_eject")))
                                 .syncHandler("ejectItems")
-                                .center())
+                                .right(6))
+                            .child(
+                                new ToggleButton().overlay(
+                                    GuiTextures.EJECT_COINS.asIcon()
+                                        .size(14))
+                                    .tooltipBuilder(t -> t.addLine(IKey.lang("vendingmachine.gui.coin_eject")))
+                                    .syncHandler("ejectCoins")
+                                    .left(6))
                             .top(80)
                             .height(18))
                     .child(
@@ -259,11 +302,23 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         return SlotGroupWidget.builder()
             .matrix("II", "II", "II")
             .key('I', index -> {
+                InterceptingSlot slot = new InterceptingSlot(base.inputItems, index);
+                this.inputSlots.add(slot);
                 return new ItemSlot().slot(
-                    new ModularSlot(base.inputItems, index).slotGroup("inputSlotGroup")
+                    slot.slotGroup("inputSlotGroup")
                         .changeListener((newItem, onlyAmountChanged, client, init) -> {
-                            if (guiData.isClient()) {
+                            boolean hasCoin = slot.intercept(
+                                newItem,
+                                client,
+                                this.getBase()
+                                    .getCurrentUser());
+                            if (client) {
                                 forceRefresh = true;
+                                return;
+                            }
+                            // server side force refresh
+                            if (hasCoin) {
+                                this.refreshInputSlots();
                             }
                         }));
             })
@@ -271,7 +326,6 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     }
 
     private SlotGroupWidget createOutputSlots() {
-        // we use slot group widget in case we want to increase the number of output slots in the future
         return SlotGroupWidget.builder()
             .matrix("II", "II")
             .key('I', index -> {
@@ -290,15 +344,17 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .debugName("paged")
             .controller(tabController)
             .background(GuiTextures.TEXT_FIELD_BACKGROUND)
-            .heightRel(0.5f);
+            .height(146);
         for (TradeCategory category : this.tradeCategories) {
-            ListWidget<IWidget, ?> tradeList = new ListWidget<>().debugName("items").heightRel(1.0f)
+            ListWidget<IWidget, ?> tradeList = new ListWidget<>().debugName("items")
                 .width(156)
-                .margin(1)
+                .top(1)
+                .height(144)
                 .collapseDisabledChild(true);
 
+            tradeList.child(new Row().height(2));
             // Higher first row top margin
-            Flow row = new TradeRow().height(ITEM_HEIGHT).margin(1).marginTop(4);
+            Flow row = new TradeRow().height(ITEM_HEIGHT+2).left(2);
 
             for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
                 int index = i;
@@ -316,6 +372,9 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                                     }
                                     builder.emptyLine();
                                     builder.addLine(IKey.str(Translator.translate("vendingmachine.gui.required_inputs")).style(IKey.DARK_GREEN, IKey.ITALIC));
+                                    for (CurrencyItem currencyItem: cur.fromCurrency) {
+                                        builder.addLine(IKey.str(currencyItem.value + " " + currencyItem.type.getLocalizedName()).style(IKey.DARK_GREEN));
+                                    }
                                     for (BigItemStack fromItem : cur.fromItems) {
                                         builder.addLine(IKey.str(fromItem.stackSize + " " + fromItem.getBaseStack().getDisplayName()).style(IKey.DARK_GREEN));
                                     }
@@ -332,7 +391,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                 if (i % ITEMS_PER_ROW == ITEMS_PER_ROW - 1) {
                     tradeList.child(row);
 
-                    row = new TradeRow().height(ITEM_HEIGHT).margin(1);
+                    row = new TradeRow().height(ITEM_HEIGHT+2).left(2);
                 }
             }
             if (row.hasChildren()) {
@@ -347,6 +406,65 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             .top(24);
     }
     // spotless:on
+
+    private static String getReadableStringFromCoinAmount(int amount) {
+        if (amount < 10000) {
+            return "" + amount;
+        } else if (amount < 1000000) {
+            return amount / 1000 + "K";
+        } else {
+            return amount / 1000000 + "M";
+        }
+    }
+
+    private IWidget createCoinInventoryRow(TradeMainPanel panel) {
+        Flow parent = new Row() // .background(GuiTextures.TEXT_FIELD_BACKGROUND)
+            .width(162)
+            .height(36)
+            .top(172)
+            .left(3);
+        Flow coinColumn = new Column().width(COIN_COLUMN_WIDTH);
+        int coinCount = 0;
+        Map<CurrencyItem.CurrencyType, Integer> currentAmounts = TradeManager.INSTANCE.playerCurrency
+            .getOrDefault(NameCache.INSTANCE.getUUIDFromPlayer(getBase().getCurrentUser()), new HashMap<>());
+        for (CurrencyItem.CurrencyType type : CurrencyItem.CurrencyType.values()) {
+            coinColumn.child(
+                new Row().child(
+                    new CoinButton(panel, type).overlay(
+                        type.texture.asIcon()
+                            .size(12))
+                        .size(12)
+                        .left(0)
+                        .syncHandler("ejectCoin_" + type.id)
+                        .tooltipDynamic((builder) -> {
+                            builder.clearText();
+                            builder.addLine(currentAmounts.getOrDefault(type, 0) + " " + type.getLocalizedName());
+                            builder.emptyLine();
+                            builder.addLine(
+                                IKey.str(Translator.translate("vendingmachine.gui.single_coin_type_eject_hint"))
+                                    .style(IKey.GRAY, IKey.ITALIC));
+                            builder.setAutoUpdate(true);
+                        }))
+                    .child(
+                        IKey.dynamic(
+                            () -> getReadableStringFromCoinAmount(
+                                currentAmounts.get(type) == null ? 0 : currentAmounts.get(type)))
+                            .scale(0.8f)
+                            .asWidget()
+                            .top(3)
+                            .left(14)
+                            .width(21))
+                    .height(14));
+            if (++coinCount % COIN_COLUMN_ROW_COUNT == 0) {
+                parent.child(coinColumn.left(3 + COIN_COLUMN_WIDTH * (coinCount / COIN_COLUMN_ROW_COUNT - 1)));
+                coinColumn = new Column().width(COIN_COLUMN_WIDTH);
+            }
+        }
+        if (coinColumn.hasChildren()) {
+            parent.child(coinColumn.left(3 + COIN_COLUMN_WIDTH * (coinCount / COIN_COLUMN_ROW_COUNT)));
+        }
+        return parent;
+    }
 
     // why is the original method private lmao
     private IWidget createInventoryRow(ModularPanel panel, PanelSyncManager syncManager) {
@@ -363,16 +481,33 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     @Override
     protected void registerSyncValues(PanelSyncManager syncManager) {
         super.registerSyncValues(syncManager);
-        syncManager.registerSlotGroup("inputSlotGroup", 7, true);
-        syncManager.registerSlotGroup("outputSlotGroup", 1, false);
+        syncManager.registerSlotGroup("inputSlotGroup", 6, true);
+        syncManager.registerSlotGroup("outputSlotGroup", 4, false);
 
         BooleanSyncValue ejectItemsSyncer = new BooleanSyncValue(() -> this.ejectItems, val -> {
             this.ejectItems = val;
             if (this.ejectItems) {
-                ejectItems();
+                doEjectItems();
+            }
+        });
+        BooleanSyncValue ejectCoinsSyncer = new BooleanSyncValue(() -> this.ejectCoins, val -> {
+            this.ejectCoins = val;
+            if (this.ejectCoins) {
+                doEjectCoins();
             }
         });
         syncManager.syncValue("ejectItems", ejectItemsSyncer);
+        syncManager.syncValue("ejectCoins", ejectCoinsSyncer);
+
+        for (CurrencyItem.CurrencyType type : CurrencyItem.CurrencyType.values()) {
+            BooleanSyncValue ejectCoinSyncer = new BooleanSyncValue(() -> this.ejectSingleCoin.get(type), val -> {
+                this.ejectSingleCoin.put(type, val);
+                if (val) {
+                    doEjectCoin(type);
+                }
+            });
+            syncManager.syncValue("ejectCoin_" + type.id, ejectCoinSyncer);
+        }
     }
 
     public void attemptPurchase(TradeItemDisplay display) {
@@ -391,7 +526,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         forceRefresh = false;
     }
 
-    public void updateSlots(Map<TradeCategory, List<TradeItemDisplay>> trades) {
+    public void updateTradeDisplay(Map<TradeCategory, List<TradeItemDisplay>> trades) {
         synchronized (displayedTrades) {
             for (Map.Entry<TradeCategory, List<TradeItemDisplayWidget>> entry : displayedTrades.entrySet()) {
                 int displayedSize = trades.get(entry.getKey()) == null ? 0
@@ -399,13 +534,13 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                         .size();
                 for (int i = 0; i < MTEVendingMachine.MAX_TRADES; i++) {
                     if (i < displayedSize) {
-                        displayedTrades.get(entry.getKey())
+                        entry.getValue()
                             .get(i)
                             .setDisplay(
                                 trades.get(entry.getKey())
                                     .get(i));
                     } else {
-                        displayedTrades.get(entry.getKey())
+                        entry.getValue()
                             .get(i)
                             .setDisplay(null);
                     }
@@ -414,8 +549,32 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         }
     }
 
+    public Map<TradeCategory, List<TradeItemDisplay>> getTradeDisplayData() {
+        Map<TradeCategory, List<TradeItemDisplay>> currentData = new HashMap<>();
+        synchronized (displayedTrades) {
+            this.displayedTrades.forEach((k, v) -> {
+                currentData.put(
+                    k,
+                    v.stream()
+                        .map(TradeItemDisplayWidget::getDisplay)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList()));
+            });
+        }
+        return currentData;
+    }
+
     public String getSearchBarText() {
         return this.searchBar.getText();
+    }
+
+    // server-side sync for all input slots
+    // during next tick after any input
+    private void refreshInputSlots() {
+        for (InterceptingSlot slot : this.inputSlots) {
+            slot.getSyncHandler()
+                .forceSyncItem();
+        }
     }
 
 }
