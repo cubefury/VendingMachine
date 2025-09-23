@@ -1,5 +1,6 @@
 package com.cubefury.vendingmachine.integration.betterquesting.gui;
 
+import com.cubefury.vendingmachine.trade.CurrencyItem;
 import com.cubefury.vendingmachine.trade.Trade;
 
 import betterquesting.api.utils.BigItemStack;
@@ -29,9 +30,21 @@ public class PanelQBTrade extends CanvasMinimum {
         super.initPanel();
 
         int x_offset = 0;
+
         for (int i = 0; i < trade.fromItems.size(); i++) {
             BigItemStack stack = trade.fromItems.get(i)
                 .toBQBigItemStack();
+            GuiRectangle rectangle = new GuiRectangle(x_offset, 0, 18, 18, 0);
+            PanelItemSlot is = PanelItemSlotBuilder.forValue(stack, rectangle)
+                .showCount(true)
+                .build();
+            this.addPanel(is);
+            x_offset += 20;
+        }
+
+        for (int i = 0; i < trade.fromCurrency.size(); i++) {
+            CurrencyItem currencyItem = trade.fromCurrency.get(i);
+            BigItemStack stack = new BigItemStack(currencyItem.getItemRepresentation());
             GuiRectangle rectangle = new GuiRectangle(x_offset, 0, 18, 18, 0);
             PanelItemSlot is = PanelItemSlotBuilder.forValue(stack, rectangle)
                 .showCount(true)

@@ -54,6 +54,11 @@ public class CurrencyItem {
         return outputs;
     }
 
+    public ItemStack getItemRepresentation() {
+        Item outputItem = (Item) Item.itemRegistry.getObject(this.type.itemPrefix);
+        return new ItemStack(outputItem, value);
+    }
+
     public enum CurrencyType {
 
         ADVENTURE("adventure", "dreamcraft:item.CoinAdventure", "gui/icons/itemCoinAdventure.png"),
