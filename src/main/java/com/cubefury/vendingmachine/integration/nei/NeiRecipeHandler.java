@@ -25,6 +25,7 @@ import com.cubefury.vendingmachine.api.trade.ICondition;
 import com.cubefury.vendingmachine.integration.betterquesting.BqAdapter;
 import com.cubefury.vendingmachine.integration.betterquesting.BqCondition;
 import com.cubefury.vendingmachine.storage.NameCache;
+import com.cubefury.vendingmachine.trade.CurrencyItem;
 import com.cubefury.vendingmachine.trade.Trade;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.Translator;
@@ -328,6 +329,14 @@ public class NeiRecipeHandler extends TemplateRecipeHandler {
                 }
                 int x = xOffset + index * SLOT_SIZE;
                 inputs.add(new PositionedStack(extractStacks(stack), x, y));
+                index++;
+            }
+            for (CurrencyItem ci : trade.fromCurrency) {
+                if (index >= GRID_COUNT) {
+                    break;
+                }
+                int x = xOffset + index * SLOT_SIZE;
+                inputs.add(new PositionedStack(ci.getItemRepresentation(), x, y));
                 index++;
             }
         }
