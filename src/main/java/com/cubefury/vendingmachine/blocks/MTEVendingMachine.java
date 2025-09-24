@@ -57,6 +57,7 @@ import gregtech.api.render.TextureFactory;
 import gregtech.api.util.GTUtil;
 import gregtech.api.util.GTUtility;
 import gregtech.api.util.MultiblockTooltipBuilder;
+import org.lwjgl.input.Keyboard;
 
 public class MTEVendingMachine extends MTEMultiBlockBase
     implements ISurvivalConstructable, ISecondaryDescribable, IAlignment {
@@ -294,6 +295,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
                 .beginStructureBlock(2, 3, 1, false)
                 .addController("Middle")
                 .addOtherStructurePart("Tin Item Pipe Casings", "Everything except the controller")
+                .addStructureInfo("Cannot be flipped onto its side")
                 .toolTipFinisher();
         }
         return tooltipBuilder;
@@ -351,6 +353,11 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     @Override
     public String[] getSecondaryDescription() {
         return getTooltip().getStructureInformation();
+    }
+
+    @Override
+    public boolean isDisplaySecondaryDescription() {
+        return Keyboard.isKeyDown(Keyboard.KEY_LSHIFT);
     }
 
     @Override
