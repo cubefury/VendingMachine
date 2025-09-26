@@ -1,9 +1,12 @@
 package com.cubefury.vendingmachine.blocks;
 
-import static com.gtnewhorizon.structurelib.structure.StructureUtility.lazy;
-import static com.gtnewhorizon.structurelib.structure.StructureUtility.ofBlock;
+import static gregtech.api.casing.Casings.TinItemPipeCasing;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -20,6 +23,7 @@ import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import org.jetbrains.annotations.NotNull;
+import org.lwjgl.input.Keyboard;
 
 import com.cleanroommc.modularui.utils.item.ItemStackHandler;
 import com.cubefury.vendingmachine.Config;
@@ -45,22 +49,32 @@ import com.gtnewhorizon.structurelib.alignment.enumerable.ExtendedFacing;
 import com.gtnewhorizon.structurelib.structure.IStructureDefinition;
 import com.gtnewhorizon.structurelib.structure.ISurvivalBuildEnvironment;
 
-import gregtech.api.GregTechAPI;
 import gregtech.api.covers.CoverRegistry;
 import gregtech.api.enums.Textures;
+import gregtech.api.interfaces.IHatchElement;
 import gregtech.api.interfaces.ISecondaryDescribable;
 import gregtech.api.interfaces.ITexture;
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
 import gregtech.api.render.TextureFactory;
+import gregtech.api.structure.IStructureInstance;
+import gregtech.api.structure.IStructureProvider;
+import gregtech.api.structure.StructureWrapper;
+import gregtech.api.structure.StructureWrapperInstanceInfo;
 import gregtech.api.util.GTUtil;
 import gregtech.api.util.GTUtility;
+import gregtech.api.util.IGTHatchAdder;
 import gregtech.api.util.MultiblockTooltipBuilder;
-import org.lwjgl.input.Keyboard;
 
 public class MTEVendingMachine extends MTEMultiBlockBase
-    implements ISurvivalConstructable, ISecondaryDescribable, IAlignment {
+    implements ISurvivalConstructable, ISecondaryDescribable, IAlignment, IStructureProvider<MTEVendingMachine> {
+
+    public static final String[][] STRUCTURE = { { "cc", "c~", "cc" } };
+    protected final StructureWrapper<MTEVendingMachine> structure;
+    protected final StructureWrapperInstanceInfo<MTEVendingMachine> structureInstanceInfo;
+
+    private final ArrayList<MTEVendingUplinkHatch> uplinkHatches = new ArrayList<>();
 
     public static final int INPUT_SLOTS = 6;
     public static final int OUTPUT_SLOTS = 4;
@@ -69,11 +83,6 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     public static final int STRUCTURE_CHECK_TICKS = 20;
 
-    private static final IStructureDefinition<MTEVendingMachine> STRUCTURE_DEFINITION = IStructureDefinition
-        .<MTEVendingMachine>builder()
-        .addShape("main", new String[][] { { "cc", "c~", "cc" } })
-        .addElement('c', lazy(t -> ofBlock(GregTechAPI.sBlockCasings11, 0)))
-        .build();
     private static final ITexture[] FACING_SIDE = {
         TextureFactory.of(Textures.BlockIcons.MACHINE_CASING_ITEM_PIPE_TIN) };
     private static final ITexture[] FACING_FRONT = {
@@ -101,6 +110,18 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     public MTEVendingMachine(final int aID, final String aName, final String aNameRegional) {
         super(aID, aName, aNameRegional);
+
+        this.structure = new StructureWrapper<>(this);
+        this.structureInstanceInfo = null;
+
+        this.structure.loadStructure();
+    }
+
+    protected MTEVendingMachine(MTEVendingMachine prototype) {
+        super(prototype.mName);
+
+        this.structure = prototype.structure;
+        this.structureInstanceInfo = new StructureWrapperInstanceInfo<>(structure);
     }
 
     public void sendTradeRequest(TradeItemDisplay trade) {
@@ -278,10 +299,6 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         return false;
     }
 
-    public MTEVendingMachine(String aName) {
-        super(aName);
-    }
-
     @Override
     public String[] getStructureDescription(ItemStack stackSize) {
         return getTooltip().getStructureHint();
@@ -425,7 +442,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     @Override
     public IMetaTileEntity newMetaEntity(IGregTechTileEntity aTileEntity) {
-        return new MTEVendingMachine(this.mName);
+        return new MTEVendingMachine(this);
     }
 
     @Override
@@ -434,18 +451,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             VendingMachine.LOG.warn("Check machine failed as Base MTE is null");
             return false;
         }
-        return STRUCTURE_DEFINITION.check(
-            this,
-            "main",
-            getBaseMetaTileEntity().getWorld(),
-            getExtendedFacing(),
-            getBaseMetaTileEntity().getXCoord(),
-            getBaseMetaTileEntity().getYCoord(),
-            getBaseMetaTileEntity().getZCoord(),
-            1,
-            1,
-            0,
-            !mMachine);
+        return structure.checkStructure(this);
     }
 
     @Override
@@ -477,38 +483,12 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     @Override
     public int survivalConstruct(ItemStack stackSize, int elementBudget, ISurvivalBuildEnvironment env) {
         if (mMachine) return -1;
-        return STRUCTURE_DEFINITION.survivalBuild(
-            this,
-            stackSize,
-            "main",
-            getBaseMetaTileEntity().getWorld(),
-            getExtendedFacing(),
-            getBaseMetaTileEntity().getXCoord(),
-            getBaseMetaTileEntity().getYCoord(),
-            getBaseMetaTileEntity().getZCoord(),
-            1,
-            1,
-            0,
-            elementBudget,
-            env,
-            false);
+        return structure.survivalConstruct(this, stackSize, elementBudget, env);
     }
 
     @Override
     public void construct(ItemStack stackSize, boolean hintsOnly) {
-        STRUCTURE_DEFINITION.buildOrHints(
-            this,
-            stackSize,
-            "main",
-            getBaseMetaTileEntity().getWorld(),
-            getExtendedFacing(),
-            getBaseMetaTileEntity().getXCoord(),
-            getBaseMetaTileEntity().getYCoord(),
-            getBaseMetaTileEntity().getZCoord(),
-            1,
-            1,
-            0,
-            hintsOnly);
+        structure.construct(this, stackSize, hintsOnly);
     }
 
     @Override
@@ -576,5 +556,56 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         itemEntity.motionY = 0.05f * offsetY;
         itemEntity.motionZ = 0.05f * offsetZ;
         world.spawnEntityInWorld(itemEntity);
+    }
+
+    @Override
+    public String[][] getDefinition() {
+        return STRUCTURE;
+    }
+
+    @Override
+    public IStructureDefinition<MTEVendingMachine> compile(String[][] definition) {
+        structure.addCasing('c', TinItemPipeCasing)
+            .withHatches(1, 1, Collections.singletonList(VendingUplinkHatchAdder.INSTANCE));
+        return structure.buildStructure(definition);
+    }
+
+    @Override
+    public IStructureInstance<MTEVendingMachine> getStructureInstance() {
+        return this.structureInstanceInfo;
+    }
+
+    private enum VendingUplinkHatchAdder implements IHatchElement<MTEVendingMachine> {
+
+        INSTANCE;
+
+        @Override
+        public List<? extends Class<? extends IMetaTileEntity>> mteClasses() {
+            return Arrays.asList(MTEVendingUplinkHatch.class);
+        }
+
+        @Override
+        public IGTHatchAdder<? super MTEVendingMachine> adder() {
+            return (vm, hatchTE, aBaseCasingIndex) -> {
+                if (hatchTE == null || hatchTE.isDead()) return false;
+
+                IMetaTileEntity aMetaTileEntity = hatchTE.getMetaTileEntity();
+
+                if (aMetaTileEntity == null) return false;
+
+                if (!(aMetaTileEntity instanceof MTEVendingUplinkHatch uplinkHatch)) return false;
+
+                vm.uplinkHatches.add(uplinkHatch);
+                uplinkHatch.updateTexture(aBaseCasingIndex);
+                uplinkHatch.updateCraftingIcon(uplinkHatch.getMachineCraftingIcon());
+
+                return true;
+            };
+        }
+
+        @Override
+        public long count(MTEVendingMachine mteVendingMachine) {
+            return mteVendingMachine.uplinkHatches.size();
+        }
     }
 }
