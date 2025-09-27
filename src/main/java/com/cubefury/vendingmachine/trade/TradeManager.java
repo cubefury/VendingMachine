@@ -23,6 +23,7 @@ public class TradeManager {
     public static TradeManager INSTANCE = new TradeManager();
 
     private final Map<UUID, Set<UUID>> availableTrades = new HashMap<>();
+    private final List<UUID> noConditionTrades = new ArrayList<>();
 
     public final Map<UUID, Map<CurrencyItem.CurrencyType, Integer>> playerCurrency = new HashMap<>();
 
@@ -73,8 +74,17 @@ public class TradeManager {
     public void recomputeAvailableTrades(UUID player) {
         synchronized (availableTrades) {
             availableTrades.clear();
+            if (player == null) { // only reset no condition trades for entire database reload
+                noConditionTrades.clear();
+            }
             for (Map.Entry<UUID, TradeGroup> entry : TradeDatabase.INSTANCE.getTradeGroups()
                 .entrySet()) {
+                if (
+                    entry.getValue()
+                        .hasNoConditions()
+                ) {
+                    noConditionTrades.add(entry.getKey());
+                }
                 if (player == null) {
                     for (UUID p : entry.getValue()
                         .getAllUnlockedPlayers()) {
@@ -97,9 +107,9 @@ public class TradeManager {
     public List<TradeGroupWrapper> getTrades(UUID player) {
         long currentTimestamp = System.currentTimeMillis();
         synchronized (availableTrades) {
-            if (!availableTrades.containsKey(player) || availableTrades.get(player) == null) {
-                return new ArrayList<>();
-            }
+            availableTrades.computeIfAbsent(player, k -> new HashSet<>());
+            availableTrades.get(player)
+                .addAll(noConditionTrades);
             ArrayList<TradeGroupWrapper> tradeList = new ArrayList<>();
             for (UUID tgId : availableTrades.get(player)) {
                 TradeGroup tg = TradeDatabase.INSTANCE.getTradeGroupFromId(tgId);

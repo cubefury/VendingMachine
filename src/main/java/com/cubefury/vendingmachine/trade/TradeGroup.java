@@ -51,6 +51,10 @@ public class TradeGroup {
         return this.id.toString();
     }
 
+    public boolean hasNoConditions() {
+        return this.requirementSet.isEmpty();
+    }
+
     public void addSatisfiedCondition(UUID player, ICondition c) {
         synchronized (playerDone) {
             playerDone.computeIfAbsent(player, k -> new HashSet<>());
@@ -104,7 +108,7 @@ public class TradeGroup {
     }
 
     public boolean isUnlockedPlayer(UUID player) {
-        return requirementSet.equals(playerDone.get(player));
+        return requirementSet.equals(playerDone.getOrDefault(player, new HashSet<>()));
     }
 
     public Set<UUID> getAllUnlockedPlayers() {

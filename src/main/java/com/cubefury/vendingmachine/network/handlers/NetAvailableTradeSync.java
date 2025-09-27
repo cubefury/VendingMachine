@@ -59,7 +59,7 @@ public class NetAvailableTradeSync {
 
     @SideOnly(Side.CLIENT)
     public static void onClient(NBTTagCompound message) {
-        if ( // Don't sync in SP or LAN - will delete other player's data
+        if ( // Don't sync in LAN - will delete other player's data
         Minecraft.getMinecraft()
             .isIntegratedServerRunning()
         ) {
