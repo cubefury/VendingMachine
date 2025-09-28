@@ -13,22 +13,27 @@ import net.minecraftforge.common.util.ForgeDirection;
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.items.VMItems;
 
+import appeng.api.config.Actionable;
 import appeng.api.implementations.IPowerChannelState;
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGridNode;
+import appeng.api.networking.security.IActionHost;
+import appeng.api.networking.security.MachineSource;
 import appeng.api.networking.storage.IStorageGrid;
+import appeng.api.storage.data.IAEItemStack;
 import appeng.api.util.AECableType;
 import appeng.api.util.DimensionalCoord;
 import appeng.me.GridAccessException;
 import appeng.me.helpers.AENetworkProxy;
 import appeng.me.helpers.IGridProxyable;
+import appeng.util.item.AEItemStack;
 import gregtech.api.interfaces.ITexture;
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.implementations.MTEHatch;
 import gregtech.api.render.TextureFactory;
 
-public class MTEVendingUplinkHatch extends MTEHatch implements IGridProxyable, IPowerChannelState {
+public class MTEVendingUplinkHatch extends MTEHatch implements IGridProxyable, IPowerChannelState, IActionHost {
 
     protected AENetworkProxy gridProxy = null;
     protected boolean additionalConnection = false;
@@ -106,6 +111,11 @@ public class MTEVendingUplinkHatch extends MTEHatch implements IGridProxyable, I
     }
 
     @Override
+    public IGridNode getActionableNode() {
+        return getProxy().getNode();
+    }
+
+    @Override
     public void securityBreak() {}
 
     @Override
@@ -152,16 +162,27 @@ public class MTEVendingUplinkHatch extends MTEHatch implements IGridProxyable, I
         return true;
     }
 
-    public boolean hasItem() {
-        IStorageGrid storage = null;
+    private IStorageGrid accessStorage() {
         try {
-            storage = getProxy().getStorage();
+            return getProxy().getStorage();
         } catch (GridAccessException gae) {
             VendingMachine.LOG.info(gae);
             gae.printStackTrace();
-            return false;
         }
-        return storage == null;
+        return null;
     }
 
+    public boolean removeItem(ItemStack remove, boolean simulate) {
+        if (remove == null) return true;
+        IStorageGrid storage = accessStorage();
+        VendingMachine.LOG.info(storage);
+        if (storage == null) return false;
+        IAEItemStack stack = storage.getItemInventory()
+            .extractItems(
+                AEItemStack.create(remove),
+                simulate ? Actionable.SIMULATE : Actionable.MODULATE,
+                new MachineSource(this));
+        VendingMachine.LOG.info(stack);
+        return stack != null && stack.getStackSize() >= remove.stackSize;
+    }
 }

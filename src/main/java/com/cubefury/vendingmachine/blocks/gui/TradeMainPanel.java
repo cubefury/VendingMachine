@@ -142,6 +142,7 @@ public class TradeMainPanel extends ModularPanel {
         ) {
             updateGui();
             MTEVendingMachineGui.resetForceRefresh();
+            TradeManager.INSTANCE.hasCurrencyUpdate = false;
         }
         this.ticksOpen += 1;
     }
@@ -168,7 +169,7 @@ public class TradeMainPanel extends ModularPanel {
 
     public boolean checkCurrencySatisfied(List<CurrencyItem> currencyItems,
         Map<CurrencyItem.CurrencyType, Integer> availableItems) {
-        if (currencyItems == null) {
+        if (currencyItems == null || currencyItems.isEmpty()) {
             return true;
         }
         if (availableItems == null) {
@@ -182,7 +183,19 @@ public class TradeMainPanel extends ModularPanel {
         for (BigItemStack bis : trade) {
             BigItemStack base = bis.copy();
             base.stackSize = 1; // shouldn't need this, but just in case
-            if (availableItems.get(base) == null || availableItems.get(base) < bis.stackSize) {
+
+            ItemStack aeStackSearch = base.getBaseStack();
+            aeStackSearch.stackSize = bis.stackSize;
+            if (availableItems.get(base) != null) {
+                aeStackSearch.stackSize = Math.max(aeStackSearch.stackSize - availableItems.get(base), 0);
+            }
+            if (aeStackSearch.stackSize == 0) {
+                continue;
+            }
+            if (
+                !gui.getBase()
+                    .fetchItemFromAE(aeStackSearch, true)
+            ) {
                 return false;
             }
         }
