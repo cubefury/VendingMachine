@@ -52,7 +52,6 @@ public class NetBulkSync {
 
         NetNameSync.sendNames(new EntityPlayerMP[] { player }, new UUID[] { playerId }, null);
         NetTradeDbSync.sendDatabase(player, false);
-        NetTradeStateSync.sendTradeState(player, false);
     }
 
     private static void onServer(Tuple2<NBTTagCompound, EntityPlayerMP> message) {

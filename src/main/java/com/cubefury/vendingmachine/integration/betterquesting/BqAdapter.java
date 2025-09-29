@@ -8,8 +8,6 @@ import java.util.UUID;
 
 import javax.annotation.Nullable;
 
-import com.cubefury.vendingmachine.VendingMachine;
-import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
 import com.cubefury.vendingmachine.trade.TradeGroup;
 import com.google.common.collect.ImmutableMap;
@@ -72,7 +70,6 @@ public class BqAdapter {
             playerSatisfiedCache.get(player)
                 .add(quest);
         }
-        syncAvailableTradesFromServer();
     }
 
     public void setQuestUnfinished(UUID player, UUID quest) {
@@ -85,7 +82,6 @@ public class BqAdapter {
                 }
             }
         }
-        syncAvailableTradesFromServer();
     }
 
     public void resetQuests(UUID player) {
@@ -96,15 +92,6 @@ public class BqAdapter {
             } else {
                 playerSatisfiedCache.remove(player);
             }
-        }
-        syncAvailableTradesFromServer();
-    }
-
-    public void syncAvailableTradesFromServer() {
-        // We have to sync these trades even though the trades are only pulled usually during VM GUI opening,
-        // cuz someone's teammate might finish the quest
-        if (VendingMachine.proxy.isClient()) {
-            NetAvailableTradeSync.requestSync();
         }
     }
 

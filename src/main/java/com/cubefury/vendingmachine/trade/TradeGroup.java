@@ -141,12 +141,24 @@ public class TradeGroup {
     }
 
     public boolean canExecuteTrade(UUID player) {
-        List<TradeGroupWrapper> availableTrades = TradeManager.INSTANCE.getTrades(player);
-        for (TradeGroupWrapper trade : availableTrades) {
+        List<TradeGroup> availableTrades = TradeManager.INSTANCE.getAvailableTradeGroups(player);
+        long currentTimestamp = System.currentTimeMillis();
+        long lastTradeTime = this.getTradeState(player).lastTrade;
+        long tradeCount = this.getTradeState(player).tradeCount;
+        long cooldownRemaining;
+        if (this.cooldown != -1 && lastTradeTime != -1 && (currentTimestamp - lastTradeTime) / 1000 < this.cooldown) {
+            cooldownRemaining = this.cooldown - (currentTimestamp - lastTradeTime) / 1000;
+        } else {
+            cooldownRemaining = -1;
+        }
+
+        boolean enabled = this.maxTrades == -1 || tradeCount < this.maxTrades;
+
+        for (TradeGroup trade : availableTrades) {
             if (trade == null) { // shouldn't happen
                 continue;
             }
-            if (trade.trade().id.equals(this.id) && trade.enabled() && trade.cooldown() < 0) {
+            if (trade.id.equals(this.id) && enabled && cooldownRemaining < 0) {
                 return true;
             }
         }

@@ -12,14 +12,14 @@ import net.minecraft.util.ResourceLocation;
 
 import com.cubefury.vendingmachine.api.network.IPacketRegistry;
 import com.cubefury.vendingmachine.api.util.Tuple2;
-import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
 import com.cubefury.vendingmachine.network.handlers.NetBulkSync;
+import com.cubefury.vendingmachine.network.handlers.NetCurrencySync;
 import com.cubefury.vendingmachine.network.handlers.NetNameSync;
 import com.cubefury.vendingmachine.network.handlers.NetResetVMUser;
 import com.cubefury.vendingmachine.network.handlers.NetSatisfiedQuestSync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeDbSync;
+import com.cubefury.vendingmachine.network.handlers.NetTradeDisplaySync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeRequestSync;
-import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
 
 public class PacketTypeRegistry implements IPacketRegistry {
 
@@ -30,8 +30,8 @@ public class PacketTypeRegistry implements IPacketRegistry {
 
     public void init() {
         NetTradeDbSync.registerHandler();
-        NetTradeStateSync.registerHandler();
-        NetAvailableTradeSync.registerHandler();
+        NetCurrencySync.registerHandler();
+        NetTradeDisplaySync.registerHandler();
         NetTradeRequestSync.registerHandler();
         NetSatisfiedQuestSync.registerHandler();
         NetNameSync.registerHandler();

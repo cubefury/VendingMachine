@@ -4,13 +4,16 @@ import static gregtech.api.util.GTStructureUtility.ofHatchAdderOptional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -27,9 +30,9 @@ import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.blocks.gui.MTEVendingMachineGui;
 import com.cubefury.vendingmachine.blocks.gui.TradeItemDisplay;
-import com.cubefury.vendingmachine.network.handlers.NetAvailableTradeSync;
+import com.cubefury.vendingmachine.network.handlers.NetCurrencySync;
+import com.cubefury.vendingmachine.network.handlers.NetTradeDisplaySync;
 import com.cubefury.vendingmachine.network.handlers.NetTradeRequestSync;
-import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
 import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.CurrencyItem;
 import com.cubefury.vendingmachine.trade.Trade;
@@ -107,6 +110,9 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     public final Queue<TradeRequest> pendingTrades = new LinkedBlockingQueue<>();
     private boolean newBufferedOutputs = false;
     private int ticksSinceOutput = 0;
+    private int ticksSinceTradeUpdate = 0;
+
+    private Map<BigItemStack, Integer> inputSlotCache = new HashMap<>();
 
     private EntityPlayer currentUser = null;
 
@@ -290,7 +296,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         TradeDatabase.INSTANCE.getTradeGroups()
             .get(tradeRequest.tradeGroup)
             .executeTrade(tradeRequest.playerID);
-        NetTradeStateSync.sendTradeState(tradeRequest.player, false);
+        this.sendTradeUpdate();
         return true;
     }
 
@@ -337,10 +343,6 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     @Override
     protected @NotNull MTEVendingMachineGui getGui() {
-        if (VendingMachine.proxy.isClient()) {
-            NetAvailableTradeSync.requestSync();
-            NetTradeStateSync.requestSync();
-        }
         return new MTEVendingMachineGui(this);
     }
 
@@ -482,11 +484,70 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         }
         if (aBaseMetaTileEntity.isServerSide()) {
             dispenseItems();
+            if (this.ticksSinceTradeUpdate++ >= Config.gui_refresh_interval) {
+                this.sendTradeUpdate();
+            }
             if (this.mUpdate++ % STRUCTURE_CHECK_TICKS == 0) {
                 this.mMachine = checkMachine(aBaseMetaTileEntity, null);
                 aBaseMetaTileEntity.setActive(this.mMachine);
             }
         }
+    }
+
+    public void sendTradeUpdate() {
+        this.ticksSinceTradeUpdate = 0;
+        if (this.currentUser == null) {
+            return;
+        }
+        NetCurrencySync.syncCurrencyToClient((EntityPlayerMP) this.currentUser);
+        NetTradeDisplaySync.syncTradesToClient((EntityPlayerMP) this.currentUser, this);
+    }
+
+    public void refreshInputSlotCache() {
+        Map<BigItemStack, Integer> items = new HashMap<>();
+        for (int i = 0; i < INPUT_SLOTS; i++) {
+            ItemStack stack = this.inputItems.getStackInSlot(i);
+            if (stack != null) {
+                BigItemStack tmp = new BigItemStack(stack);
+                tmp.stackSize = 1;
+                items.putIfAbsent(tmp, 0);
+                items.replace(tmp, items.get(tmp) + stack.stackSize);
+            }
+        }
+        this.inputSlotCache = items;
+    }
+
+    public boolean inputItemsSatisfied(List<BigItemStack> fromItems) {
+        for (BigItemStack bis : fromItems) {
+            BigItemStack base = bis.copy();
+            base.stackSize = 1; // shouldn't need this, but just in case
+
+            ItemStack aeStackSearch = base.getBaseStack();
+            aeStackSearch.stackSize = bis.stackSize;
+            if (this.inputSlotCache.get(base) != null) {
+                aeStackSearch.stackSize = Math.max(aeStackSearch.stackSize - this.inputSlotCache.get(base), 0);
+            }
+            if (aeStackSearch.stackSize == 0) {
+                continue;
+            }
+            if (!this.fetchItemFromAE(aeStackSearch, true)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean inputCurrencySatisfied(List<CurrencyItem> currencyItems, UUID player) {
+        if (currencyItems == null || currencyItems.isEmpty()) {
+            return true;
+        }
+        Map<CurrencyItem.CurrencyType, Integer> availableCurrency = TradeManager.INSTANCE.playerCurrency.get(player);
+        if (availableCurrency == null) {
+            return false;
+        }
+        // TODO: Add AE2 coin item support
+        return currencyItems.stream()
+            .allMatch(ci -> availableCurrency.containsKey(ci.type) && availableCurrency.get(ci.type) >= ci.value);
     }
 
     public boolean getActive() {
@@ -553,6 +614,8 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         }
         if (canUse(aPlayer)) {
             this.currentUser = aPlayer;
+            // force trade state update now
+            this.ticksSinceTradeUpdate = Config.gui_refresh_interval;
             openGui(aPlayer);
         } else {
             aPlayer.addChatComponentMessage(new ChatComponentTranslation("vendingmachine.gui.error.player_using"));

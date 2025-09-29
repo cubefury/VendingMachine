@@ -209,6 +209,13 @@ public class BigItemStack {
         return nbt;
     }
 
+    public ItemStack convertToItemStack() {
+        ItemStack display = this.getCombinedStacks()
+            .get(0);
+        display.stackSize = this.stackSize;
+        return display;
+    }
+
     @Optional.Method(modid = "betterquesting")
     public betterquesting.api.utils.BigItemStack toBQBigItemStack() {
         betterquesting.api.utils.BigItemStack newBis = new betterquesting.api.utils.BigItemStack(

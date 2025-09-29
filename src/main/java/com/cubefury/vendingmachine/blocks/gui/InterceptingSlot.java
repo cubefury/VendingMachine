@@ -6,7 +6,7 @@ import net.minecraft.item.ItemStack;
 
 import com.cleanroommc.modularui.utils.item.ItemStackHandler;
 import com.cleanroommc.modularui.widgets.slot.ModularSlot;
-import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
+import com.cubefury.vendingmachine.network.handlers.NetCurrencySync;
 import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.CurrencyItem;
 import com.cubefury.vendingmachine.trade.TradeManager;
@@ -24,7 +24,7 @@ public class InterceptingSlot extends ModularSlot {
             this.putStack(null);
             if (!client) {
                 TradeManager.INSTANCE.addCurrency(NameCache.INSTANCE.getUUIDFromPlayer(player), mapped);
-                NetTradeStateSync.sendPlayerCurrency((EntityPlayerMP) player, mapped);
+                NetCurrencySync.sendPlayerCurrency((EntityPlayerMP) player, mapped);
             }
             return true;
         }
