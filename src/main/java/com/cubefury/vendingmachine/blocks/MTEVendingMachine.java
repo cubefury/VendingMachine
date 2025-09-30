@@ -301,10 +301,8 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     }
 
     public boolean fetchItemFromAE(ItemStack requiredStack, boolean simulate) {
-        // VendingMachine.LOG.info("AE Fetch object {}", this);
-        // VendingMachine.LOG.info("AE Fetch uplink hatch size: {}", this.uplinkHatches.size());
-        return false;
-        // return this.uplinkHatches.stream().anyMatch(hatch -> hatch.removeItem(requiredStack, simulate));
+        return this.uplinkHatches.stream()
+            .anyMatch(hatch -> hatch.removeItem(requiredStack, simulate));
     }
 
     @Override
@@ -460,8 +458,6 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             VendingMachine.LOG.warn("Check machine failed as Base MTE is null");
             return false;
         }
-        // VendingMachine.LOG.info("checkmachine: {}", this);
-        // VendingMachine.LOG.info("checkmachine uplinkhatches {}", this.uplinkHatches.size());
         this.uplinkHatches.clear();
         return STRUCTURE_DEFINITION.check(
             this,

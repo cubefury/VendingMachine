@@ -175,14 +175,12 @@ public class MTEVendingUplinkHatch extends MTEHatch implements IGridProxyable, I
     public boolean removeItem(ItemStack remove, boolean simulate) {
         if (remove == null) return true;
         IStorageGrid storage = accessStorage();
-        VendingMachine.LOG.info(storage);
         if (storage == null) return false;
         IAEItemStack stack = storage.getItemInventory()
             .extractItems(
                 AEItemStack.create(remove),
                 simulate ? Actionable.SIMULATE : Actionable.MODULATE,
                 new MachineSource(this));
-        VendingMachine.LOG.info(stack);
         return stack != null && stack.getStackSize() >= remove.stackSize;
     }
 }
