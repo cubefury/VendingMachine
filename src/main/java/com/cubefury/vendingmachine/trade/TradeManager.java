@@ -8,13 +8,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.annotation.Nonnull;
-
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants;
 
 import com.cubefury.vendingmachine.VendingMachine;
+import com.cubefury.vendingmachine.blocks.gui.TradeItemDisplay;
 
 // This is a cache of available trades, maintained server-side
 // so we don't have to recompute what trades are available every time we send it
@@ -23,11 +22,14 @@ public class TradeManager {
     public static TradeManager INSTANCE = new TradeManager();
 
     private final Map<UUID, Set<UUID>> availableTrades = new HashMap<>();
+    private final List<UUID> noConditionTrades = new ArrayList<>();
 
     public final Map<UUID, Map<CurrencyItem.CurrencyType, Integer>> playerCurrency = new HashMap<>();
 
     // For writeback to file in original format, to prevent data loss
     private final Map<UUID, List<NBTTagCompound>> invalidCurrency = new HashMap<>();
+
+    public final List<TradeItemDisplay> tradeData = new ArrayList<>();
 
     public boolean hasCurrencyUpdate = false;
 
@@ -52,29 +54,20 @@ public class TradeManager {
         }
     }
 
-    public Set<UUID> getAvailableTrades(@Nonnull UUID player) {
-        synchronized (availableTrades) {
-            Set<UUID> trades = new HashSet<>();
-            if (availableTrades.containsKey(player)) {
-                trades.addAll(availableTrades.get(player));
-            }
-            return trades;
-        }
-    }
-
-    public void setAvailableTrades(UUID player, Set<UUID> tradeGroups) {
-        synchronized (availableTrades) {
-            availableTrades.put(player, new HashSet<>());
-            availableTrades.get(player)
-                .addAll(tradeGroups);
-        }
-    }
-
     public void recomputeAvailableTrades(UUID player) {
         synchronized (availableTrades) {
             availableTrades.clear();
+            if (player == null) { // only reset no condition trades for entire database reload
+                noConditionTrades.clear();
+            }
             for (Map.Entry<UUID, TradeGroup> entry : TradeDatabase.INSTANCE.getTradeGroups()
                 .entrySet()) {
+                if (
+                    entry.getValue()
+                        .hasNoConditions()
+                ) {
+                    noConditionTrades.add(entry.getKey());
+                }
                 if (player == null) {
                     for (UUID p : entry.getValue()
                         .getAllUnlockedPlayers()) {
@@ -94,29 +87,14 @@ public class TradeManager {
         }
     }
 
-    public List<TradeGroupWrapper> getTrades(UUID player) {
-        long currentTimestamp = System.currentTimeMillis();
+    public List<TradeGroup> getAvailableTradeGroups(UUID player) {
         synchronized (availableTrades) {
-            if (!availableTrades.containsKey(player) || availableTrades.get(player) == null) {
-                return new ArrayList<>();
-            }
-            ArrayList<TradeGroupWrapper> tradeList = new ArrayList<>();
+            availableTrades.computeIfAbsent(player, k -> new HashSet<>());
+            availableTrades.get(player)
+                .addAll(noConditionTrades);
+            ArrayList<TradeGroup> tradeList = new ArrayList<>();
             for (UUID tgId : availableTrades.get(player)) {
-                TradeGroup tg = TradeDatabase.INSTANCE.getTradeGroupFromId(tgId);
-                long lastTradeTime = tg.getTradeState(player).lastTrade;
-                long tradeCount = tg.getTradeState(player).tradeCount;
-
-                long cooldownRemaining;
-                if (
-                    tg.cooldown != -1 && lastTradeTime != -1 && (currentTimestamp - lastTradeTime) / 1000 < tg.cooldown
-                ) {
-                    cooldownRemaining = tg.cooldown - (currentTimestamp - lastTradeTime) / 1000;
-                } else {
-                    cooldownRemaining = -1;
-                }
-
-                boolean enabled = tg.maxTrades == -1 || tradeCount < tg.maxTrades;
-                tradeList.add(new TradeGroupWrapper(tg, cooldownRemaining, enabled));
+                tradeList.add(TradeDatabase.INSTANCE.getTradeGroupFromId(tgId));
             }
             return tradeList;
         }

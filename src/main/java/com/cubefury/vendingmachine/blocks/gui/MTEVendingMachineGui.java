@@ -34,7 +34,8 @@ import com.cubefury.vendingmachine.VendingMachine;
 import com.cubefury.vendingmachine.blocks.MTEVendingMachine;
 import com.cubefury.vendingmachine.gui.GuiTextures;
 import com.cubefury.vendingmachine.gui.WidgetThemes;
-import com.cubefury.vendingmachine.network.handlers.NetTradeStateSync;
+import com.cubefury.vendingmachine.network.handlers.NetCurrencySync;
+import com.cubefury.vendingmachine.network.handlers.NetTradeDisplaySync;
 import com.cubefury.vendingmachine.storage.NameCache;
 import com.cubefury.vendingmachine.trade.CurrencyItem;
 import com.cubefury.vendingmachine.trade.TradeCategory;
@@ -211,7 +212,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             base.spawnItem(ejectable);
         }
         TradeManager.INSTANCE.resetCurrency(currentUser, type);
-        NetTradeStateSync.resetPlayerCurrency((EntityPlayerMP) base.getCurrentUser(), type);
+        NetCurrencySync.resetPlayerCurrency((EntityPlayerMP) base.getCurrentUser(), type);
         this.ejectSingleCoin.put(type, false);
     }
 
@@ -234,7 +235,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
             }
         }
         TradeManager.INSTANCE.resetCurrency(currentUser, null);
-        NetTradeStateSync.resetPlayerCurrency((EntityPlayerMP) base.getCurrentUser(), null);
+        NetCurrencySync.resetPlayerCurrency((EntityPlayerMP) base.getCurrentUser(), null);
         ejectCoins = false;
     }
 
@@ -313,10 +314,16 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                                 this.getBase()
                                     .getCurrentUser());
                             if (client) {
-                                forceRefresh = true;
                                 return;
                             }
                             // server side force refresh
+                            // Not syncing the trades to client on slot change will cause a short refresh delay, but
+                            // might be worth
+                            // for huge AE systems
+                            NetTradeDisplaySync.syncTradesToClient(
+                                (EntityPlayerMP) this.getBase()
+                                    .getCurrentUser(),
+                                this.getBase());
                             if (hasCoin) {
                                 this.refreshInputSlots();
                             }

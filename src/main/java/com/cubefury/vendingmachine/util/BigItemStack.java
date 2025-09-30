@@ -31,8 +31,8 @@ public class BigItemStack {
 
     public BigItemStack(ItemStack stack) {
         this.baseStack = stack.copy();
-        this.stackSize = baseStack.stackSize;
-        baseStack.stackSize = 1;
+        this.stackSize = stack.stackSize;
+        this.baseStack.stackSize = 1;
     }
 
     public BigItemStack(@Nonnull Block block) {
@@ -146,12 +146,12 @@ public class BigItemStack {
 
         if (stack instanceof ItemStack) {
             return baseStack.isItemEqual((ItemStack) stack)
-                && ItemStack.areItemStackTagsEqual(baseStack, (ItemStack) stack);
+                && ItemStack.areItemStackTagsEqual(baseStack, (ItemStack) stack)
+                && stackSize == ((ItemStack) stack).stackSize;
         }
 
-        if (stack instanceof BigItemStack) {
-            BigItemStack castStack = (BigItemStack) stack;
-            return baseStack.isItemEqual(castStack.baseStack) && baseStack.stackSize == castStack.stackSize
+        if (stack instanceof BigItemStack castStack) {
+            return baseStack.isItemEqual(castStack.baseStack) && stackSize == castStack.stackSize
                 && ItemStack.areItemStackTagsEqual(baseStack, castStack.baseStack);
         }
 
@@ -207,6 +207,13 @@ public class BigItemStack {
         nbt.setInteger("Count", this.stackSize);
         nbt.setString("OreDict", this.getOreDict());
         return nbt;
+    }
+
+    public ItemStack convertToItemStack() {
+        ItemStack display = this.getCombinedStacks()
+            .get(0);
+        display.stackSize = this.stackSize;
+        return display;
     }
 
     @Optional.Method(modid = "betterquesting")

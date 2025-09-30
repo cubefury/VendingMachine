@@ -45,7 +45,7 @@ public class VendingMachine {
     public static boolean isAeLoaded = false;
 
     public static int CONTROLLER_MTE_ID = 2741;
-    // public static int ME_UPLINK_MTE_ID = 2742;
+    public static int ME_UPLINK_MTE_ID = 2742;
 
     @SidedProxy(
         clientSide = "com.cubefury.vendingmachine.ClientProxy",
