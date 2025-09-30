@@ -166,14 +166,14 @@ public class MTEVendingUplinkHatch extends MTEHatch implements IGridProxyable, I
         try {
             return getProxy().getStorage();
         } catch (GridAccessException gae) {
-            VendingMachine.LOG.info(gae);
+            VendingMachine.LOG.warn("Could not access storage: ", gae);
             gae.printStackTrace();
         }
         return null;
     }
 
     public boolean removeItem(ItemStack remove, boolean simulate) {
-        if (remove == null) return true;
+        if (remove == null || remove.stackSize <= 0) return true;
         IStorageGrid storage = accessStorage();
         if (storage == null) return false;
         IAEItemStack stack = storage.getItemInventory()

@@ -223,21 +223,31 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         ) {
             return false;
         }
+        this.refreshInputSlotCache();
+
+        Trade trade = TradeDatabase.INSTANCE.getTradeGroupFromId(tradeRequest.tradeGroup)
+            .getTrades()
+            .get(tradeRequest.tradeGroupOrder);
+
+        if (
+            !this.inputCurrencySatisfied(trade.fromCurrency, tradeRequest.playerID)
+                || !this.inputItemsSatisfied(trade.fromItems)
+        ) {
+            return false;
+        }
+
         ItemStack[] inputSlots = new ItemStack[MTEVendingMachine.INPUT_SLOTS];
         for (int i = 0; i < MTEVendingMachine.INPUT_SLOTS; i++) {
             ItemStack curStack = this.inputItems.getStackInSlot(i);
             inputSlots[i] = curStack == null ? null : curStack.copy();
         }
 
-        Trade trade = TradeDatabase.INSTANCE.getTradeGroupFromId(tradeRequest.tradeGroup)
-            .getTrades()
-            .get(tradeRequest.tradeGroupOrder);
-        Map<CurrencyItem.CurrencyType, Integer> coinInventory = TradeManager.INSTANCE.playerCurrency
-            .get(NameCache.INSTANCE.getUUIDFromPlayer(this.getCurrentUser()));
+        UUID currentPlayer = NameCache.INSTANCE.getUUIDFromPlayer(this.getCurrentUser());
+
+        TradeManager.INSTANCE.playerCurrency.putIfAbsent(currentPlayer, new HashMap<>());
+        Map<CurrencyItem.CurrencyType, Integer> coinInventory = TradeManager.INSTANCE.playerCurrency.get(currentPlayer);
+
         Map<CurrencyItem.CurrencyType, Integer> newCoinInventory = new HashMap<>();
-        if (coinInventory == null) {
-            return false;
-        }
         for (CurrencyItem ci : trade.fromCurrency) {
             int oldValue = coinInventory.get(ci.type);
             if (!coinInventory.containsKey(ci.type) || oldValue < ci.value) {
@@ -248,7 +258,9 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         }
 
         for (BigItemStack stack : trade.fromItems) {
-            ItemStack requiredStack = stack.getBaseStack();
+            ItemStack requiredStack = stack.getBaseStack()
+                .copy();
+            requiredStack.stackSize = 1; // just in case it's not pulled as 1 for some reason
             int requiredAmount = stack.stackSize;
             // Remove Items from last stacks if possible
             for (int i = MTEVendingMachine.INPUT_SLOTS - 1; i >= 0 && requiredAmount > 0; i--) {
@@ -271,7 +283,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
                 }
             }
             requiredStack.stackSize = requiredAmount;
-            if (requiredAmount > 0 && fetchItemFromAE(requiredStack, false)) {
+            if (requiredAmount > 0 && !fetchItemFromAE(requiredStack, false)) {
                 return false;
             }
         }
@@ -301,8 +313,12 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     }
 
     public boolean fetchItemFromAE(ItemStack requiredStack, boolean simulate) {
-        return this.uplinkHatches.stream()
-            .anyMatch(hatch -> hatch.removeItem(requiredStack, simulate));
+        for (MTEVendingUplinkHatch hatch : this.uplinkHatches) {
+            if (hatch.removeItem(requiredStack, simulate)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

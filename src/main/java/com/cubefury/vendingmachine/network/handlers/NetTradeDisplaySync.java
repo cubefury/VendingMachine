@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import javax.annotation.Nonnull;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -113,7 +112,7 @@ public class NetTradeDisplaySync {
     }
 
     public static void syncTradesToClient(@Nonnull EntityPlayerMP player, MTEVendingMachine base) {
-        UUID playerId = NameCache.INSTANCE.getUUIDFromPlayer(Minecraft.getMinecraft().thePlayer);
+        UUID playerId = NameCache.INSTANCE.getUUIDFromPlayer(player);
         List<TradeGroup> availableGroups = TradeManager.INSTANCE.getAvailableTradeGroups(playerId);
         base.refreshInputSlotCache();
 
