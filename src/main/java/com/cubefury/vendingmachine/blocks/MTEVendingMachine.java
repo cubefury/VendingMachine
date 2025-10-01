@@ -18,6 +18,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ChatComponentTranslation;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.ForgeDirection;
@@ -52,6 +53,7 @@ import com.gtnewhorizon.structurelib.structure.ISurvivalBuildEnvironment;
 import gregtech.api.GregTechAPI;
 import gregtech.api.covers.CoverRegistry;
 import gregtech.api.enums.Textures;
+import gregtech.api.enums.Textures.BlockIcons.CustomIcon;
 import gregtech.api.interfaces.ISecondaryDescribable;
 import gregtech.api.interfaces.ITexture;
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
@@ -91,17 +93,15 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     private static final ITexture[] FACING_SIDE = {
         TextureFactory.of(Textures.BlockIcons.MACHINE_CASING_ITEM_PIPE_TIN) };
     private static final ITexture[] FACING_FRONT = {
-        TextureFactory.of(Textures.BlockIcons.MACHINE_CASING_BRICKEDBLASTFURNACE_INACTIVE) };
+        TextureFactory.of(new CustomIcon("vendingmachine:vending_machine_front_off")) };
     private static final ITexture[] FACING_ACTIVE = {
-        TextureFactory.of(Textures.BlockIcons.MACHINE_CASING_BRICKEDBLASTFURNACE_ACTIVE), TextureFactory.builder()
-            .addIcon(Textures.BlockIcons.MACHINE_CASING_BRICKEDBLASTFURNACE_ACTIVE_GLOW)
-            .glow()
-            .build() };
+        TextureFactory.builder().addIcon(new CustomIcon("vendingmachine:vending_machine_front_on")).glow().build() };
 
     private MultiblockTooltipBuilder tooltipBuilder;
 
     public int mUpdate = 0;
     public boolean mMachine = false;
+    private boolean mIsAnimated;
 
     public ItemStackHandler inputItems = new ItemStackHandler(INPUT_SLOTS);
     public ItemStackHandler outputItems = new ItemStackHandler(OUTPUT_SLOTS);
@@ -118,15 +118,22 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     public MTEVendingMachine(final int aID, final String aName, final String aNameRegional) {
         super(aID, aName, aNameRegional);
+        this.mIsAnimated = true;
     }
 
     protected MTEVendingMachine(String aName) {
         super(aName);
+        this.mIsAnimated = true;
     }
 
     @Override
     public IMetaTileEntity newMetaEntity(IGregTechTileEntity aTileEntity) {
         return new MTEVendingMachine(this.mName);
+    }
+
+    public boolean usingAnimations() {
+        // Logger.INFO("Is animated? "+this.mIsAnimated);
+        return this.mIsAnimated;
     }
 
     public void sendTradeRequest(TradeItemDisplay trade) {
@@ -537,7 +544,9 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             ItemStack aeStackSearch = base.getBaseStack();
             aeStackSearch.stackSize = bis.stackSize;
             if (this.inputSlotCache.get(base) != null) {
-                aeStackSearch.stackSize = Math.max(aeStackSearch.stackSize - this.inputSlotCache.get(base), 0);
+                aeStackSearch.stackSize = Math.max(
+                    aeStackSearch.stackSize - this.inputSlotCache.getOrDefault(base, 0),
+                    0);
             }
             if (aeStackSearch.stackSize == 0) {
                 continue;
