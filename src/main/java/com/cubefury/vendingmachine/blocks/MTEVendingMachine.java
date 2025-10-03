@@ -1,5 +1,10 @@
 package com.cubefury.vendingmachine.blocks;
 
+import static com.cubefury.vendingmachine.api.enums.Textures.VM_MACHINE_FRONT_OFF;
+import static com.cubefury.vendingmachine.api.enums.Textures.VM_MACHINE_FRONT_ON;
+import static com.cubefury.vendingmachine.api.enums.Textures.VM_MACHINE_FRONT_ON_GLOW;
+import static com.cubefury.vendingmachine.api.enums.Textures.VM_OVERLAY;
+import static com.cubefury.vendingmachine.api.enums.Textures.VM_OVERLAY_ACTIVE;
 import static gregtech.api.util.GTStructureUtility.ofHatchAdderOptional;
 
 import java.util.ArrayList;
@@ -18,7 +23,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.ForgeDirection;
@@ -41,6 +45,7 @@ import com.cubefury.vendingmachine.trade.TradeDatabase;
 import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.trade.TradeRequest;
 import com.cubefury.vendingmachine.util.BigItemStack;
+import com.cubefury.vendingmachine.util.OverlayHelper;
 import com.gtnewhorizon.structurelib.StructureLibAPI;
 import com.gtnewhorizon.structurelib.alignment.IAlignment;
 import com.gtnewhorizon.structurelib.alignment.IAlignmentLimits;
@@ -53,12 +58,13 @@ import com.gtnewhorizon.structurelib.structure.ISurvivalBuildEnvironment;
 import gregtech.api.GregTechAPI;
 import gregtech.api.covers.CoverRegistry;
 import gregtech.api.enums.Textures;
-import gregtech.api.enums.Textures.BlockIcons.CustomIcon;
+import gregtech.api.interfaces.IIconContainer;
 import gregtech.api.interfaces.ISecondaryDescribable;
 import gregtech.api.interfaces.ITexture;
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.implementations.MTEMultiBlockBase;
+import gregtech.api.render.RenderOverlay;
 import gregtech.api.render.TextureFactory;
 import gregtech.api.util.GTUtil;
 import gregtech.api.util.GTUtility;
@@ -92,10 +98,12 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     private static final ITexture[] FACING_SIDE = {
         TextureFactory.of(Textures.BlockIcons.MACHINE_CASING_ITEM_PIPE_TIN) };
-    private static final ITexture[] FACING_FRONT = {
-        TextureFactory.of(new CustomIcon("vendingmachine:vending_machine_front_off")) };
-    private static final ITexture[] FACING_ACTIVE = {
-        TextureFactory.builder().addIcon(new CustomIcon("vendingmachine:vending_machine_front_on")).glow().build() };
+    private static final ITexture[] FACING_FRONT = { TextureFactory.of(VM_MACHINE_FRONT_OFF) };
+    private static final ITexture[] FACING_ACTIVE = { TextureFactory.of(VM_MACHINE_FRONT_ON), TextureFactory.builder()
+        .addIcon(VM_MACHINE_FRONT_ON_GLOW)
+        .glow()
+        .build() };
+    protected final List<RenderOverlay.OverlayTicket> overlayTickets = new ArrayList<>();
 
     private MultiblockTooltipBuilder tooltipBuilder;
 
@@ -381,9 +389,30 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     public ITexture[] getTexture(IGregTechTileEntity baseMetaTileEntity, ForgeDirection side, ForgeDirection facing,
         int colorIndex, boolean active, boolean redstoneLevel) {
         if (side == facing) {
+            if (baseMetaTileEntity == null) {
+                return FACING_FRONT;
+            }
             return active ? FACING_ACTIVE : FACING_FRONT;
         }
         return FACING_SIDE;
+    }
+
+    protected void setTextureOverlay() {
+        IGregTechTileEntity tile = getBaseMetaTileEntity();
+        if (tile.isServerSide()) return;
+
+        IIconContainer[] vmTextures;
+        if (getBaseMetaTileEntity().isActive() && usingAnimations()) vmTextures = VM_OVERLAY_ACTIVE;
+        else vmTextures = VM_OVERLAY;
+
+        OverlayHelper.setVMOverlay(
+            tile.getWorld(),
+            tile.getXCoord(),
+            tile.getYCoord(),
+            tile.getZCoord(),
+            getExtendedFacing(),
+            vmTextures,
+            overlayTickets);
     }
 
     @Override
@@ -467,7 +496,16 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     @Override
     public void setExtendedFacing(ExtendedFacing alignment) {
+        boolean extendedFacingChanged = alignment != getExtendedFacing();
         getBaseMetaTileEntity().setFrontFacing(alignment.getDirection());
+        if (extendedFacingChanged) {
+            setTextureOverlay();
+        }
+    }
+
+    @Override
+    public void onTextureUpdate() {
+        setTextureOverlay();
     }
 
     @Override
@@ -498,8 +536,8 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     @Override
     public void onPostTick(IGregTechTileEntity aBaseMetaTileEntity, long aTimer) {
-        if ((aBaseMetaTileEntity.isClientSide()) && (aBaseMetaTileEntity.isActive())) {
-            // spawn something maybe
+        if (aBaseMetaTileEntity.isClientSide() && !aBaseMetaTileEntity.isActive()) {
+            OverlayHelper.clearVMOverlay(overlayTickets);
         }
         if (aBaseMetaTileEntity.isServerSide()) {
             dispenseItems();
@@ -544,9 +582,8 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             ItemStack aeStackSearch = base.getBaseStack();
             aeStackSearch.stackSize = bis.stackSize;
             if (this.inputSlotCache.get(base) != null) {
-                aeStackSearch.stackSize = Math.max(
-                    aeStackSearch.stackSize - this.inputSlotCache.getOrDefault(base, 0),
-                    0);
+                aeStackSearch.stackSize = Math
+                    .max(aeStackSearch.stackSize - this.inputSlotCache.getOrDefault(base, 0), 0);
             }
             if (aeStackSearch.stackSize == 0) {
                 continue;
@@ -579,8 +616,10 @@ public class MTEVendingMachine extends MTEMultiBlockBase
     @Override
     public void onFirstTick(IGregTechTileEntity aBaseMetaTileEntity) {
         super.onFirstTick(aBaseMetaTileEntity);
-        if (aBaseMetaTileEntity.isClientSide())
+        if (aBaseMetaTileEntity.isClientSide()) {
             StructureLibAPI.queryAlignment((IAlignmentProvider) aBaseMetaTileEntity);
+            setTextureOverlay();
+        }
     }
 
     @Override
@@ -618,6 +657,12 @@ public class MTEVendingMachine extends MTEMultiBlockBase
             1,
             0,
             hintsOnly);
+    }
+
+    @Override
+    public void onRemoval() {
+        super.onRemoval();
+        if (getBaseMetaTileEntity().isClientSide()) OverlayHelper.clearVMOverlay(overlayTickets);
     }
 
     @Override
