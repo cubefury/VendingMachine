@@ -399,7 +399,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     protected void setTextureOverlay() {
         IGregTechTileEntity tile = getBaseMetaTileEntity();
-        if (tile.isServerSide()) return;
+        if (tile == null || tile.isServerSide()) return;
 
         IIconContainer[] vmTextures;
         if (getBaseMetaTileEntity().isActive() && usingAnimations()) vmTextures = VM_OVERLAY_ACTIVE;
