@@ -268,7 +268,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                         .width(30)
                         .height(20))
                     .child(
-                        new Row().child(createInputRow().center())
+                        new Row().child(createInputSlots().center())
                             .top(20)
                             .height(18 * 3))
                     .child(
@@ -299,7 +299,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                     .right(1));
     }
 
-    private SlotGroupWidget createInputRow() {
+    private SlotGroupWidget createInputSlots() {
         return SlotGroupWidget.builder()
             .matrix("II", "II", "II")
             .key('I', index -> {
@@ -336,11 +336,6 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         return SlotGroupWidget.builder()
             .matrix("II", "II", "II")
             .key('I', index -> {
-                /*
-                 * ModularSlot ms = new ModularSlot(base.outputItems, index).accessibility(false, true)
-                 * .slotGroup("outputSlotGroup");
-                 */
-                // ms.changeListener((newItem, onlyAmountChanged, client, init) -> {});
                 return new ItemSlot().slot(
                     new ModularSlot(base.outputItems, index).accessibility(false, true)
                         .slotGroup("outputSlotGroup"));
@@ -493,8 +488,8 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     @Override
     protected void registerSyncValues(PanelSyncManager syncManager) {
         super.registerSyncValues(syncManager);
-        syncManager.registerSlotGroup("inputSlotGroup", 6, true);
-        syncManager.registerSlotGroup("outputSlotGroup", 4, false);
+        syncManager.registerSlotGroup("inputSlotGroup", 2, true);
+        syncManager.registerSlotGroup("outputSlotGroup", 2, false);
 
         BooleanSyncValue ejectItemsSyncer = new BooleanSyncValue(() -> this.ejectItems, val -> {
             this.ejectItems = val;
