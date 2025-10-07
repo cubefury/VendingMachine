@@ -126,7 +126,9 @@ public class TradeDatabase {
             UUID tgId = NBTConverter.UuidValueType.TRADEGROUP.readId(state);
             TradeGroup tg = TradeDatabase.INSTANCE.getTradeGroupFromId(tgId);
             TradeHistory th = new TradeHistory(state.getLong("lastTrade"), state.getInteger("tradeCount"));
-            tg.setTradeState(player, th);
+            if (tg != null) {
+                tg.setTradeState(player, th);
+            }
         }
         TradeManager.INSTANCE.populateCurrencyFromNBT(nbt, player, merge);
     }
