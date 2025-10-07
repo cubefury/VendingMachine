@@ -14,6 +14,7 @@ vendingmachine.gui.coin_eject=Eject All Coins
 vendingmachine.gui.single_coin_type_eject_hint=Shift-Click to Extract
 vendingmachine.gui.search=Search
 vendingmachine.gui.required_inputs=Requires:
+vendingmachine.gui.trade_hint=Shift-Click to Purchase
 
 vendingmachine.gui.cooldown_display.second=s
 vendingmachine.gui.cooldown_display.minute=m

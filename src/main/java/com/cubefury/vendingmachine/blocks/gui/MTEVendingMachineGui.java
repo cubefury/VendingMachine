@@ -128,7 +128,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         panel.child(
             new Column().size(20)
                 .right(5));
-        panel.child(createIOColumn(syncManager));
+        panel.child(createIOColumn());
         return panel;
     }
 
@@ -253,7 +253,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         ejectItems = false;
     }
 
-    private IWidget createIOColumn(PanelSyncManager syncManager) {
+    private IWidget createIOColumn() {
         return new ParentWidget<>().excludeAreaInNEI()
             .width(50)
             .height(178)
@@ -336,10 +336,14 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         return SlotGroupWidget.builder()
             .matrix("II", "II", "II")
             .key('I', index -> {
-                ModularSlot ms = new ModularSlot(base.outputItems, index).accessibility(false, true)
-                    .slotGroup("outputSlotGroup");
-                ms.changeListener((newItem, onlyAmountChanged, client, init) -> {});
-                return new ItemSlot().slot(ms);
+                /*
+                 * ModularSlot ms = new ModularSlot(base.outputItems, index).accessibility(false, true)
+                 * .slotGroup("outputSlotGroup");
+                 */
+                // ms.changeListener((newItem, onlyAmountChanged, client, init) -> {});
+                return new ItemSlot().slot(
+                    new ModularSlot(base.outputItems, index).accessibility(false, true)
+                        .slotGroup("outputSlotGroup"));
             })
             .build();
     }
@@ -388,6 +392,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
                                     builder.emptyLine();
                                     builder.addLine(IKey.str(cur.label).style(IKey.GRAY));
+                                    builder.addLine(IKey.str(Translator.translate("vendingmachine.gui.trade_hint")).style(IKey.GRAY));
                                 }
                             }
                         }
