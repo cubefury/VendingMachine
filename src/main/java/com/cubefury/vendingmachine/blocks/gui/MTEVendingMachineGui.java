@@ -123,7 +123,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                 .child(createTradeUI((TradeMainPanel) panel, this.tabController));
             mainColumn.child(createCoinInventoryRow((TradeMainPanel) panel));
         }
-        mainColumn.child(createInventoryRow(panel, syncManager));
+        mainColumn.child(createInventoryRow());
         panel.child(mainColumn);
         panel.child(
             new Column().size(20)
@@ -256,7 +256,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     private IWidget createIOColumn(PanelSyncManager syncManager) {
         return new ParentWidget<>().excludeAreaInNEI()
             .width(50)
-            .height(160)
+            .height(178)
             .right(-48)
             .top(40)
             .widgetTheme(WidgetThemes.BACKGROUND_SIDEPANEL)
@@ -268,7 +268,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                         .width(30)
                         .height(20))
                     .child(
-                        new Row().child(createInputRow(syncManager).center())
+                        new Row().child(createInputRow().center())
                             .top(20)
                             .height(18 * 3))
                     .child(
@@ -289,17 +289,17 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                     .child(
                         GuiTextures.OUTPUT_SPRITE.asWidget()
                             .leftRel(0.5f)
-                            .bottom(34)
+                            .bottom(52)
                             .width(30)
                             .height(20))
                     .child(
                         new Row().child(createOutputSlots().center())
                             .bottom(6)
-                            .height(18 * 2))
+                            .height(18 * 3))
                     .right(1));
     }
 
-    private SlotGroupWidget createInputRow(PanelSyncManager syncManager) {
+    private SlotGroupWidget createInputRow() {
         return SlotGroupWidget.builder()
             .matrix("II", "II", "II")
             .key('I', index -> {
@@ -334,7 +334,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     private SlotGroupWidget createOutputSlots() {
         return SlotGroupWidget.builder()
-            .matrix("II", "II")
+            .matrix("II", "II", "II")
             .key('I', index -> {
                 ModularSlot ms = new ModularSlot(base.outputItems, index).accessibility(false, true)
                     .slotGroup("outputSlotGroup");
@@ -474,7 +474,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     }
 
     // why is the original method private lmao
-    private IWidget createInventoryRow(ModularPanel panel, PanelSyncManager syncManager) {
+    private IWidget createInventoryRow() {
         return new Row().widthRel(1)
             .height(76)
             .alignX(0)
