@@ -2,6 +2,8 @@ item.vendingmachine.placeholder.name=Placeholder Item
 
 tooltip.vendingmachine=Who's even restocking this...
 
+structure.vendingmachine.hint.1=Hint 1 Dot: Tin Item Pipe Casing, ME Vending Uplink Hatch
+
 vendingmachine.gui.requirementHeader=Requirements:
 vendingmachine.gui.requirement.unknown=Unknown Requirement
 vendingmachine.gui.requirement.betterquesting=Quest

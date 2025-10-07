@@ -48,6 +48,7 @@ import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.trade.TradeRequest;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.OverlayHelper;
+import com.cubefury.vendingmachine.util.Translator;
 import com.gtnewhorizon.structurelib.StructureLibAPI;
 import com.gtnewhorizon.structurelib.alignment.IAlignment;
 import com.gtnewhorizon.structurelib.alignment.IAlignmentLimits;
@@ -82,13 +83,13 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         .addElement(
             'c',
             ofChain(
-                ofBlock(GregTechAPI.sBlockCasings11, 0),
                 ofHatchAdderOptional(
                     MTEVendingMachine::addUplinkHatch,
                     ((BlockCasings11) GregTechAPI.sBlockCasings11).getTextureIndex(0),
                     1,
                     GregTechAPI.sBlockCasings11,
-                    0)))
+                    0),
+                ofBlock(GregTechAPI.sBlockCasings11, 0)))
         .build();
 
     private final ArrayList<MTEVendingUplinkHatch> uplinkHatches = new ArrayList<>();
@@ -347,7 +348,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     @Override
     public String[] getStructureDescription(ItemStack stackSize) {
-        return getTooltip().getStructureHint();
+        return new String[] { Translator.translate("structure.vendingmachine.hint.1") };
     }
 
     @Override
