@@ -2,16 +2,26 @@
 
 This mod adds a vending machine, unlocking trades based on questbook data. If you have AE2 installed, it will also add an AE2 vending terminal, which will allow you perform trades directly with items from your ME system.
 
+### Structure
+
+![img.png](img.png)
+
+### Interface
+![img_1.png](img_1.png)
+
 ## Current Status
 
-WIP
+Alpha Testing
 
 ## For Non-GTNH Modpacks
 
-This can be used as a standalone mod with several dependencies. The vending machine block and ME Vending terminal do not come with default recipes.
+This can be used as a standalone mod with several dependencies. The vending machine block and ME Vending Uplink do not come with default recipes.
 
 ### Required Dependencies:
+- GT5U
 - ModularUI 2
+- NotEnoughItems
+- Applied Energistics 2
 
 ### Optional Dependencies:
 - BetterQuesting
