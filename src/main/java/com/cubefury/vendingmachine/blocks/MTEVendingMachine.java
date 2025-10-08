@@ -5,6 +5,8 @@ import static com.cubefury.vendingmachine.api.enums.Textures.VM_MACHINE_FRONT_ON
 import static com.cubefury.vendingmachine.api.enums.Textures.VM_MACHINE_FRONT_ON_GLOW;
 import static com.cubefury.vendingmachine.api.enums.Textures.VM_OVERLAY;
 import static com.cubefury.vendingmachine.api.enums.Textures.VM_OVERLAY_ACTIVE;
+import static com.gtnewhorizon.structurelib.structure.StructureUtility.ofBlock;
+import static com.gtnewhorizon.structurelib.structure.StructureUtility.ofChain;
 import static gregtech.api.util.GTStructureUtility.ofHatchAdderOptional;
 
 import java.util.ArrayList;
@@ -46,6 +48,7 @@ import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.trade.TradeRequest;
 import com.cubefury.vendingmachine.util.BigItemStack;
 import com.cubefury.vendingmachine.util.OverlayHelper;
+import com.cubefury.vendingmachine.util.Translator;
 import com.gtnewhorizon.structurelib.StructureLibAPI;
 import com.gtnewhorizon.structurelib.alignment.IAlignment;
 import com.gtnewhorizon.structurelib.alignment.IAlignmentLimits;
@@ -79,12 +82,14 @@ public class MTEVendingMachine extends MTEMultiBlockBase
         .addShape("main", new String[][] { { "cc", "c~", "cc" } })
         .addElement(
             'c',
-            ofHatchAdderOptional(
-                MTEVendingMachine::addUplinkHatch,
-                ((BlockCasings11) GregTechAPI.sBlockCasings11).getTextureIndex(0),
-                1,
-                GregTechAPI.sBlockCasings11,
-                0))
+            ofChain(
+                ofHatchAdderOptional(
+                    MTEVendingMachine::addUplinkHatch,
+                    ((BlockCasings11) GregTechAPI.sBlockCasings11).getTextureIndex(0),
+                    1,
+                    GregTechAPI.sBlockCasings11,
+                    0),
+                ofBlock(GregTechAPI.sBlockCasings11, 0)))
         .build();
 
     private final ArrayList<MTEVendingUplinkHatch> uplinkHatches = new ArrayList<>();
@@ -343,7 +348,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
 
     @Override
     public String[] getStructureDescription(ItemStack stackSize) {
-        return getTooltip().getStructureHint();
+        return new String[] { Translator.translate("structure.vendingmachine.hint.1") };
     }
 
     @Override
@@ -359,6 +364,7 @@ public class MTEVendingMachine extends MTEMultiBlockBase
                 .beginStructureBlock(2, 3, 1, false)
                 .addController("Middle")
                 .addOtherStructurePart("Tin Item Pipe Casings", "Everything except the controller")
+                .addOtherStructurePart("ME Vending Uplink Hatch", "Any Pipe Casing, Optional")
                 .addStructureInfo("Cannot be flipped onto its side")
                 .toolTipFinisher();
         }
