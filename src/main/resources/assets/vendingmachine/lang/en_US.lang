@@ -26,6 +26,7 @@ vendingmachine.gui.cooldown_display.day=d
 vendingmachine.gui.error.player_using=Someone is using the vending machine at the moment.
 
 gt.blockmachines.multimachine.vendingmachine.name=Vending Machine
+gt.blockmachines.multimachine.vendingmachine.name.gui=Vending Machine
 hatch.vendinguplink.me.name=ME Vending Uplink Hatch
 
 vendingmachine.category.unknown=Unknown Category

@@ -118,7 +118,11 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
         panel.child(createCategoryTabs(this.tabController));
         Flow mainColumn = new Column().width(170);
         if (VendingMachine.proxy.isClient()) { // client side filtering
-            mainColumn.child(createTitleTextStyle(base.getLocalName()))
+            mainColumn.child(
+                createTitleTextStyle(
+                    IKey.lang("gt.blockmachines.multimachine.vendingmachine.name.gui")
+                        .style(IKey.DARK_GRAY)
+                        .get()))
                 .child(this.searchBar)
                 .child(createTradeUI((TradeMainPanel) panel, this.tabController));
             mainColumn.child(createCoinInventoryRow((TradeMainPanel) panel));
