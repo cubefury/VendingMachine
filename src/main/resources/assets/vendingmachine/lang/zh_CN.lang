@@ -2,7 +2,7 @@ item.vendingmachine.placeholder.name=占位符物品
 
 tooltip.vendingmachine=到底是谁在补货啊...
 
-structure.vendingmachine.hint.1=Hint 1 Dot: Tin Item Pipe Casing, ME Vending Uplink Hatch
+structure.vendingmachine.hint.1=提示 1：锡质物品管道外壳，ME自动售货接入接口
 
 vendingmachine.gui.requirementHeader=需求条件：
 vendingmachine.gui.requirement.unknown=未知需求
@@ -16,7 +16,7 @@ vendingmachine.gui.coin_eject=取出所有代币
 vendingmachine.gui.single_coin_type_eject_hint=Shift-点击提取
 vendingmachine.gui.search=搜索
 vendingmachine.gui.required_inputs=需要：
-vendingmachine.gui.trade_hint=Shift-Click to Purchase
+vendingmachine.gui.trade_hint=Shift-点击购买
 
 vendingmachine.gui.cooldown_display.second=秒
 vendingmachine.gui.cooldown_display.minute=分
