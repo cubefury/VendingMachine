@@ -1,7 +1,7 @@
 package com.cubefury.vendingmachine.blocks;
 
-import static gregtech.api.enums.Textures.BlockIcons.OVERLAY_ME_INPUT_FLUID_HATCH;
-import static gregtech.api.enums.Textures.BlockIcons.OVERLAY_ME_INPUT_FLUID_HATCH_ACTIVE;
+import static com.cubefury.vendingmachine.api.enums.Textures.VUPLINK_OVERLAY_0;
+import static com.cubefury.vendingmachine.api.enums.Textures.VUPLINK_OVERLAY_1;
 
 import java.util.EnumSet;
 
@@ -120,12 +120,12 @@ public class MTEVendingUplinkHatch extends MTEHatch implements IGridProxyable, I
 
     @Override
     public ITexture[] getTexturesActive(ITexture aBaseTexture) {
-        return new ITexture[] { aBaseTexture, TextureFactory.of(OVERLAY_ME_INPUT_FLUID_HATCH_ACTIVE) };
+        return new ITexture[] { aBaseTexture, TextureFactory.of(VUPLINK_OVERLAY_1) };
     }
 
     @Override
     public ITexture[] getTexturesInactive(ITexture aBaseTexture) {
-        return new ITexture[] { aBaseTexture, TextureFactory.of(OVERLAY_ME_INPUT_FLUID_HATCH) };
+        return new ITexture[] { aBaseTexture, TextureFactory.of(VUPLINK_OVERLAY_0) };
     }
 
     @Override
