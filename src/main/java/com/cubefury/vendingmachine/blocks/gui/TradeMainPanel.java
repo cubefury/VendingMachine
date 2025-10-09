@@ -21,6 +21,7 @@ import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.network.handlers.NetResetVMUser;
 import com.cubefury.vendingmachine.trade.TradeCategory;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
+import com.cubefury.vendingmachine.trade.TradeGroup;
 import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.util.BigItemStack;
 
@@ -126,8 +127,11 @@ public class TradeMainPanel extends ModularPanel {
         Map<TradeCategory, List<TradeItemDisplay>> trades = new HashMap<>();
         trades.put(TradeCategory.ALL, new ArrayList<>());
         for (TradeItemDisplay tid : TradeManager.INSTANCE.tradeData) {
-            TradeCategory category = TradeDatabase.INSTANCE.getTradeGroupFromId(tid.tgID)
-                .getCategory();
+            TradeGroup group = TradeDatabase.INSTANCE.getTradeGroupFromId(tid.tgID);
+            if (group == null) {
+                continue;
+            }
+            TradeCategory category = group.getCategory();
             trades.putIfAbsent(category, new ArrayList<>());
             trades.get(category)
                 .add(tid);
