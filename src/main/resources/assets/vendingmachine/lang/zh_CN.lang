@@ -26,6 +26,7 @@ vendingmachine.gui.cooldown_display.day=天
 vendingmachine.gui.error.player_using=当前有其他玩家正在使用此自动售货机
 
 gt.blockmachines.multimachine.vendingmachine.name=自动售货机
+gt.blockmachines.multimachine.vendingmachine.name.gui=自动售货机
 hatch.vendinguplink.me.name=ME自动售货接入接口
 
 vendingmachine.category.unknown=未知分类
