@@ -176,20 +176,11 @@ public class NBTConverter {
             out.endArray();
         } else if (value instanceof NBTTagList) {
             List<NBTBase> tagList = getTagList((NBTTagList) value);
-            if (format) {
-                out.beginObject();
-                for (int i = 0; i < tagList.size(); i++) {
-                    NBTBase tag = tagList.get(i);
-                    out.name(i + ":" + tag.getId());
-                    NBTtoJSON_Base(tag, true, out);
-                }
-                out.endObject();
-            } else {
-                out.beginArray();
-                for (NBTBase tag : tagList) {
-                    NBTtoJSON_Base(tag, false, out);
-                }
+            out.beginArray();
+            for (NBTBase tag : tagList) {
+                NBTtoJSON_Base(tag, format, out);
             }
+            out.endArray();
         } else if (value instanceof NBTTagCompound) {
             NBTtoJSON_Compound((NBTTagCompound) value, out, format);
         } else {
@@ -233,31 +224,15 @@ public class NBTConverter {
         } else if (tag instanceof NBTTagCompound) {
             return NBTtoJSON_Compound((NBTTagCompound) tag, new JsonObject(), format);
         } else if (tag instanceof NBTTagList) {
-            if (format) {
-                JsonObject jAry = new JsonObject();
+            JsonArray jAry = new JsonArray();
 
-                List<NBTBase> tagList = getTagList((NBTTagList) tag);
+            List<NBTBase> tagList = getTagList((NBTTagList) tag);
 
-                for (int i = 0; i < tagList.size(); i++) {
-                    jAry.add(
-                        i + ":"
-                            + tagList.get(i)
-                                .getId(),
-                        NBTtoJSON_Base(tagList.get(i), true));
-                }
-
-                return jAry;
-            } else {
-                JsonArray jAry = new JsonArray();
-
-                List<NBTBase> tagList = getTagList((NBTTagList) tag);
-
-                for (NBTBase t : tagList) {
-                    jAry.add(NBTtoJSON_Base(t, false));
-                }
-
-                return jAry;
+            for (NBTBase t : tagList) {
+                jAry.add(NBTtoJSON_Base(t, format));
             }
+
+            return jAry;
         } else if (tag instanceof NBTTagByteArray) {
             JsonArray jAry = new JsonArray();
 

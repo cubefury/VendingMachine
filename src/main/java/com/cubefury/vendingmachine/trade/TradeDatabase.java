@@ -109,9 +109,10 @@ public class TradeDatabase {
     public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
         nbt.setInteger("version", this.version);
         NBTTagList tgList = new NBTTagList();
-        for (TradeGroup tg : tradeGroups.values()) {
-            tgList.appendTag(tg.writeToNBT(new NBTTagCompound()));
-        }
+        tradeGroups.values()
+            .stream()
+            .sorted(Comparator.comparing(TradeGroup::getId))
+            .forEach(tg -> tgList.appendTag(tg.writeToNBT(new NBTTagCompound())));
         nbt.setTag("tradeGroups", tgList);
         return nbt;
     }
