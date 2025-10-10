@@ -1,5 +1,8 @@
 package com.cubefury.vendingmachine.blocks.gui;
 
+import static com.cubefury.vendingmachine.gui.GuiTextures.SORT_ALPHABET;
+import static com.cubefury.vendingmachine.gui.GuiTextures.SORT_SMART;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +17,8 @@ import net.minecraft.item.ItemStack;
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.api.widget.IWidget;
 import com.cleanroommc.modularui.drawable.DynamicDrawable;
+import com.cleanroommc.modularui.drawable.Icon;
+import com.cleanroommc.modularui.drawable.UITexture;
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.RichTooltip;
@@ -74,6 +79,7 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
     public static String lastSearch = "";
     public static int lastPage = 0;
     public static TradeItemDisplayWidget.DisplayType displayType = Config.display_type;
+    public static SortMode sortMode = Config.sort_mode;
 
     public static final int CUSTOM_UI_HEIGHT = 320;
 
@@ -86,6 +92,29 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
 
     private static final int COIN_COLUMN_WIDTH = 40;
     private static final int COIN_COLUMN_ROW_COUNT = 4;
+
+    public enum SortMode {
+
+        SMART("smart", SORT_SMART),
+        ALPHABET("alphabet", SORT_ALPHABET);
+
+        private String mode;
+        private Icon texture;
+
+        SortMode(String mode, UITexture texture) {
+            this.mode = mode;
+            this.texture = texture.asIcon();
+        }
+
+        public String getLocalizedName() {
+            return IKey.lang("vendingmachine.gui.display_sort_" + this.mode)
+                .toString();
+        }
+
+        public Icon getTexture() {
+            return this.texture;
+        }
+    }
 
     public MTEVendingMachineGui(MTEVendingMachine base) {
         super(base);
@@ -181,6 +210,21 @@ public class MTEVendingMachineGui extends MTEMultiBlockBaseGui {
                     builder.clearText();
                     builder
                         .addLine(IKey.lang("vendingmachine.gui.display_mode") + " " + displayType.getLocalizedName());
+                })
+                .tooltipAutoUpdate(true));
+        buttonColumn.child(
+            new CycleButtonWidget().size(14)
+                .top(17)
+                .overlay(
+                    new DynamicDrawable(
+                        () -> sortMode.getTexture()
+                            .size(14)))
+                .stateCount(SortMode.values().length)
+                .value(new IntValue.Dynamic(() -> sortMode.ordinal(), val -> { sortMode = SortMode.values()[val]; }))
+                .tooltipDynamic(builder -> {
+                    builder.clearText();
+                    builder.addLine(IKey.lang("vendingmachine.gui.display_sort") + " " + sortMode.getLocalizedName());
+                    setForceRefresh();
                 })
                 .tooltipAutoUpdate(true));
         return buttonColumn;

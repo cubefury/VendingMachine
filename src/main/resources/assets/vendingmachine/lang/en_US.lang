@@ -20,6 +20,9 @@ vendingmachine.gui.trade_hint=Shift-Click to Purchase
 vendingmachine.gui.display_mode=Display:
 vendingmachine.gui.display_mode_tile=Tiles
 vendingmachine.gui.display_mode_list=List
+vendingmachine.gui.display_sort=Sort:
+vendingmachine.gui.display_sort_smart=Smart
+vendingmachine.gui.display_sort_alphabet=Alphabetical Order
 
 vendingmachine.gui.cooldown_display.second=s
 vendingmachine.gui.cooldown_display.minute=m

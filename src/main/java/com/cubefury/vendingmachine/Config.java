@@ -4,6 +4,7 @@ import java.io.File;
 
 import net.minecraftforge.common.config.Configuration;
 
+import com.cubefury.vendingmachine.blocks.gui.MTEVendingMachineGui;
 import com.cubefury.vendingmachine.blocks.gui.TradeItemDisplayWidget.DisplayType;
 
 public class Config {
@@ -16,6 +17,7 @@ public class Config {
     public static int dispense_frequency = 10;
     public static int dispense_amount = 16;
     public static DisplayType display_type = DisplayType.TILE;
+    public static MTEVendingMachineGui.SortMode sort_mode = MTEVendingMachineGui.SortMode.SMART;
 
     public static File worldDir = null;
 
@@ -48,6 +50,16 @@ public class Config {
                     "Default trade display format, either TILE or LIST. Case sensitive."));
         } catch (IllegalArgumentException e) {
             display_type = DisplayType.TILE;
+        }
+        try {
+            sort_mode = MTEVendingMachineGui.SortMode.valueOf(
+                configuration.getString(
+                    "sort_mode",
+                    CONFIG_CATEGORY_VM,
+                    "SMART",
+                    "Default sort mode, either SMART or ALPHABET. Case sensitive."));
+        } catch (IllegalArgumentException e) {
+            sort_mode = MTEVendingMachineGui.SortMode.SMART;
         }
 
         if (configuration.hasChanged()) {

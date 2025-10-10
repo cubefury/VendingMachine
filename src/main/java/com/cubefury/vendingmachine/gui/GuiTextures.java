@@ -86,6 +86,18 @@ public final class GuiTextures {
         .name("mode_list")
         .build();
 
+    public static final UITexture SORT_SMART = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/overlay/sort_smart")
+        .imageSize(32, 32)
+        .name("sort_smart")
+        .build();
+
+    public static final UITexture SORT_ALPHABET = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/overlay/sort_alphabet")
+        .imageSize(32, 32)
+        .name("sort_alphabet")
+        .build();
+
     public static final UITexture INPUT_SPRITE = UITexture.builder()
         .location(VendingMachine.MODID, "gui/background/input")
         .imageSize(30, 20)
