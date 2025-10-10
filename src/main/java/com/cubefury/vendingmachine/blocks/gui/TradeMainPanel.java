@@ -65,7 +65,7 @@ public class TradeMainPanel extends ModularPanel {
 
     public void updateGui() {
         if (shiftHeld) {
-            this.updateTradeInformation(gui.getTradeDisplayData());
+            this.updateTradeInformation(gui.getCurrentTradeDisplayData());
         } else {
             Map<TradeCategory, List<TradeItemDisplay>> trades = formatTrades();
             gui.updateTradeDisplay(trades);

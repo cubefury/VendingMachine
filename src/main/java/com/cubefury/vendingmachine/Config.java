@@ -4,6 +4,8 @@ import java.io.File;
 
 import net.minecraftforge.common.config.Configuration;
 
+import com.cubefury.vendingmachine.blocks.gui.TradeItemDisplayWidget.DisplayType;
+
 public class Config {
 
     private static final String CONFIG_CATEGORY_VM = "Vending Machine Settings";
@@ -13,6 +15,7 @@ public class Config {
     public static int gui_refresh_interval = 20;
     public static int dispense_frequency = 10;
     public static int dispense_amount = 16;
+    public static DisplayType display_type = DisplayType.TILE;
 
     public static File worldDir = null;
 
@@ -36,6 +39,16 @@ public class Config {
             1,
             Integer.MAX_VALUE,
             "Number of items per dispense cycle");
+        try {
+            display_type = DisplayType.valueOf(
+                configuration.getString(
+                    "display_type",
+                    CONFIG_CATEGORY_VM,
+                    "TILE",
+                    "Default trade display format, either TILE or LIST. Case sensitive."));
+        } catch (IllegalArgumentException e) {
+            display_type = DisplayType.TILE;
+        }
 
         if (configuration.hasChanged()) {
             configuration.save();
