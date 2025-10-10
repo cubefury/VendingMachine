@@ -45,18 +45,57 @@ public final class GuiTextures {
         .name("text_field_background")
         .build();
 
-    public static final UITexture TRADE_BUTTON_UNPRESSED = UITexture.builder()
+    // TODO: Restore canApplyTheme to trade button textures after scrolling texture bug is fixed in MUI2
+    public static final UITexture TILE_TRADE_BUTTON_UNPRESSED = UITexture.builder()
         .location(VendingMachine.MODID, "gui/background/trade_button_unpressed_color_corrected")
         .imageSize(195, 136)
         .adaptable(4)
         .name("trade_button_unpressed")
         .build();
 
-    public static final UITexture TRADE_BUTTON_PRESSED = UITexture.builder()
+    public static final UITexture TILE_TRADE_BUTTON_PRESSED = UITexture.builder()
         .location(VendingMachine.MODID, "gui/background/trade_button_pressed_color_corrected")
         .imageSize(195, 136)
         .adaptable(4)
         .name("trade_button_pressed")
+        .build();
+
+    public static final UITexture LIST_TRADE_BUTTON_UNPRESSED = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/background/list_trade_button_unpressed_color_corrected")
+        .imageSize(195, 136)
+        .adaptable(2)
+        .name("list_trade_button_unpressed")
+        .build();
+
+    public static final UITexture LIST_TRADE_BUTTON_PRESSED = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/background/list_trade_button_pressed_color_corrected")
+        .imageSize(195, 136)
+        .adaptable(2)
+        .name("list_trade_button_pressed")
+        .build();
+
+    public static final UITexture MODE_TILE = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/overlay/mode_tile")
+        .imageSize(32, 32)
+        .name("mode_tile")
+        .build();
+
+    public static final UITexture MODE_LIST = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/overlay/mode_list")
+        .imageSize(32, 32)
+        .name("mode_list")
+        .build();
+
+    public static final UITexture SORT_SMART = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/overlay/sort_smart")
+        .imageSize(32, 32)
+        .name("sort_smart")
+        .build();
+
+    public static final UITexture SORT_ALPHABET = UITexture.builder()
+        .location(VendingMachine.MODID, "gui/overlay/sort_alphabet")
+        .imageSize(32, 32)
+        .name("sort_alphabet")
         .build();
 
     public static final UITexture INPUT_SPRITE = UITexture.builder()

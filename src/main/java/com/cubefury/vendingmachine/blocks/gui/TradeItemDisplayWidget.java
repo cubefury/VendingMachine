@@ -1,5 +1,8 @@
 package com.cubefury.vendingmachine.blocks.gui;
 
+import static com.cubefury.vendingmachine.gui.GuiTextures.MODE_LIST;
+import static com.cubefury.vendingmachine.gui.GuiTextures.MODE_TILE;
+
 import net.minecraft.item.ItemStack;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,6 +12,8 @@ import com.cleanroommc.modularui.api.value.IValue;
 import com.cleanroommc.modularui.api.widget.Interactable;
 import com.cleanroommc.modularui.drawable.DynamicDrawable;
 import com.cleanroommc.modularui.drawable.GuiDraw;
+import com.cleanroommc.modularui.drawable.Icon;
+import com.cleanroommc.modularui.drawable.UITexture;
 import com.cleanroommc.modularui.screen.viewport.ModularGuiContext;
 import com.cleanroommc.modularui.theme.WidgetTheme;
 import com.cleanroommc.modularui.utils.Platform;
@@ -19,17 +24,51 @@ import com.cubefury.vendingmachine.gui.GuiTextures;
 
 public class TradeItemDisplayWidget extends ItemDisplayWidget implements Interactable {
 
+    public enum DisplayType {
+
+        TILE("tile", MODE_TILE),
+        LIST("list", MODE_LIST);
+
+        private String type;
+        private Icon texture;
+
+        DisplayType(String type, UITexture texture) {
+            this.type = type;
+            this.texture = texture.asIcon();
+        }
+
+        public String getLocalizedName() {
+            return IKey.lang("vendingmachine.gui.display_mode_" + this.type)
+                .toString();
+        }
+
+        public Icon getTexture() {
+            return this.texture;
+        }
+    }
+
     private TradeMainPanel rootPanel;
     private boolean pressed = false;
     private IValue<ItemStack> value;
+    public final DisplayType displayType;
 
     private TradeItemDisplay display;
 
-    public TradeItemDisplayWidget(TradeItemDisplay display) {
-        height(MTEVendingMachineGui.ITEM_HEIGHT);
-        width(MTEVendingMachineGui.ITEM_WIDTH);
-        background(
-            new DynamicDrawable(() -> pressed ? GuiTextures.TRADE_BUTTON_PRESSED : GuiTextures.TRADE_BUTTON_UNPRESSED));
+    public TradeItemDisplayWidget(TradeItemDisplay display, DisplayType displayType) {
+        this.displayType = displayType;
+        if (displayType == DisplayType.TILE) {
+            height(MTEVendingMachineGui.TILE_ITEM_HEIGHT);
+            width(MTEVendingMachineGui.TILE_ITEM_WIDTH);
+            background(
+                new DynamicDrawable(
+                    () -> pressed ? GuiTextures.TILE_TRADE_BUTTON_PRESSED : GuiTextures.TILE_TRADE_BUTTON_UNPRESSED));
+        } else if (displayType == DisplayType.LIST) {
+            height(MTEVendingMachineGui.LIST_ITEM_HEIGHT);
+            width(MTEVendingMachineGui.LIST_ITEM_WIDTH);
+            background(
+                new DynamicDrawable(
+                    () -> pressed ? GuiTextures.LIST_TRADE_BUTTON_PRESSED : GuiTextures.LIST_TRADE_BUTTON_UNPRESSED));
+        }
 
         this.display = display;
         this.item((ItemStack) null);
@@ -57,24 +96,47 @@ public class TradeItemDisplayWidget extends ItemDisplayWidget implements Interac
     public void draw(ModularGuiContext context, WidgetTheme widgetTheme) {
         ItemStack item = value.getValue();
         if (!Platform.isStackEmpty(item)) {
-            GuiDraw.drawText(" " + this.display.display.stackSize, 4, 9, 1.0f, 0x0, false);
-            GuiDraw.drawItem(item, 26, 4, 16, 16, context.getCurrentDrawingZ());
-            if (this.display.tradeableNow) {
-                GuiDraw.drawOutline(1, 1, 45, 23, 0x883CFF00, 2);
+            if (this.displayType == DisplayType.TILE) {
+                GuiDraw.drawText(" " + this.display.display.stackSize, 4, 9, 1.0f, 0x0, false);
+                GuiDraw.drawItem(item, 26, 4, 16, 16, context.getCurrentDrawingZ());
+                if (this.display.tradeableNow) {
+                    GuiDraw.drawOutline(1, 1, 45, 23, 0x883CFF00, 2);
+                }
+                if (this.display.hasCooldown || !this.display.enabled) {
+                    GuiDraw.drawRoundedRect(
+                        1,
+                        1,
+                        MTEVendingMachineGui.TILE_ITEM_WIDTH - 2,
+                        MTEVendingMachineGui.TILE_ITEM_HEIGHT - 2,
+                        0xBB000000,
+                        1,
+                        1);
+                }
+                this.overlay(
+                    IKey.str(display.hasCooldown ? this.display.cooldownText : "")
+                        .style(IKey.WHITE));
+            } else if (this.displayType == DisplayType.LIST) {
+                GuiDraw.drawText("" + this.display.display.stackSize, 6, 4, 0.9f, 0x0, false);
+                GuiDraw.drawText("" + this.display.display.getDisplayName(), 24, 4, 0.9f, 0x0, false);
+                GuiDraw.drawRect(
+                    1,
+                    1,
+                    3,
+                    MTEVendingMachineGui.LIST_ITEM_HEIGHT - 3,
+                    this.display.tradeableNow ? 0x883CFF00 : 0x88333333);
+                if (this.display.hasCooldown || !this.display.enabled) {
+                    GuiDraw.drawRect(
+                        1,
+                        1,
+                        MTEVendingMachineGui.LIST_ITEM_WIDTH - 2,
+                        MTEVendingMachineGui.LIST_ITEM_HEIGHT - 2,
+                        0xBB000000);
+                }
+                this.overlay(
+                    IKey.str(display.hasCooldown ? this.display.cooldownText : "")
+                        .style(IKey.WHITE)
+                        .scale(0.9f));
             }
-            if (this.display.hasCooldown || !this.display.enabled) {
-                GuiDraw.drawRoundedRect(
-                    1,
-                    1,
-                    MTEVendingMachineGui.ITEM_WIDTH - 2,
-                    MTEVendingMachineGui.ITEM_HEIGHT - 2,
-                    0xBB000000,
-                    1,
-                    1);
-            }
-            this.overlay(
-                IKey.str(display.hasCooldown ? this.display.cooldownText : "")
-                    .style(IKey.WHITE));
         }
     }
 

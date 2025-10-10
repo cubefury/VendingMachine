@@ -21,6 +21,7 @@ import com.cubefury.vendingmachine.Config;
 import com.cubefury.vendingmachine.network.handlers.NetResetVMUser;
 import com.cubefury.vendingmachine.trade.TradeCategory;
 import com.cubefury.vendingmachine.trade.TradeDatabase;
+import com.cubefury.vendingmachine.trade.TradeGroup;
 import com.cubefury.vendingmachine.trade.TradeManager;
 import com.cubefury.vendingmachine.util.BigItemStack;
 
@@ -64,7 +65,7 @@ public class TradeMainPanel extends ModularPanel {
 
     public void updateGui() {
         if (shiftHeld) {
-            this.updateTradeInformation(gui.getTradeDisplayData());
+            this.updateTradeInformation(gui.getCurrentTradeDisplayData());
         } else {
             Map<TradeCategory, List<TradeItemDisplay>> trades = formatTrades();
             gui.updateTradeDisplay(trades);
@@ -125,9 +126,14 @@ public class TradeMainPanel extends ModularPanel {
     public Map<TradeCategory, List<TradeItemDisplay>> formatTrades() {
         Map<TradeCategory, List<TradeItemDisplay>> trades = new HashMap<>();
         trades.put(TradeCategory.ALL, new ArrayList<>());
+        MTEVendingMachineGui.SortMode sortMode = MTEVendingMachineGui.sortMode;
+
         for (TradeItemDisplay tid : TradeManager.INSTANCE.tradeData) {
-            TradeCategory category = TradeDatabase.INSTANCE.getTradeGroupFromId(tid.tgID)
-                .getCategory();
+            TradeGroup group = TradeDatabase.INSTANCE.getTradeGroupFromId(tid.tgID);
+            if (group == null) {
+                continue;
+            }
+            TradeCategory category = group.getCategory();
             trades.putIfAbsent(category, new ArrayList<>());
             trades.get(category)
                 .add(tid);
@@ -152,28 +158,35 @@ public class TradeMainPanel extends ModularPanel {
                 if (a.display.getItem() == null) return 1;
                 if (b.display.getItem() == null) return -1;
 
-                // enabled or has cooldown
-                int rankA = getRank(a);
-                int rankB = getRank(b);
+                if (sortMode == MTEVendingMachineGui.SortMode.ALPHABET) {
+                    return (a.display.getDisplayName()
+                        .compareTo(b.display.getDisplayName()));
+                } else if (sortMode == MTEVendingMachineGui.SortMode.SMART) {
+                    // enabled or has cooldown
+                    int rankA = getRank(a);
+                    int rankB = getRank(b);
 
-                if (rankA != rankB) {
-                    return Integer.compare(rankA, rankB);
+                    if (rankA != rankB) {
+                        return Integer.compare(rankA, rankB);
+                    }
+
+                    // cooldown time
+                    int cooldownCmp = Long.compare(b.cooldown, a.cooldown);
+                    if (cooldownCmp != 0) return cooldownCmp;
+
+                    // display item ordering
+                    int idCmp = Integer
+                        .compare(Item.getIdFromItem(a.display.getItem()), Item.getIdFromItem(b.display.getItem()));
+                    if (idCmp != 0) return idCmp;
+                    int dmgCmp = Integer.compare(a.display.getItemDamage(), b.display.getItemDamage());
+                    if (dmgCmp != 0) return dmgCmp;
+
+                    // sort by tradegroup Order
+                    return Integer.compare(a.tradeGroupOrder, b.tradeGroupOrder);
                 }
 
-                // cooldown time
-                int cooldownCmp = Long.compare(b.cooldown, a.cooldown);
-                if (cooldownCmp != 0) return cooldownCmp;
-
-                // display item ordering
-                int idCmp = Integer
-                    .compare(Item.getIdFromItem(a.display.getItem()), Item.getIdFromItem(b.display.getItem()));
-                if (idCmp != 0) return idCmp;
-                int dmgCmp = Integer.compare(a.display.getItemDamage(), b.display.getItemDamage());
-                if (dmgCmp != 0) return dmgCmp;
-
-                // sort by tradegroup Order
-                return Integer.compare(a.tradeGroupOrder, b.tradeGroupOrder);
-
+                // impossible
+                return 0;
             });
             trades.replace(category, filteredTrades);
         }
