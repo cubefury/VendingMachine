@@ -116,13 +116,8 @@ public class TradeItemDisplayWidget extends ItemDisplayWidget implements Interac
                     IKey.str(display.hasCooldown ? this.display.cooldownText : "")
                         .style(IKey.WHITE));
             } else if (this.displayType == DisplayType.LIST) {
-                GuiDraw.drawText(
-                    " " + this.display.display.stackSize + " " + this.display.display.getDisplayName(),
-                    4,
-                    4,
-                    0.9f,
-                    0x0,
-                    false);
+                GuiDraw.drawText("" + this.display.display.stackSize, 6, 4, 0.9f, 0x0, false);
+                GuiDraw.drawText("" + this.display.display.getDisplayName(), 24, 4, 0.9f, 0x0, false);
                 GuiDraw.drawRect(
                     1,
                     1,
