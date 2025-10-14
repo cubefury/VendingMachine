@@ -1,5 +1,5 @@
 ### Note
-Not maintained here, please refer to the [NH Repo]([img.png](https://github.com/GTNewHorizons/VendingMachine), and submit issues/PRs there!
+Not maintained here, please refer to the [NH Repo](https://github.com/GTNewHorizons/VendingMachine), and submit issues/PRs there!
 
 ## Introduction
 
