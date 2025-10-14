@@ -1,3 +1,6 @@
+### Note
+Not maintained here, please refer to the [NH Repo]([img.png](https://github.com/GTNewHorizons/VendingMachine), and submit issues/PRs there!
+
 ## Introduction
 
 This mod adds a vending machine, unlocking trades based on questbook data. If you have AE2 installed, it will also add an AE2 vending terminal, which will allow you perform trades directly with items from your ME system.
